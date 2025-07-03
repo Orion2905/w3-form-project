@@ -45,6 +45,7 @@ class Candidate(db.Model):
     proficiency_2 = db.Column(db.String(16))
     language_3 = db.Column(db.String(32))
     proficiency_3 = db.Column(db.String(16))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     photos = db.relationship('Photo', back_populates='candidate', cascade="all, delete-orphan")
     curricula = db.relationship('Curriculum', back_populates='candidate', cascade="all, delete-orphan")
@@ -78,13 +79,13 @@ class User(db.Model, UserMixin):
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id', ondelete='CASCADE'), nullable=False)
     filename = db.Column(db.String(128), nullable=False)
     candidate = db.relationship('Candidate', back_populates='photos')
 
 class Curriculum(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id', ondelete='CASCADE'), nullable=False)
     filename = db.Column(db.String(128), nullable=False)
     candidate = db.relationship('Candidate', back_populates='curricula')
 

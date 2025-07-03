@@ -32,4 +32,11 @@ def create_app():
     # Importa e registra i blueprint
     from w3form.routes import main
     app.register_blueprint(main)
+    
+    from w3form.api_candidates import api as api_candidates
+    app.register_blueprint(api_candidates)
+    
+    from w3form.api_candidates import api_stats
+    app.register_blueprint(api_stats)
+    
     return app

@@ -21,3 +21,9 @@ class Config:
         "pool_timeout": 30,
         "poolclass": QueuePool
     }
+
+    AZURE_STORAGE_CONNECTION_STRING = os.environ.get(
+        'AZURE_STORAGE_CONNECTION_STRING',
+        'DefaultEndpointsProtocol=https;AccountName=w3data;AccountKey=hht3XfrXMWusuG5RpK+hRF4IyoQQwJtnFbRLMjHzrgxLPKK/0VCoKb3ovGyfTrcMqGt5gzikBuvq+AStL0G08Q==;EndpointSuffix=core.windows.net'
+    )
+    AZURE_STORAGE_CONTAINER = os.environ.get('AZURE_STORAGE_CONTAINER', 'candidati-files')

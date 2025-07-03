@@ -49,11 +49,9 @@ def dashboard():
     if current_user.role == 'ospite':
         return redirect(url_for('main.add_candidate'))
     candidates = Candidate.query.all()
-    return render_template('dashboard.html', candidates=candidates)
+    return render_template('dashboard.html', candidates=candidates, sidebar=True)
 
 @main.route('/candidato/aggiungi', methods=['GET', 'POST'])
-@login_required
-@role_required('intervistatore', 'ospite')
 def add_candidate():
     # TODO: implementare form e logica inserimento
     return render_template('candidate_form.html')

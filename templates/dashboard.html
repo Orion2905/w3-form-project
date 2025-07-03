@@ -1,29 +1,208 @@
-{% extends 'base.html' %}
+{% extends 'layout_sidebar.html' %}
 {% block content %}
-<h2>Elenco Candidati</h2>
-<a href="{{ url_for('main.add_candidate') }}" class="btn btn-success mb-3">Aggiungi Candidato</a>
-<a href="{{ url_for('main.export_pdf') }}" class="btn btn-secondary mb-3">Esporta PDF</a>
-<a href="{{ url_for('main.export_excel') }}" class="btn btn-secondary mb-3">Esporta Excel</a>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Nome</th>
-            <th>Cognome</th>
-            <th>Email</th>
-            <th>Azioni</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for c in candidates %}
-        <tr>
-            <td>{{ c.first_name }}</td>
-            <td>{{ c.last_name }}</td>
-            <td>{{ c.email }}</td>
-            <td>
-                <a href="{{ url_for('main.edit_candidate', id=c.id) }}" class="btn btn-primary btn-sm">Modifica</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h2 class="mb-4">Dashboard</h2>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="card text-center p-3">
+      <div class="fs-2 fw-bold" id="stat-total">-</div>
+      <div class="text-muted">Candidati totali</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card text-center p-3">
+      <div class="fs-2 fw-bold" id="stat-cv">-</div>
+      <div class="text-muted">Con Curriculum</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card text-center p-3">
+      <div class="fs-2 fw-bold" id="stat-photo">-</div>
+      <div class="text-muted">Con Foto</div>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Distribuzione per genere</h5>
+      <canvas id="chart-gender" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Stato civile</h5>
+      <canvas id="chart-marital" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Taglia T-shirt</h5>
+      <canvas id="chart-tshirt" height="180"></canvas>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card p-3">
+      <h5 class="mb-3">Occupazione</h5>
+      <canvas id="chart-roles" height="120" style="max-width:180px;"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6 order-lg-2">
+    <div class="card p-3 h-100 d-flex flex-column justify-content-between">
+      <h5 class="mb-3">Ultimi candidati inseriti</h5>
+      <div class="table-responsive position-relative">
+        <div id="latest-loader" class="position-absolute top-50 start-50 translate-middle" style="display:none;z-index:2">
+          <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+        <table class="table table-sm align-middle mb-0 w-100 animate__animated animate__fadeIn" id="latest-table">
+          <thead>
+            <tr>
+              <th style="min-width:120px">Nome</th>
+              <th style="min-width:180px">Email</th>
+              <th style="min-width:100px">Ruolo</th>
+              <th style="min-width:100px">Città</th>
+              <th style="min-width:100px">Genere</th>
+              <th style="min-width:100px">Data</th>
+            </tr>
+          </thead>
+          <tbody id="latest-candidates">
+            <tr><td colspan="6" class="text-center text-muted">Caricamento...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3 order-lg-3">
+    <div class="card p-3 d-flex align-items-center justify-content-center" style="min-height:100%;">
+      <h5 class="mb-3">Auto/Moto</h5>
+      <canvas id="chart-auto" height="90" width="90" style="max-width:90px;"></canvas>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-6">
+    <div class="card p-3">
+      <h5 class="mb-3">Candidati per mese</h5>
+      <canvas id="chart-monthly" height="180"></canvas>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+async function fetchStats() {
+  // Loader visibile
+  document.getElementById('latest-loader').style.display = '';
+  document.getElementById('latest-table').classList.remove('animate__fadeIn');
+
+  const summary = await fetch('/api/stats/summary').then(r=>r.json());
+  document.getElementById('stat-total').textContent = summary.total;
+  document.getElementById('stat-cv').textContent = summary.with_cv;
+  document.getElementById('stat-photo').textContent = summary.with_photo;
+
+  const roles = await fetch('/api/stats/roles').then(r=>r.json());
+  const ctxRoles = document.getElementById('chart-roles').getContext('2d');
+  new Chart(ctxRoles, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(roles),
+      datasets: [{
+        data: Object.values(roles),
+        backgroundColor: ['#7db7e8','#bfaee0','#ffd6a5','#b6e2d3','#ffb3b3'],
+      }]
+    },
+    options: {responsive:true, cutout:'70%', plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const gender = await fetch('/api/stats/gender').then(r=>r.json());
+  const ctxGender = document.getElementById('chart-gender').getContext('2d');
+  new Chart(ctxGender, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(gender),
+      datasets: [{
+        data: Object.values(gender),
+        backgroundColor: ['#7db7e8','#bfaee0','#ffd6a5','#b6e2d3','#ffb3b3'],
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const marital = await fetch('/api/stats/marital_status').then(r=>r.json());
+  const ctxMarital = document.getElementById('chart-marital').getContext('2d');
+  new Chart(ctxMarital, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(marital),
+      datasets: [{
+        data: Object.values(marital),
+        backgroundColor: ['#ffd6a5','#bfaee0','#b6e2d3','#7db7e8','#ffb3b3'],
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const tshirt = await fetch('/api/stats/tshirt_size').then(r=>r.json());
+  const ctxTshirt = document.getElementById('chart-tshirt').getContext('2d');
+  new Chart(ctxTshirt, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(tshirt),
+      datasets: [{
+        data: Object.values(tshirt),
+        backgroundColor: ['#bfaee0','#ffd6a5','#b6e2d3','#7db7e8','#ffb3b3'],
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const auto = await fetch('/api/stats/auto_moto_munito').then(r=>r.json());
+  const ctxAuto = document.getElementById('chart-auto').getContext('2d');
+  new Chart(ctxAuto, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(auto),
+      datasets: [{
+        data: Object.values(auto),
+        backgroundColor: ['#b6e2d3','#ffb3b3','#bfaee0'],
+      }]
+    },
+    options: {responsive:true, cutout:'75%', plugins:{legend:{display:false}}}
+  });
+
+  const monthly = await fetch('/api/stats/monthly').then(r=>r.json());
+  const ctxMonthly = document.getElementById('chart-monthly').getContext('2d');
+  new Chart(ctxMonthly, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(monthly),
+      datasets: [{
+        label: 'Candidati',
+        data: Object.values(monthly),
+        backgroundColor: '#7db7e8',
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}},
+      scales:{x:{ticks:{color:getComputedStyle(document.body).color}},y:{ticks:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const latest = await fetch('/api/stats/latest').then(r=>r.json());
+  const tbody = document.getElementById('latest-candidates');
+  tbody.innerHTML = latest.map(c => `
+    <tr class="animate__animated animate__fadeInUp">
+      <td class="text-nowrap fw-semibold">${c.first_name} ${c.last_name}</td>
+      <td class="text-break small">${c.email}</td>
+      <td><span class="badge bg-primary">${c.role||'-'}</span></td>
+      <td class="text-nowrap">${c.city||'-'}</td>
+      <td class="text-nowrap">${c.gender||'-'}</td>
+      <td class="text-nowrap">${c.created_at}</td>
+    </tr>
+  `).join('');
+  // Loader nascosto e animazione
+  document.getElementById('latest-loader').style.display = 'none';
+  document.getElementById('latest-table').classList.add('animate__fadeIn');
+}
+fetchStats();
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 {% endblock %}

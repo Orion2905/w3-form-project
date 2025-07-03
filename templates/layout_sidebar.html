@@ -1,0 +1,67 @@
+{% extends 'layout_full.html' %}
+{% block sidebar %}
+<nav id="sidebar" class="sidebar border-end d-flex flex-column align-items-center">
+  <div class="sidebar-logo my-3">
+    <img src="https://placehold.co/48x48?text=W3" alt="Logo" width="48" height="48" style="border-radius:12px;">
+  </div>
+  <ul class="nav flex-column py-4 w-100 px-2">
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="/">
+        <span class="sidebar-icon me-2"><i class="bi bi-house"></i></span>
+        <span class="sidebar-text">Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="/candidato/aggiungi">
+        <span class="sidebar-icon me-2"><i class="bi bi-person-plus"></i></span>
+        <span class="sidebar-text">Aggiungi Candidato</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="/esporta/pdf">
+        <span class="sidebar-icon me-2"><i class="bi bi-file-earmark-pdf"></i></span>
+        <span class="sidebar-text">Esporta PDF</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="/esporta/excel">
+        <span class="sidebar-icon me-2"><i class="bi bi-file-earmark-excel"></i></span>
+        <span class="sidebar-text">Esporta Excel</span>
+      </a>
+    </li>
+    <li class="nav-item mt-4">
+      <a class="nav-link d-flex align-items-center text-danger px-3 py-2" href="/logout">
+        <span class="sidebar-icon me-2"><i class="bi bi-box-arrow-right"></i></span>
+        <span class="sidebar-text">Logout</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endblock %}
+{% block main_content %}
+<div class="flex-grow-1 p-4 d-flex flex-column">
+  {% block content %}{% endblock %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Sidebar toggle animazione, solo una dichiarazione globale
+(function() {
+  var sidebar = document.getElementById('sidebar');
+  var sidebarToggle = document.getElementById('sidebarToggle');
+  if(sidebar && sidebarToggle) {
+    sidebarToggle.onclick = function() {
+      sidebar.classList.toggle('sidebar-collapsed');
+      document.querySelectorAll('.sidebar-text').forEach(function(el) {
+        el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
+      });
+      sidebar.style.transition = 'width 0.3s cubic-bezier(.4,2,.6,1)';
+    };
+    // Inizializza stato testo sidebar
+    document.querySelectorAll('.sidebar-text').forEach(function(el) {
+      el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
+    });
+  }
+})();
+</script>
+{% endblock %}
