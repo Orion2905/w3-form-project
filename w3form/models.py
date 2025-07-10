@@ -3,6 +3,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class Candidate(db.Model):
@@ -46,9 +47,11 @@ class Candidate(db.Model):
     language_3 = db.Column(db.String(32))
     proficiency_3 = db.Column(db.String(16))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    form_id = db.Column(db.Integer, db.ForeignKey('dynamic_form.id', ondelete='CASCADE'), nullable=True)
 
     photos = db.relationship('Photo', back_populates='candidate', cascade="all, delete-orphan")
     curricula = db.relationship('Curriculum', back_populates='candidate', cascade="all, delete-orphan")
+    form = db.relationship('DynamicForm', back_populates='candidates')
 
     def set_password(self, password):
         """Cripta la password"""
@@ -89,5 +92,18 @@ class Curriculum(db.Model):
     filename = db.Column(db.String(128), nullable=False)
     candidate = db.relationship('Candidate', back_populates='curricula')
 
+class DynamicForm(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    slug = db.Column(db.String(64), unique=True, nullable=False)  # per url univoca
+    description = db.Column(db.Text)
+    dropdown_options = db.Column(db.JSON, nullable=False, default=dict)  # opzioni menu a tendina per questo form
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    active_from = db.Column(db.DateTime, nullable=True)
+    active_until = db.Column(db.DateTime, nullable=True)
+    candidates = db.relationship('Candidate', back_populates='form', cascade="all, delete-orphan")
 
 
+
+     

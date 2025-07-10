@@ -16,7 +16,7 @@
             <header class="py-3 border-bottom header-app" style="min-height:56px;">
                 <div class="container-fluid d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2">
-                        {% if sidebar is defined and sidebar %}
+                        {% if show_sidebar_toggle is not defined or show_sidebar_toggle %}
                         <button id="sidebarToggleMobile" class="btn btn-outline-secondary me-2 d-inline d-md-none" type="button" aria-label="Espandi/chiudi menu">
                             <span id="sidebarIconMobile">☰</span>
                         </button>

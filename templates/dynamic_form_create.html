@@ -1,0 +1,92 @@
+{% extends 'layout_sidebar.html' %}
+{% block content %}
+<h2>{% if form %}Modifica form dinamico{% else %}Crea nuovo form dinamico{% endif %}</h2>
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label">Nome form</label>
+    <input type="text" class="form-control" name="name" required value="{{ form.name if form else '' }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Slug (URL univoca)</label>
+    <input type="text" class="form-control" name="slug" required value="{{ form.slug if form else '' }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Descrizione</label>
+    <textarea class="form-control" name="description">{{ form.description if form else '' }}</textarea>
+  </div>
+  <h5 class="mt-4">Opzioni menu a tendina</h5>
+  <div class="row">
+    <div class="col-md-6">
+      {% for field in dropdown_fields[:5] %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.replace('_',' ').title() }}</label>
+        <div class="input-group mb-1">
+          <input type="text" class="form-control" id="input-{{ field }}">
+          <button class="btn btn-outline-primary" type="button" onclick="addTag('{{ field }}')">Aggiungi</button>
+        </div>
+        <div id="tags-{{ field }}" class="mb-1"></div>
+        <input type="hidden" name="opt_{{ field }}" id="hidden-{{ field }}">
+      </div>
+      {% endfor %}
+    </div>
+    <div class="col-md-6">
+      {% for field in dropdown_fields[5:] %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.replace('_',' ').title() }}</label>
+        <div class="input-group mb-1">
+          <input type="text" class="form-control" id="input-{{ field }}">
+          <button class="btn btn-outline-primary" type="button" onclick="addTag('{{ field }}')">Aggiungi</button>
+        </div>
+        <div id="tags-{{ field }}" class="mb-1"></div>
+        <input type="hidden" name="opt_{{ field }}" id="hidden-{{ field }}">
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Attivo</label><br>
+      <input type="checkbox" name="is_active" value="1" {% if form and form.is_active %}checked{% endif %}> Form attivo
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Attivo dal</label>
+      <input type="datetime-local" class="form-control" name="active_from" value="{{ form.active_from.strftime('%Y-%m-%dT%H:%M') if form and form.active_from else '' }}">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Attivo fino al</label>
+      <input type="datetime-local" class="form-control" name="active_until" value="{{ form.active_until.strftime('%Y-%m-%dT%H:%M') if form and form.active_until else '' }}">
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">{% if form %}Salva modifiche{% else %}Crea form{% endif %}</button>
+</form>
+<script>
+const tagFields = {{ dropdown_fields|tojson }};
+const tags = {};
+tagFields.forEach(f => tags[f] = []);
+// Precarica i tag se in modifica
+{% if dropdown_options %}
+  {% for field in dropdown_fields %}
+    tags['{{ field }}'] = {{ dropdown_options.get(field, [])|tojson }};
+  {% endfor %}
+{% endif %}
+function addTag(field) {
+  const input = document.getElementById('input-' + field);
+  const val = input.value.trim();
+  if(val && !tags[field].includes(val)) {
+    tags[field].push(val);
+    renderTags(field);
+    input.value = '';
+  }
+}
+function removeTag(field, idx) {
+  tags[field].splice(idx,1);
+  renderTags(field);
+}
+function renderTags(field) {
+  const container = document.getElementById('tags-' + field);
+  container.innerHTML = tags[field].map((t,i) => `<span class="badge bg-primary me-1">${t} <a href="#" onclick="removeTag('${field}',${i});return false;" style="color:#fff;text-decoration:none;">&times;</a></span>`).join('');
+  document.getElementById('hidden-' + field).value = tags[field].join('\n');
+}
+tagFields.forEach(f => renderTags(f));
+</script>
+{% endblock %}
