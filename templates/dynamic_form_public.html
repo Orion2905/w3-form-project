@@ -84,11 +84,36 @@
               <input type="email" class="form-control" id="email" name="email">
             </div>
             <div class="mb-3">
-              <label for="profile_photo" class="form-label">Immagine Profilo</label>
-              <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+              <label class="form-label">Immagine Profilo</label>
+              <div class="btn-group mb-2" role="group">
+                <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_upload" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="photo_mode_upload">Carica file</label>
+                <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_camera" autocomplete="off">
+                <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
+              </div>
+              <div id="photo_upload_area">
+                <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+              </div>
+              <div id="photo_camera_area" style="display:none;">
+                <video id="profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
+                <canvas id="profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+              </div>
+              <div class="mt-2">
+                <img id="profile_photo_preview" src="" alt="Anteprima foto" class="rounded shadow" style="max-width:100px; max-height:100px; display:none;">
+              </div>
             </div>
           </div>
         </div>
+        <div class="mb-3">
+              <label for="come_sei_arrivato" class="form-label">Come sei arrivato a noi?</label>
+              <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
+                <option value="">Seleziona</option>
+                {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social','Sito web','Altro'] %}
+                <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
         <div class="d-flex justify-content-end">
           <button type="button" class="btn btn-primary" id="next1">Avanti &rarr;</button>
         </div>
@@ -262,6 +287,12 @@
     </form>
     <div id="form-success" class="alert alert-success mt-3 d-none">Candidatura inviata con successo!</div>
     <div id="form-error" class="alert alert-danger mt-3 d-none"></div>
+    <div id="form-loading" class="d-none text-center my-4">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Caricamento...</span>
+      </div>
+      <div class="mt-2">Invio candidatura in corso...</div>
+    </div>
   </div>
 </div>
 <script>
@@ -279,33 +310,112 @@ document.getElementById('next2').onclick = () => showStep(2);
 document.getElementById('prev2').onclick = () => showStep(0);
 document.getElementById('prev3').onclick = () => showStep(1);
 
-// Invio AJAX del form
+// Gestione upload/scatto foto profilo
+const photoModeUpload = document.getElementById('photo_mode_upload');
+const photoModeCamera = document.getElementById('photo_mode_camera');
+const photoUploadArea = document.getElementById('photo_upload_area');
+const photoCameraArea = document.getElementById('photo_camera_area');
+const profilePhotoFile = document.getElementById('profile_photo');
+const profilePhotoVideo = document.getElementById('profile_photo_video');
+const profilePhotoCanvas = document.getElementById('profile_photo_canvas');
+const profilePhotoPreview = document.getElementById('profile_photo_preview');
+let webcamStream = null;
+let capturedPhotoBlob = null;
+
+photoModeUpload.addEventListener('change', function() {
+  if(this.checked) {
+    photoUploadArea.style.display = 'block';
+    photoCameraArea.style.display = 'none';
+    profilePhotoFile.value = '';
+    profilePhotoPreview.style.display = 'none';
+    capturedPhotoBlob = null;
+    stopWebcam();
+  }
+});
+
+photoModeCamera.addEventListener('change', function() {
+  if(this.checked) {
+    photoUploadArea.style.display = 'none';
+    photoCameraArea.style.display = 'block';
+    profilePhotoPreview.style.display = 'none';
+    profilePhotoFile.value = '';
+    capturedPhotoBlob = null;
+    startWebcam();
+  }
+});
+
+function startWebcam() {
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      webcamStream = stream;
+      profilePhotoVideo.srcObject = stream;
+      profilePhotoVideo.play();
+    })
+    .catch(() => {
+      alert('Impossibile accedere alla webcam.');
+    });
+}
+function stopWebcam() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(track => track.stop());
+    webcamStream = null;
+  }
+  profilePhotoVideo.srcObject = null;
+}
+document.getElementById('takePhotoBtn').addEventListener('click', function() {
+  profilePhotoCanvas.width = profilePhotoVideo.videoWidth;
+  profilePhotoCanvas.height = profilePhotoVideo.videoHeight;
+  profilePhotoCanvas.getContext('2d').drawImage(profilePhotoVideo, 0, 0);
+  profilePhotoCanvas.toBlob(blob => {
+    capturedPhotoBlob = blob;
+    const url = URL.createObjectURL(blob);
+    profilePhotoPreview.src = url;
+    profilePhotoPreview.style.display = 'block';
+  }, 'image/jpeg');
+});
+profilePhotoFile.addEventListener('change', function() {
+  const file = this.files[0];
+  if(file) {
+    const url = URL.createObjectURL(file);
+    profilePhotoPreview.src = url;
+    profilePhotoPreview.style.display = 'block';
+    capturedPhotoBlob = null;
+  }
+});
+// Modifica invio form per includere foto scattata
 const form = document.getElementById('candidateForm');
 form.onsubmit = async function(e) {
   e.preventDefault();
-  const formData = new FormData(form);
-  // Aggiungi form_id se serve (associazione al DynamicForm)
-  formData.append('form_id', '{{ form.id }}');
-  document.getElementById('form-success').classList.add('d-none');
   document.getElementById('form-error').classList.add('d-none');
+  document.getElementById('form-success').classList.add('d-none');
+  document.getElementById('form-loading').classList.remove('d-none');
+  const submitBtn = form.querySelector('[type="submit"]');
+  if(submitBtn) submitBtn.disabled = true;
   try {
+    const formData = new FormData(form);
+    if(photoModeCamera.checked && capturedPhotoBlob) {
+      formData.set('profile_photo', capturedPhotoBlob, 'profile_photo.jpg');
+    }
     const resp = await fetch('/api/candidates/upload', {
       method: 'POST',
       body: formData
     });
     const data = await resp.json();
+    document.getElementById('form-loading').classList.add('d-none');
+    if(submitBtn) submitBtn.disabled = false;
     if(data.success) {
-      document.getElementById('form-success').classList.remove('d-none');
-      form.reset();
-      showStep(0);
+      window.location.href = '/success';
     } else {
       document.getElementById('form-error').textContent = data.error || 'Errore invio candidatura';
       document.getElementById('form-error').classList.remove('d-none');
     }
   } catch (err) {
+    document.getElementById('form-loading').classList.add('d-none');
+    if(submitBtn) submitBtn.disabled = false;
     document.getElementById('form-error').textContent = 'Errore di rete o server';
     document.getElementById('form-error').classList.remove('d-none');
   }
+  stopWebcam();
 };
 </script>
 {% endblock %}

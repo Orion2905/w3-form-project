@@ -1,0 +1,731 @@
+{% extends 'layout_sidebar.html' %}
+{% block title %}Gestione Candidati{% endblock %}
+{% block main_content %}
+<div class="container-fluid my-4">
+  <h2 class="mb-4">Elenco Candidati</h2>
+  <div class="mb-3">
+    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
+      <i class="bi bi-funnel"></i> Filtri avanzati
+    </button>
+  </div>
+  <div class="collapse mb-3" id="filtersCollapse">
+    <div class="card card-body bg-light">
+      <div class="row g-2">
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_first_name" placeholder="Nome">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_last_name" placeholder="Cognome">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_email" placeholder="Email">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_phone_number" placeholder="Telefono">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_come_sei_arrivato" placeholder="Come sei arrivato">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_gender" placeholder="Genere">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_marital_status" placeholder="Stato civile">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control filter-input" id="filter_availability" placeholder="Disponibilità">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-secondary w-100" id="resetFilters">Reset filtri</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mb-3">
+    <input type="text" class="form-control" id="searchInput" placeholder="Cerca su tutti i campi...">
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle" id="candidatesTable">
+      <thead class="table-light">
+        <tr>
+          {% set columns = [
+            ('first_name', 'Nome'),
+            ('last_name', 'Cognome'),
+            ('email', 'Email'),
+            ('phone_number', 'Telefono'),
+            ('come_sei_arrivato', 'Come sei arrivato a noi'),
+            ('gender', 'Genere'),
+            ('date_of_birth', 'Data di nascita'),
+            ('place_of_birth', 'Luogo di nascita'),
+            ('nationality', 'Nazionalità'),
+            ('marital_status', 'Stato civile'),
+            ('height_cm', 'Altezza (cm)'),
+            ('weight_kg', 'Peso (kg)'),
+            ('tshirt_size', 'Taglia T-shirt'),
+            ('shoe_size_eu', 'Numero scarpe'),
+            ('address', 'Indirizzo'),
+            ('city', 'Città'),
+            ('postal_code', 'CAP'),
+            ('country_of_residence', 'Paese residenza'),
+            ('id_document', 'ID documento'),
+            ('id_number', 'Numero documento'),
+            ('id_expiry_date', 'Scadenza documento'),
+            ('id_country', 'Paese documento'),
+            ('license_country', 'Patente paese'),
+            ('license_number', 'Patente numero'),
+            ('license_category', 'Categoria patente'),
+            ('license_issue_date', 'Rilascio patente'),
+            ('license_expiry_date', 'Scadenza patente'),
+            ('years_driving_experience', 'Anni guida'),
+            ('auto_moto_munito', 'Auto/Moto munito'),
+            ('occupation', 'Occupazione'),
+            ('other_experience', 'Altre esperienze'),
+            ('availability', 'Disponibilità'),
+            ('other_location', 'Altra località'),
+            ('language_1', 'Lingua 1'),
+            ('proficiency_1', 'Livello 1'),
+            ('language_2', 'Lingua 2'),
+            ('proficiency_2', 'Livello 2'),
+            ('language_3', 'Lingua 3'),
+            ('proficiency_3', 'Livello 3')
+          ] %}
+          {% for key, label in columns %}
+          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <button class="btn btn-link p-0 sort-btn" data-sort="{{ key }}" title="{{ label }}">
+              <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">{{ label }}</span>
+              <i class="bi bi-arrow-down-up ms-1"></i>
+            </button>
+          </th>
+          {% endfor %}
+          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Curriculum</span>
+          </th>
+          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Foto</span>
+          </th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Popolato via JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- Modale immagine -->
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <img id="imgModalSrc" src="" class="img-fluid rounded shadow" style="max-height:80vh; max-width:90vw;">
+    </div>
+  </div>
+</div>
+<!-- Modale modifica con tabs -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modifica Candidato</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" class="row g-3">
+          <input type="hidden" id="edit_id">
+          <ul class="nav nav-tabs mb-3" id="editTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tab-anagrafica" data-bs-toggle="tab" data-bs-target="#anagrafica" type="button" role="tab">Anagrafica</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-contatti" data-bs-toggle="tab" data-bs-target="#contatti" type="button" role="tab">Contatti</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-documenti" data-bs-toggle="tab" data-bs-target="#documenti" type="button" role="tab">Documenti</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-patente" data-bs-toggle="tab" data-bs-target="#patente" type="button" role="tab">Patente</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-lingue" data-bs-toggle="tab" data-bs-target="#lingue" type="button" role="tab">Lingue</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-altro" data-bs-toggle="tab" data-bs-target="#altro" type="button" role="tab">Altro</button>
+            </li>
+          </ul>
+          <div class="tab-content" id="editTabContent">
+            <div class="tab-pane fade show active" id="anagrafica" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_first_name" class="form-label">Nome</label>
+                  <input type="text" class="form-control" id="edit_first_name" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_last_name" class="form-label">Cognome</label>
+                  <input type="text" class="form-control" id="edit_last_name" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_gender" class="form-label">Genere</label>
+                  <input type="text" class="form-control" id="edit_gender">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_date_of_birth" class="form-label">Data di nascita</label>
+                  <input type="date" class="form-control" id="edit_date_of_birth">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_place_of_birth" class="form-label">Luogo di nascita</label>
+                  <input type="text" class="form-control" id="edit_place_of_birth">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_nationality" class="form-label">Nazionalità</label>
+                  <input type="text" class="form-control" id="edit_nationality">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_marital_status" class="form-label">Stato civile</label>
+                  <input type="text" class="form-control" id="edit_marital_status">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_height_cm" class="form-label">Altezza (cm)</label>
+                  <input type="number" class="form-control" id="edit_height_cm">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_weight_kg" class="form-label">Peso (kg)</label>
+                  <input type="number" class="form-control" id="edit_weight_kg">
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="contatti" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="edit_email">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_phone_number" class="form-label">Telefono</label>
+                  <input type="text" class="form-control" id="edit_phone_number">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_address" class="form-label">Indirizzo</label>
+                  <input type="text" class="form-control" id="edit_address">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_city" class="form-label">Città</label>
+                  <input type="text" class="form-control" id="edit_city">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_postal_code" class="form-label">CAP</label>
+                  <input type="text" class="form-control" id="edit_postal_code">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_country_of_residence" class="form-label">Paese residenza</label>
+                  <input type="text" class="form-control" id="edit_country_of_residence">
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="documenti" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_id_document" class="form-label">ID doc</label>
+                  <input type="text" class="form-control" id="edit_id_document">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_id_number" class="form-label">Numero doc</label>
+                  <input type="text" class="form-control" id="edit_id_number">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_id_expiry_date" class="form-label">Scadenza doc</label>
+                  <input type="date" class="form-control" id="edit_id_expiry_date">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_id_country" class="form-label">Paese doc</label>
+                  <input type="text" class="form-control" id="edit_id_country">
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="patente" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_license_country" class="form-label">Patente paese</label>
+                  <input type="text" class="form-control" id="edit_license_country">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_license_number" class="form-label">Patente numero</label>
+                  <input type="text" class="form-control" id="edit_license_number">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_license_category" class="form-label">Categoria patente</label>
+                  <input type="text" class="form-control" id="edit_license_category">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_license_issue_date" class="form-label">Rilascio patente</label>
+                  <input type="date" class="form-control" id="edit_license_issue_date">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_license_expiry_date" class="form-label">Scadenza patente</label>
+                  <input type="date" class="form-control" id="edit_license_expiry_date">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_years_driving_experience" class="form-label">Anni guida</label>
+                  <input type="number" class="form-control" id="edit_years_driving_experience">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_auto_moto_munito" class="form-label">Auto/Moto munito</label>
+                  <input type="text" class="form-control" id="edit_auto_moto_munito">
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="lingue" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="edit_language_1" class="form-label">Lingua 1</label>
+                  <input type="text" class="form-control" id="edit_language_1">
+                </div>
+                <div class="col-md-4">
+                  <label for="edit_proficiency_1" class="form-label">Livello 1</label>
+                  <input type="text" class="form-control" id="edit_proficiency_1">
+                </div>
+                <div class="col-md-4">
+                  <label for="edit_language_2" class="form-label">Lingua 2</label>
+                  <input type="text" class="form-control" id="edit_language_2">
+                </div>
+                <div class="col-md-4">
+                  <label for="edit_proficiency_2" class="form-label">Livello 2</label>
+                  <input type="text" class="form-control" id="edit_proficiency_2">
+                </div>
+                <div class="col-md-4">
+                  <label for="edit_language_3" class="form-label">Lingua 3</label>
+                  <input type="text" class="form-control" id="edit_language_3">
+                </div>
+                <div class="col-md-4">
+                  <label for="edit_proficiency_3" class="form-label">Livello 3</label>
+                  <input type="text" class="form-control" id="edit_proficiency_3">
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="altro" role="tabpanel">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_come_sei_arrivato" class="form-label">Come sei arrivato a noi?</label>
+                  <input type="text" class="form-control" id="edit_come_sei_arrivato">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_occupation" class="form-label">Occupazione</label>
+                  <input type="text" class="form-control" id="edit_occupation">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_other_experience" class="form-label">Altre esperienze</label>
+                  <input type="text" class="form-control" id="edit_other_experience">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_availability" class="form-label">Disponibilità</label>
+                  <input type="text" class="form-control" id="edit_availability">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_other_location" class="form-label">Altra località</label>
+                  <input type="text" class="form-control" id="edit_other_location">
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label class="form-label">Foto profilo</label>
+                  <div class="btn-group mb-2" role="group">
+                    <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_upload" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="photo_mode_upload">Carica file</label>
+                    <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_camera" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
+                  </div>
+                  <div id="photo_upload_area">
+                    <input class="form-control" type="file" id="edit_profile_photo_file" accept="image/*">
+                  </div>
+                  <div id="photo_camera_area" style="display:none;">
+                    <video id="edit_profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
+                    <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
+                    <canvas id="edit_profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+                  </div>
+                  <div class="mt-2">
+                    <img id="edit_profile_photo_preview" src="" alt="Anteprima foto" class="rounded shadow" style="max-width:100px; max-height:100px; display:none;">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-success">Salva</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let allCandidates = [];
+let currentSort = { key: null, asc: true };
+async function loadCandidates() {
+  const resp = await fetch('/api/candidates');
+  allCandidates = await resp.json();
+  applyFiltersAndSort();
+}
+function renderTable(data) {
+  const tbody = document.querySelector('#candidatesTable tbody');
+  tbody.innerHTML = '';
+  data.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.first_name||''}</td>
+      <td>${c.last_name||''}</td>
+      <td>${c.email||''}</td>
+      <td>${c.phone_number||''}</td>
+      <td>${c.come_sei_arrivato||''}</td>
+      <td>${c.gender||''}</td>
+      <td>${c.date_of_birth||''}</td>
+      <td>${c.place_of_birth||''}</td>
+      <td>${c.nationality||''}</td>
+      <td>${c.marital_status||''}</td>
+      <td>${c.height_cm||''}</td>
+      <td>${c.weight_kg||''}</td>
+      <td>${c.tshirt_size||''}</td>
+      <td>${c.shoe_size_eu||''}</td>
+      <td>${c.address||''}</td>
+      <td>${c.city||''}</td>
+      <td>${c.postal_code||''}</td>
+      <td>${c.country_of_residence||''}</td>
+      <td>${c.id_document||''}</td>
+      <td>${c.id_number||''}</td>
+      <td>${c.id_expiry_date||''}</td>
+      <td>${c.id_country||''}</td>
+      <td>${c.license_country||''}</td>
+      <td>${c.license_number||''}</td>
+      <td>${c.license_category||''}</td>
+      <td>${c.license_issue_date||''}</td>
+      <td>${c.license_expiry_date||''}</td>
+      <td>${c.years_driving_experience||''}</td>
+      <td>${c.auto_moto_munito||''}</td>
+      <td>${c.occupation||''}</td>
+      <td>${c.other_experience||''}</td>
+      <td>${c.availability||''}</td>
+      <td>${c.other_location||''}</td>
+      <td>${c.language_1||''}</td>
+      <td>${c.proficiency_1||''}</td>
+      <td>${c.language_2||''}</td>
+      <td>${c.proficiency_2||''}</td>
+      <td>${c.language_3||''}</td>
+      <td>${c.proficiency_3||''}</td>
+      <td>
+        ${c.curriculum_file ? `<a href="${c.curriculum_file}" target="_blank" class="btn btn-outline-primary btn-sm"><i class='bi bi-file-earmark-pdf'></i> Apri</a>` : '<span class="text-muted">-</span>'}
+      </td>
+      <td>
+        ${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}
+      </td>
+      <td><button class="btn btn-sm btn-primary" onclick="openEdit(${c.id})"><i class="bi bi-pencil"></i> Modifica</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+function applyFiltersAndSort() {
+  let filtered = allCandidates;
+  document.querySelectorAll('.filter-input').forEach(input => {
+    const val = input.value.toLowerCase();
+    const key = input.id.replace('filter_','');
+    if(val) {
+      filtered = filtered.filter(c => (c[key]||'').toString().toLowerCase().includes(val));
+    }
+  });
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if(q) {
+    filtered = filtered.filter(c =>
+      Object.values(c).some(v => (v||'').toString().toLowerCase().includes(q))
+    );
+  }
+  if(currentSort.key) {
+    filtered = filtered.slice().sort((a,b) => {
+      let va = (a[currentSort.key]||'').toString().toLowerCase();
+      let vb = (b[currentSort.key]||'').toString().toLowerCase();
+      if(va < vb) return currentSort.asc ? -1 : 1;
+      if(va > vb) return currentSort.asc ? 1 : -1;
+      return 0;
+    });
+  }
+  renderTable(filtered);
+}
+document.querySelectorAll('.filter-input').forEach(input => {
+  input.addEventListener('input', applyFiltersAndSort);
+});
+document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+document.getElementById('resetFilters').onclick = function() {
+  document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+  document.getElementById('searchInput').value = '';
+  applyFiltersAndSort();
+};
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const key = this.getAttribute('data-sort');
+    if(currentSort.key === key) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.key = key;
+      currentSort.asc = true;
+    }
+    applyFiltersAndSort();
+  });
+});
+function openEdit(id) {
+  const c = allCandidates.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('edit_id').value = c.id;
+  document.getElementById('edit_first_name').value = c.first_name||'';
+  document.getElementById('edit_last_name').value = c.last_name||'';
+  document.getElementById('edit_email').value = c.email||'';
+  document.getElementById('edit_phone_number').value = c.phone_number||'';
+  document.getElementById('edit_come_sei_arrivato').value = c.come_sei_arrivato||'';
+  document.getElementById('edit_gender').value = c.gender||'';
+  document.getElementById('edit_date_of_birth').value = c.date_of_birth||'';
+  document.getElementById('edit_place_of_birth').value = c.place_of_birth||'';
+  document.getElementById('edit_nationality').value = c.nationality||'';
+  document.getElementById('edit_marital_status').value = c.marital_status||'';
+  document.getElementById('edit_height_cm').value = c.height_cm||'';
+  document.getElementById('edit_weight_kg').value = c.weight_kg||'';
+  document.getElementById('edit_tshirt_size').value = c.tshirt_size||'';
+  document.getElementById('edit_shoe_size_eu').value = c.shoe_size_eu||'';
+  document.getElementById('edit_address').value = c.address||'';
+  document.getElementById('edit_city').value = c.city||'';
+  document.getElementById('edit_postal_code').value = c.postal_code||'';
+  document.getElementById('edit_country_of_residence').value = c.country_of_residence||'';
+  document.getElementById('edit_id_document').value = c.id_document||'';
+  document.getElementById('edit_id_number').value = c.id_number||'';
+  document.getElementById('edit_id_expiry_date').value = c.id_expiry_date||'';
+  document.getElementById('edit_id_country').value = c.id_country||'';
+  document.getElementById('edit_license_country').value = c.license_country||'';
+  document.getElementById('edit_license_number').value = c.license_number||'';
+  document.getElementById('edit_license_category').value = c.license_category||'';
+  document.getElementById('edit_license_issue_date').value = c.license_issue_date||'';
+  document.getElementById('edit_license_expiry_date').value = c.license_expiry_date||'';
+  document.getElementById('edit_years_driving_experience').value = c.years_driving_experience||'';
+  document.getElementById('edit_auto_moto_munito').value = c.auto_moto_munito||'';
+  document.getElementById('edit_occupation').value = c.occupation||'';
+  document.getElementById('edit_other_experience').value = c.other_experience||'';
+  document.getElementById('edit_availability').value = c.availability||'';
+  document.getElementById('edit_other_location').value = c.other_location||'';
+  document.getElementById('edit_language_1').value = c.language_1||'';
+  document.getElementById('edit_proficiency_1').value = c.proficiency_1||'';
+  document.getElementById('edit_language_2').value = c.language_2||'';
+  document.getElementById('edit_proficiency_2').value = c.proficiency_2||'';
+  document.getElementById('edit_language_3').value = c.language_3||'';
+  document.getElementById('edit_proficiency_3').value = c.proficiency_3||'';
+  new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+document.getElementById('editForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('edit_id').value;
+  const payload = {
+    first_name: document.getElementById('edit_first_name').value,
+    last_name: document.getElementById('edit_last_name').value,
+    email: document.getElementById('edit_email').value,
+    phone_number: document.getElementById('edit_phone_number').value,
+    come_sei_arrivato: document.getElementById('edit_come_sei_arrivato').value,
+    gender: document.getElementById('edit_gender').value,
+    date_of_birth: document.getElementById('edit_date_of_birth').value,
+    place_of_birth: document.getElementById('edit_place_of_birth').value,
+    nationality: document.getElementById('edit_nationality').value,
+    marital_status: document.getElementById('edit_marital_status').value,
+    height_cm: document.getElementById('edit_height_cm').value,
+    weight_kg: document.getElementById('edit_weight_kg').value,
+    tshirt_size: document.getElementById('edit_tshirt_size').value,
+    shoe_size_eu: document.getElementById('edit_shoe_size_eu').value,
+    address: document.getElementById('edit_address').value,
+    city: document.getElementById('edit_city').value,
+    postal_code: document.getElementById('edit_postal_code').value,
+    country_of_residence: document.getElementById('edit_country_of_residence').value,
+    id_document: document.getElementById('edit_id_document').value,
+    id_number: document.getElementById('edit_id_number').value,
+    id_expiry_date: document.getElementById('edit_id_expiry_date').value,
+    id_country: document.getElementById('edit_id_country').value,
+    license_country: document.getElementById('edit_license_country').value,
+    license_number: document.getElementById('edit_license_number').value,
+    license_category: document.getElementById('edit_license_category').value,
+    license_issue_date: document.getElementById('edit_license_issue_date').value,
+    license_expiry_date: document.getElementById('edit_license_expiry_date').value,
+    years_driving_experience: document.getElementById('edit_years_driving_experience').value,
+    auto_moto_munito: document.getElementById('edit_auto_moto_munito').value,
+    occupation: document.getElementById('edit_occupation').value,
+    other_experience: document.getElementById('edit_other_experience').value,
+    availability: document.getElementById('edit_availability').value,
+    other_location: document.getElementById('edit_other_location').value,
+    language_1: document.getElementById('edit_language_1').value,
+    proficiency_1: document.getElementById('edit_proficiency_1').value,
+    language_2: document.getElementById('edit_language_2').value,
+    proficiency_2: document.getElementById('edit_proficiency_2').value,
+    language_3: document.getElementById('edit_language_3').value,
+    proficiency_3: document.getElementById('edit_proficiency_3').value
+  };
+  // Handle photo upload
+  const formData = new FormData();
+  for (const k in payload) formData.append(k, payload[k]);
+  if (capturedPhotoBlob) {
+    formData.append('profile_photo', capturedPhotoBlob, 'profile.jpg');
+  }
+  await fetch(`/api/candidates/${id}`, {
+    method: 'PUT',
+    body: formData
+  });
+  bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+  loadCandidates();
+};
+loadCandidates();
+
+// Tooltip Bootstrap per i titoli delle colonne
+const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+tooltipTriggerList.forEach(function (el) {
+  new bootstrap.Tooltip(el);
+});
+
+// Gestione upload/scatto foto profilo
+const photoModeUpload = document.getElementById('photo_mode_upload');
+const photoModeCamera = document.getElementById('photo_mode_camera');
+const photoUploadArea = document.getElementById('photo_upload_area');
+const photoCameraArea = document.getElementById('photo_camera_area');
+const profilePhotoFile = document.getElementById('edit_profile_photo_file');
+const profilePhotoVideo = document.getElementById('edit_profile_photo_video');
+const profilePhotoCanvas = document.getElementById('edit_profile_photo_canvas');
+const profilePhotoPreview = document.getElementById('edit_profile_photo_preview');
+let mediaRecorder;
+let photoBlob;
+
+photoModeUpload.addEventListener('change', function() {
+  if(this.checked) {
+    photoUploadArea.style.display = 'block';
+    photoCameraArea.style.display = 'none';
+    profilePhotoFile.value = '';
+    profilePhotoPreview.style.display = 'none';
+  }
+});
+
+photoModeCamera.addEventListener('change', function() {
+  if(this.checked) {
+    photoUploadArea.style.display = 'none';
+    photoCameraArea.style.display = 'block';
+    startCamera();
+  }
+});
+
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  profilePhotoVideo.srcObject = stream;
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.addEventListener('dataavailable', function(e) {
+    photoBlob = e.data;
+    const url = URL.createObjectURL(photoBlob);
+    profilePhotoPreview.src = url;
+    profilePhotoPreview.style.display = 'block';
+  });
+  mediaRecorder.start();
+}
+
+document.getElementById('takePhotoBtn').addEventListener('click', function() {
+  mediaRecorder.stop();
+  profilePhotoVideo.srcObject.getTracks().forEach(track => track.stop());
+});
+
+profilePhotoFile.addEventListener('change', function() {
+  const file = this.files[0];
+  if(file) {
+    const url = URL.createObjectURL(file);
+    profilePhotoPreview.src = url;
+    profilePhotoPreview.style.display = 'block';
+  }
+});
+
+document.getElementById('editForm').addEventListener('submit', function() {
+  const photoMode = document.querySelector('input[name="photo_mode"]:checked').id;
+  if(photoMode === 'photo_mode_camera' && photoBlob) {
+    const formData = new FormData();
+    formData.append('profile_photo', photoBlob, 'profile_photo.jpg');
+    fetch(`/api/candidates/${document.getElementById('edit_id').value}/photo`, {
+      method: 'POST',
+      body: formData
+    });
+  }
+});
+
+// === Webcam/Profile Photo Logic ===
+let webcamStream = null;
+const photoInput = document.createElement('input');
+photoInput.type = 'file';
+photoInput.accept = 'image/*';
+photoInput.style.display = 'none';
+document.body.appendChild(photoInput);
+
+let capturedPhotoBlob = null;
+
+function setPhotoPreview(src) {
+  const img = document.getElementById('photoPreview');
+  if (img) img.src = src || '';
+}
+
+function stopWebcam() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(track => track.stop());
+    webcamStream = null;
+  }
+  const video = document.getElementById('webcamVideo');
+  if (video) video.srcObject = null;
+}
+
+function startWebcam() {
+  const video = document.getElementById('webcamVideo');
+  if (!video) return;
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      webcamStream = stream;
+      video.srcObject = stream;
+      video.play();
+    })
+    .catch(() => {
+      alert('Impossibile accedere alla webcam.');
+    });
+}
+
+// Switch between upload and webcam
+function setPhotoMode(mode) {
+  document.getElementById('webcamContainer').style.display = (mode === 'webcam') ? '' : 'none';
+  document.getElementById('photoUploadContainer').style.display = (mode === 'upload') ? '' : 'none';
+  if (mode === 'webcam') {
+    startWebcam();
+  } else {
+    stopWebcam();
+  }
+}
+
+document.getElementById('photoModeUpload').onclick = () => setPhotoMode('upload');
+document.getElementById('photoModeWebcam').onclick = () => setPhotoMode('webcam');
+
+document.getElementById('photoUploadBtn').onclick = () => photoInput.click();
+photoInput.onchange = function() {
+  if (this.files && this.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => setPhotoPreview(e.target.result);
+    reader.readAsDataURL(this.files[0]);
+    capturedPhotoBlob = this.files[0];
+  }
+};
+
+document.getElementById('capturePhotoBtn').onclick = function() {
+  const video = document.getElementById('webcamVideo');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    capturedPhotoBlob = blob;
+    setPhotoPreview(URL.createObjectURL(blob));
+  }, 'image/jpeg');
+};
+
+document.getElementById('removePhotoBtn').onclick = function() {
+  setPhotoPreview('');
+  capturedPhotoBlob = null;
+  photoInput.value = '';
+};
+
+// On modal close, stop webcam
+const editModalEl = document.getElementById('editModal');
+editModalEl.addEventListener('hidden.bs.modal', stopWebcam);
+</script>
+{% endblock %}

@@ -452,3 +452,16 @@ a, .nav-link {
 a:hover, .nav-link:hover {
   color: var(--secondary);
 }
+
+/* Dropdown fix per tema scuro */
+body[data-theme="dark"] .form-select,
+body[data-theme="dark"] select {
+  background-color: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+body[data-theme="dark"] .form-select option,
+body[data-theme="dark"] select option {
+  background-color: #292b3e !important;
+  color: var(--text-dark) !important;
+}

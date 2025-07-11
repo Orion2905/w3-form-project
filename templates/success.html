@@ -1,0 +1,16 @@
+{% extends 'layout_full.html' %}
+{% set show_sidebar_toggle = False %}
+{% block main_content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+  <div class="card p-5 text-center shadow-lg">
+    <div class="mb-4">
+      <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+    </div>
+    <h2 class="mb-3">Candidatura inviata con successo!</h2>
+    <p class="mb-4">Grazie per aver inviato la tua candidatura.<br>Ti ricontatteremo al più presto.</p>
+    {% if current_user.is_authenticated and current_user.role in ['admin', 'intervistatore'] %}
+      <a href="/" class="btn btn-primary">Torna alla Home</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

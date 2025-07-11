@@ -46,6 +46,7 @@ class Candidate(db.Model):
     proficiency_2 = db.Column(db.String(16))
     language_3 = db.Column(db.String(32))
     proficiency_3 = db.Column(db.String(16))
+    come_sei_arrivato = db.Column(db.String(64))  # nuovo campo a tendina personalizzabile
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     form_id = db.Column(db.Integer, db.ForeignKey('dynamic_form.id', ondelete='CASCADE'), nullable=True)
 
@@ -106,4 +107,3 @@ class DynamicForm(db.Model):
 
 
 
-     

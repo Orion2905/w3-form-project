@@ -180,7 +180,7 @@ def upload_candidate_api():
             address=data.get('address'),
             city=data.get('city'),
             postal_code=data.get('postal_code'),
-            country_of_residenza=data.get('country_of_residenza'),
+            country_of_residence=data.get('country_of_residence'),
             id_document=data.get('id_document'),
             id_number=data.get('id_number'),
             id_expiry_date=datetime.fromisoformat(data.get('id_expiry_date')) if data.get('id_expiry_date') else None,

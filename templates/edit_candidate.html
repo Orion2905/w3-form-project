@@ -1,0 +1,35 @@
+{% extends 'layout_full.html' %}
+{% block title %}Modifica Candidato{% endblock %}
+{% block main_content %}
+<div class="container my-4">
+  <h2 class="mb-4">Modifica Candidato</h2>
+  <form method="post">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="first_name" class="form-label">Nome</label>
+          <input type="text" class="form-control" id="first_name" name="first_name" value="{{ candidate.first_name }}" required>
+        </div>
+        <div class="mb-3">
+          <label for="last_name" class="form-label">Cognome</label>
+          <input type="text" class="form-control" id="last_name" name="last_name" value="{{ candidate.last_name }}" required>
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" name="email" value="{{ candidate.email }}">
+        </div>
+        <div class="mb-3">
+          <label for="phone_number" class="form-label">Telefono</label>
+          <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ candidate.phone_number }}">
+        </div>
+        <div class="mb-3">
+          <label for="come_sei_arrivato" class="form-label">Come sei arrivato a noi?</label>
+          <input type="text" class="form-control" id="come_sei_arrivato" name="come_sei_arrivato" value="{{ candidate.come_sei_arrivato }}">
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-success">Salva</button>
+    <a href="{{ url_for('candidates_list') }}" class="btn btn-secondary ms-2">Annulla</a>
+  </form>
+</div>
+{% endblock %}
