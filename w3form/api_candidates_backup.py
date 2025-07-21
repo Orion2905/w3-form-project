@@ -8,10 +8,12 @@ import os
 from werkzeug.utils import secure_filename
 from w3form.azure_utils import upload_to_azure
 from sqlalchemy import func, text
+
+api_candidates = Blueprint('api_candidates', __name__)
+api_stats = Blueprint('api_stats', __name__)
 import sqlalchemy
 
 api = Blueprint('api', __name__, url_prefix='/api/candidates')
-api_stats = Blueprint('api_stats', __name__)
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -279,24 +281,19 @@ def stats_summary():
     azienda = request.args.get('azienda', '')
     
     # Base query
-    base_query = Candidate.query
+    query = Candidate.query
     
     # Applica filtri se specificati
     if evento or azienda:
-        base_query = base_query.join(DynamicForm)
+        query = query.join(DynamicForm)
         if evento:
-            base_query = base_query.filter(DynamicForm.category == evento)
+            query = query.filter(DynamicForm.category == evento)
         if azienda:
-            base_query = base_query.filter(DynamicForm.subcategory == azienda)
+            query = query.filter(DynamicForm.subcategory == azienda)
     
-    total = base_query.count()
-    
-    # Per CV e Photo, riapplico i filtri 
-    cv_query = base_query.join(Curriculum)
-    with_cv = cv_query.count()
-    
-    photo_query = base_query.join(Photo)
-    with_photo = photo_query.count()
+    total = query.count()
+    with_cv = query.join(Curriculum).count()
+    with_photo = query.join(Photo).count()
     
     return jsonify({
         'total': total,
@@ -489,30 +486,3 @@ def stats_aziende():
     data = DynamicForm.query.with_entities(DynamicForm.subcategory).filter(DynamicForm.subcategory.isnot(None)).distinct().all()
     aziende = [item[0] for item in data if item[0]]
     return jsonify(aziende)
-
-@api_stats.route('/api/stats/cities')
-def stats_cities():
-    """Ottiene la distribuzione dei candidati per città (top 10)"""
-    # Ottieni i filtri dalla query string
-    evento = request.args.get('evento', '')
-    azienda = request.args.get('azienda', '')
-    
-    # Base query
-    query = Candidate.query
-    
-    # Applica filtri se specificati
-    if evento or azienda:
-        query = query.join(DynamicForm)
-        if evento:
-            query = query.filter(DynamicForm.category == evento)
-        if azienda:
-            query = query.filter(DynamicForm.subcategory == azienda)
-    
-    # Raggruppa per città e conta, prendi solo le top 10
-    data = query.with_entities(Candidate.city, func.count())\
-                .filter(Candidate.city.isnot(None))\
-                .group_by(Candidate.city)\
-                .order_by(func.count().desc())\
-                .limit(10).all()
-    
-    return jsonify({c or 'Non specificata': count for c, count in data})

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stampa Profilo - {{ candidate.first_name }} {{ candidate.last_name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        
+        @media screen {
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.4;
+                color: #333;
+                max-width: 800px;
+                margin: 20px auto;
+                padding: 20px;
+                background: #f9f9f9;
+            }
+            .print-instructions {
+                background: #e3f2fd;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+                border-left: 4px solid #2196f3;
+            }
+            .content-wrapper {
+                background: white;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                border-radius: 5px;
+            }
+        }
+        
+        @media print {
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.4;
+                color: #333;
+                font-size: 12px;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            .print-instructions {
+                display: none;
+            }
+            .content-wrapper {
+                background: white;
+                padding: 0;
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+        .header h2 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #666;
+        }
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            background: #f0f0f0;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 14px;
+            border-left: 4px solid #007bff;
+        }
+        .field-row {
+            margin-bottom: 6px;
+            border-bottom: 1px dotted #ccc;
+            padding-bottom: 3px;
+            overflow: hidden;
+        }
+        .field-label {
+            font-weight: bold;
+            width: 180px;
+            float: left;
+        }
+        .field-value {
+            margin-left: 190px;
+        }
+        .scores-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .scores-table th,
+        .scores-table td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: left;
+        }
+        .scores-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        .scores-summary {
+            background: #e8f4f8;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .summary-item {
+            display: inline-block;
+            margin-right: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-instructions">
+        <h4>💡 Istruzioni per salvare come PDF:</h4>
+        <ol>
+            <li>Premi <strong>Ctrl+P</strong> o clicca il pulsante "Stampa" qui sotto</li>
+            <li>Nel dialog di stampa, seleziona <strong>"Salva come PDF"</strong> come destinazione</li>
+            <li>Regola le impostazioni (orientamento, margini) se necessario</li>
+            <li>Clicca <strong>"Salva"</strong> e scegli dove salvare il file PDF</li>
+        </ol>
+        <button class="btn" onclick="window.print()">🖨️ Stampa / Salva PDF</button>
+        <button class="btn btn-secondary" onclick="window.close()">❌ Chiudi</button>
+    </div>
+
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="header">
+            <h1>Profilo Candidato</h1>
+            <h2>{{ candidate.first_name }} {{ candidate.last_name }}</h2>
+            <p><strong>Data esportazione:</strong> {{ export_date.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+
+        <!-- Dati Anagrafici -->
+        <div class="section">
+            <div class="section-title">📋 Dati Anagrafici</div>
+            <div class="field-row">
+                <div class="field-label">Nome:</div>
+                <div class="field-value">{{ candidate.first_name or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Cognome:</div>
+                <div class="field-value">{{ candidate.last_name or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Email:</div>
+                <div class="field-value">{{ candidate.email or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Telefono:</div>
+                <div class="field-value">{{ candidate.phone_number or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Genere:</div>
+                <div class="field-value">{{ candidate.gender or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Data di nascita:</div>
+                <div class="field-value">{{ candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Luogo di nascita:</div>
+                <div class="field-value">{{ candidate.place_of_birth or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Nazionalità:</div>
+                <div class="field-value">{{ candidate.nationality or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Stato civile:</div>
+                <div class="field-value">{{ candidate.marital_status or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Come sei arrivato:</div>
+                <div class="field-value">{{ candidate.come_sei_arrivato or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Dati Fisici -->
+        <div class="section">
+            <div class="section-title">📏 Dati Fisici</div>
+            <div class="field-row">
+                <div class="field-label">Altezza (cm):</div>
+                <div class="field-value">{{ candidate.height_cm or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Peso (kg):</div>
+                <div class="field-value">{{ candidate.weight_kg or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Taglia T-shirt:</div>
+                <div class="field-value">{{ candidate.tshirt_size or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Numero scarpe:</div>
+                <div class="field-value">{{ candidate.shoe_size_eu or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Contatti e Indirizzo -->
+        <div class="section">
+            <div class="section-title">🏠 Contatti e Indirizzo</div>
+            <div class="field-row">
+                <div class="field-label">Indirizzo:</div>
+                <div class="field-value">{{ candidate.address or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Città:</div>
+                <div class="field-value">{{ candidate.city or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">CAP:</div>
+                <div class="field-value">{{ candidate.postal_code or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Paese di residenza:</div>
+                <div class="field-value">{{ candidate.country_of_residence or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Documenti -->
+        <div class="section">
+            <div class="section-title">📄 Documenti</div>
+            <div class="field-row">
+                <div class="field-label">Tipo documento:</div>
+                <div class="field-value">{{ candidate.id_document or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Numero documento:</div>
+                <div class="field-value">{{ candidate.id_number or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Scadenza documento:</div>
+                <div class="field-value">{{ candidate.id_expiry_date.strftime('%d/%m/%Y') if candidate.id_expiry_date else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Paese documento:</div>
+                <div class="field-value">{{ candidate.id_country or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Codice fiscale:</div>
+                <div class="field-value">{{ candidate.codice_fiscale or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Permesso soggiorno:</div>
+                <div class="field-value">{{ candidate.permesso_soggiorno or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Patente -->
+        <div class="section">
+            <div class="section-title">🚗 Patente di Guida</div>
+            <div class="field-row">
+                <div class="field-label">Paese patente:</div>
+                <div class="field-value">{{ candidate.license_country or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Numero patente:</div>
+                <div class="field-value">{{ candidate.license_number or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Categoria patente:</div>
+                <div class="field-value">{{ candidate.license_category or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Data rilascio:</div>
+                <div class="field-value">{{ candidate.license_issue_date.strftime('%d/%m/%Y') if candidate.license_issue_date else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Scadenza patente:</div>
+                <div class="field-value">{{ candidate.license_expiry_date.strftime('%d/%m/%Y') if candidate.license_expiry_date else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Anni esperienza:</div>
+                <div class="field-value">{{ candidate.years_driving_experience or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Auto/Moto munito:</div>
+                <div class="field-value">{{ candidate.auto_moto_munito or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Lingue -->
+        <div class="section">
+            <div class="section-title">🌐 Competenze Linguistiche</div>
+            {% if candidate.language_1 or candidate.language_2 or candidate.language_3 %}
+                {% if candidate.language_1 %}
+                <div class="field-row">
+                    <div class="field-label">Lingua 1:</div>
+                    <div class="field-value">{{ candidate.language_1 }} ({{ candidate.proficiency_1 or '-' }})</div>
+                </div>
+                {% endif %}
+                {% if candidate.language_2 %}
+                <div class="field-row">
+                    <div class="field-label">Lingua 2:</div>
+                    <div class="field-value">{{ candidate.language_2 }} ({{ candidate.proficiency_2 or '-' }})</div>
+                </div>
+                {% endif %}
+                {% if candidate.language_3 %}
+                <div class="field-row">
+                    <div class="field-label">Lingua 3:</div>
+                    <div class="field-value">{{ candidate.language_3 }} ({{ candidate.proficiency_3 or '-' }})</div>
+                </div>
+                {% endif %}
+            {% else %}
+                <p>Nessuna competenza linguistica specificata</p>
+            {% endif %}
+        </div>
+
+        <!-- Lavoro -->
+        <div class="section">
+            <div class="section-title">💼 Esperienza Lavorativa</div>
+            <div class="field-row">
+                <div class="field-label">Occupazione:</div>
+                <div class="field-value">{{ candidate.occupation or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Città disponibilità:</div>
+                <div class="field-value">{{ candidate.city_availability or '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Disponibile da:</div>
+                <div class="field-value">{{ candidate.availability_from.strftime('%d/%m/%Y') if candidate.availability_from else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Disponibile fino:</div>
+                <div class="field-value">{{ candidate.availability_till.strftime('%d/%m/%Y') if candidate.availability_till else '-' }}</div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Altre esperienze:</div>
+                <div class="field-value">{{ candidate.other_experience or '-' }}</div>
+            </div>
+        </div>
+
+        <!-- Form Associato -->
+        {% if candidate.form %}
+        <div class="section">
+            <div class="section-title">📝 Form Compilato</div>
+            <div class="field-row">
+                <div class="field-label">Nome form:</div>
+                <div class="field-value">{{ candidate.form.name }}</div>
+            </div>
+            {% if candidate.form.category %}
+            <div class="field-row">
+                <div class="field-label">Categoria:</div>
+                <div class="field-value">{{ candidate.form.category }}</div>
+            </div>
+            {% endif %}
+            {% if candidate.form.subcategory %}
+            <div class="field-row">
+                <div class="field-label">Sottocategoria:</div>
+                <div class="field-value">{{ candidate.form.subcategory }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Punteggi -->
+        {% if candidate.scores %}
+        <div class="section">
+            <div class="section-title">⭐ Valutazioni</div>
+            
+            <div class="scores-summary">
+                <div class="summary-item">Punteggio Totale: {{ "%.1f"|format(candidate.get_total_score()) }}</div>
+                <div class="summary-item">Media: {{ "%.1f"|format(candidate.get_average_score()) }}</div>
+                <div class="summary-item">Valutazioni: {{ candidate.scores|length }}</div>
+            </div>
+
+            <table class="scores-table">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Sottocategoria</th>
+                        <th>Punteggio</th>
+                        <th>Max</th>
+                        <th>%</th>
+                        <th>Peso</th>
+                        <th>Valutatore</th>
+                        <th>Data</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in candidate.scores %}
+                    <tr>
+                        <td>{{ score.category }}</td>
+                        <td>{{ score.subcategory or '-' }}</td>
+                        <td>{{ score.score }}</td>
+                        <td>{{ score.max_score }}</td>
+                        <td>{{ "%.1f"|format(score.percentage) }}%</td>
+                        <td>{{ score.weight }}</td>
+                        <td>{{ score.evaluator.username if score.evaluator else '-' }}</td>
+                        <td>{{ score.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ score.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="section">
+            <div class="section-title">⭐ Valutazioni</div>
+            <p>Nessuna valutazione presente per questo candidato.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Auto-apri il dialog di stampa dopo un breve delay
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.print();
+            }, 1000);
+        });
+        
+        // Gestisci tasti di scelta rapida
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>

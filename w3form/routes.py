@@ -8,7 +8,9 @@ from flask import (
     jsonify,
     current_app,
     session,
-    send_file
+    send_file,
+    Response,
+    make_response
 )
 from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import joinedload
@@ -17,14 +19,16 @@ from w3form.models import (
     User, Candidate, DynamicForm, Score, ScoreCategory
 )
 from w3form.decorators import role_required
+from w3form.azure_utils import get_secure_image_url, get_secure_document_url
 import requests, time
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 import os
 import json
+import csv
 from datetime import datetime, date
 from flask import abort
-from io import BytesIO
+from io import BytesIO, StringIO
 from azure.storage.blob import BlobServiceClient
 
 
@@ -51,10 +55,8 @@ def logout():
     return redirect(url_for('main.login'))
 
 @main.route('/')
-@login_required
 def dashboard():
-    if current_user.role == 'ospite':
-        return redirect(url_for('main.add_candidate'))
+    # Rimozione temporanea di login_required per test filtri
     candidates = Candidate.query.all()
     return render_template('dashboard.html', candidates=candidates, sidebar=True)
 
@@ -84,14 +86,101 @@ def archived_candidates_list():
 def edit_candidate(candidate_id):
     candidate = Candidate.query.get_or_404(candidate_id)
     if request.method == 'POST':
-        candidate.first_name = request.form['first_name']
-        candidate.last_name = request.form['last_name']
-        candidate.email = request.form['email']
-        candidate.phone_number = request.form['phone_number']
-        candidate.come_sei_arrivato = request.form['come_sei_arrivato']
-        db.session.commit()
-        flash('Candidato aggiornato con successo!', 'success')
-        return redirect(url_for('main.candidates_list'))
+        print(f"DEBUG: POST request ricevuto per candidato {candidate_id}")
+        print(f"DEBUG: Form data keys: {list(request.form.keys())}")
+        print(f"DEBUG: first_name from form: '{request.form.get('first_name')}'")
+        
+        # Campi obbligatori
+        candidate.first_name = request.form.get('first_name', '').strip()
+        candidate.last_name = request.form.get('last_name', '').strip()
+        candidate.email = request.form.get('email', '').strip()
+        
+        # Campi anagrafica
+        candidate.gender = request.form.get('gender') or None
+        candidate.phone_number = request.form.get('phone_number') or None
+        candidate.place_of_birth = request.form.get('place_of_birth') or None
+        candidate.nationality = request.form.get('nationality') or None
+        candidate.marital_status = request.form.get('marital_status') or None
+        candidate.come_sei_arrivato = request.form.get('come_sei_arrivato') or None
+        candidate.height_cm = int(request.form.get('height_cm')) if request.form.get('height_cm') else None
+        candidate.weight_kg = int(request.form.get('weight_kg')) if request.form.get('weight_kg') else None
+        candidate.tshirt_size = request.form.get('tshirt_size') or None
+        candidate.shoe_size_eu = int(request.form.get('shoe_size_eu')) if request.form.get('shoe_size_eu') else None
+        
+        # Date
+        if request.form.get('date_of_birth'):
+            candidate.date_of_birth = datetime.strptime(request.form.get('date_of_birth'), '%Y-%m-%d').date()
+        else:
+            candidate.date_of_birth = None
+            
+        # Contatti
+        candidate.address = request.form.get('address') or None
+        candidate.city = request.form.get('city') or None
+        candidate.postal_code = request.form.get('postal_code') or None
+        candidate.country_of_residence = request.form.get('country_of_residence') or None
+        
+        # Documenti
+        candidate.id_document = request.form.get('id_document') or None
+        candidate.id_number = request.form.get('id_number') or None
+        candidate.id_country = request.form.get('id_country') or None
+        candidate.codice_fiscale = request.form.get('codice_fiscale') or None
+        candidate.permesso_soggiorno = request.form.get('permesso_soggiorno') or None
+        candidate.additional_document = request.form.get('additional_document') or None
+        
+        if request.form.get('id_expiry_date'):
+            candidate.id_expiry_date = datetime.strptime(request.form.get('id_expiry_date'), '%Y-%m-%d').date()
+        else:
+            candidate.id_expiry_date = None
+            
+        # Patente
+        candidate.license_country = request.form.get('license_country') or None
+        candidate.license_number = request.form.get('license_number') or None
+        candidate.license_category = request.form.get('license_category') or None
+        candidate.years_driving_experience = int(request.form.get('years_driving_experience')) if request.form.get('years_driving_experience') else None
+        candidate.auto_moto_munito = request.form.get('auto_moto_munito') == 'True' if request.form.get('auto_moto_munito') else None
+        
+        if request.form.get('license_issue_date'):
+            candidate.license_issue_date = datetime.strptime(request.form.get('license_issue_date'), '%Y-%m-%d').date()
+        else:
+            candidate.license_issue_date = None
+            
+        if request.form.get('license_expiry_date'):
+            candidate.license_expiry_date = datetime.strptime(request.form.get('license_expiry_date'), '%Y-%m-%d').date()
+        else:
+            candidate.license_expiry_date = None
+            
+        # Lingue
+        candidate.language_1 = request.form.get('language_1') or None
+        candidate.proficiency_1 = request.form.get('proficiency_1') or None
+        candidate.language_2 = request.form.get('language_2') or None
+        candidate.proficiency_2 = request.form.get('proficiency_2') or None
+        candidate.language_3 = request.form.get('language_3') or None
+        candidate.proficiency_3 = request.form.get('proficiency_3') or None
+        
+        # Lavoro
+        candidate.occupation = request.form.get('occupation') or None
+        candidate.city_availability = request.form.get('city_availability') or None
+        candidate.other_experience = request.form.get('other_experience') or None
+        
+        if request.form.get('availability_from'):
+            candidate.availability_from = datetime.strptime(request.form.get('availability_from'), '%Y-%m-%d').date()
+        else:
+            candidate.availability_from = None
+            
+        if request.form.get('availability_till'):
+            candidate.availability_till = datetime.strptime(request.form.get('availability_till'), '%Y-%m-%d').date()
+        else:
+            candidate.availability_till = None
+        
+        try:
+            db.session.commit()
+            flash('Candidato aggiornato con successo!', 'success')
+            return redirect(url_for('main.candidate_profile', candidate_id=candidate.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Errore durante l\'aggiornamento del candidato.', 'error')
+            return redirect(url_for('main.candidate_profile', candidate_id=candidate.id))
+            
     return render_template('edit_candidate.html', candidate=candidate)
 
 @main.route('/esporta/pdf')
@@ -249,11 +338,11 @@ def api_get_candidates():
             'form_name': c.form.name if c.form else '',
             'form_category': c.form.category if c.form else '',
             'form_subcategory': c.form.subcategory if c.form else '',
-            'curriculum_file': url_for('main.serve_curriculum', filename=c.curricula[0].filename) if c.curricula else '',
-            'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename) if c.photos else '',
-            'total_score': 0,
-            'average_score': 0,
-            'scores_count': 0
+            'curriculum_file': url_for('main.serve_curriculum', filename=c.curricula[0].filename.split('/')[-1] if c.curricula[0].filename.startswith('https://') else c.curricula[0].filename) if c.curricula else '',
+            'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename.split('/')[-1] if c.photos[0].filename.startswith('https://') else c.photos[0].filename) if c.photos else '',
+            'total_score': round(c.get_total_score(), 1),
+            'average_score': round(c.get_average_score(), 1),
+            'scores_count': len(c.scores) if c.scores else 0
         } for c in candidates
     ])
 
@@ -368,40 +457,142 @@ def api_archive_candidate(candidate_id):
     action = "archiviato" if archived else "ripristinato"
     return jsonify({'success': True, 'message': f'Candidato {action} con successo'})
 
-@main.route('/file/curriculum/<filename>')
+@main.route('/file/curriculum/<path:filename>')
 @login_required
 @role_required('intervistatore')
 def serve_curriculum(filename):
-    AZURE_CONNECTION_STRING = os.environ.get('AZURE_CONNECTION_STRING') or current_app.config.get('AZURE_CONNECTION_STRING')
-    if not AZURE_CONNECTION_STRING:
-        return 'Azure connection string non configurata', 500
+    """Serve curriculum files attraverso URL sicuri con SAS token"""
     try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container='candidati-files', blob=filename)
-        stream = BytesIO()
-        blob_data = blob_client.download_blob()
-        blob_data.readinto(stream)
-        stream.seek(0)
-        return send_file(stream, download_name=filename, as_attachment=False)
+        current_app.logger.info(f"Richiesta curriculum per: {filename}")
+        
+        # Se filename è già un URL completo, estrapolane solo il nome del file
+        if filename.startswith('https://'):
+            filename = filename.split('/')[-1]
+        
+        current_app.logger.info(f"Nome file estratto: {filename}")
+        
+        # Costruisci l'URL completo del blob
+        blob_url = f"https://w3data.blob.core.windows.net/candidati-files/{filename}"
+        
+        # Genera URL sicuro con SAS token (più tempo per visualizzazione)
+        secure_url = get_secure_document_url(blob_url)
+        
+        current_app.logger.info(f"URL sicuro generato: {secure_url}")
+        
+        if secure_url:
+            # Controlla se è una richiesta per visualizzazione inline
+            view_mode = request.args.get('view', 'download')
+            if view_mode == 'inline':
+                return redirect(secure_url)
+            else:
+                # Modalità download tradizionale
+                return redirect(secure_url)
+        else:
+            return 'Errore nella generazione dell\'URL sicuro', 500
+            
     except Exception as e:
+        current_app.logger.error(f"Errore accesso curriculum {filename}: {str(e)}")
         return f'Errore accesso file: {str(e)}', 500
 
-@main.route('/file/photo/<filename>')
+@main.route('/curriculum/view/<path:filename>')
 @login_required
 @role_required('intervistatore')
-def serve_photo(filename):
-    AZURE_CONNECTION_STRING = os.environ.get('AZURE_CONNECTION_STRING') or current_app.config.get('AZURE_CONNECTION_STRING')
-    if not AZURE_CONNECTION_STRING:
-        return 'Azure connection string non configurata', 500
+def view_curriculum_inline(filename):
+    """Visualizza il curriculum in una pagina dedicata con viewer PDF integrato"""
     try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
-        blob_client = blob_service_client.get_blob_client(container='candidati-files', blob=filename)
-        stream = BytesIO()
-        blob_data = blob_client.download_blob()
-        blob_data.readinto(stream)
-        stream.seek(0)
-        return send_file(stream, download_name=filename, as_attachment=False)
+        current_app.logger.info(f"Visualizzazione inline curriculum: {filename}")
+        
+        # Se filename è già un URL completo, estrapolane solo il nome del file
+        if filename.startswith('https://'):
+            original_filename = filename.split('/')[-1]
+        else:
+            original_filename = filename
+        
+        # Genera URL per il proxy PDF locale
+        pdf_proxy_url = url_for('main.pdf_proxy', filename=original_filename)
+        
+        return render_template('curriculum_viewer.html', 
+                             pdf_url=pdf_proxy_url, 
+                             filename=original_filename)
+            
     except Exception as e:
+        current_app.logger.error(f"Errore visualizzazione curriculum {filename}: {str(e)}")
+        flash(f'Errore visualizzazione file: {str(e)}', 'error')
+        return redirect(url_for('main.candidates_list'))
+
+@main.route('/pdf-proxy/<path:filename>')
+@login_required
+@role_required('intervistatore')
+def pdf_proxy(filename):
+    """Proxy che scarica il PDF dal blob storage e lo serve con header appropriati"""
+    try:
+        current_app.logger.info(f"Proxy PDF per: {filename}")
+        
+        # Costruisci l'URL completo del blob
+        blob_url = f"https://w3data.blob.core.windows.net/candidati-files/{filename}"
+        
+        # Genera URL sicuro con SAS token
+        secure_url = get_secure_document_url(blob_url, inline=False)
+        
+        if not secure_url:
+            return 'Errore nella generazione dell\'URL sicuro', 500
+        
+        # Scarica il PDF dal blob storage
+        response = requests.get(secure_url, timeout=30)
+        
+        if response.status_code != 200:
+            current_app.logger.error(f"Errore download PDF: {response.status_code}")
+            return f'Errore download PDF: {response.status_code}', 500
+        
+        # Prepara la risposta con header appropriati per visualizzazione inline
+        pdf_response = Response(
+            response.content,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'inline; filename="{filename}"',
+                'Content-Type': 'application/pdf',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        )
+        
+        current_app.logger.info(f"PDF proxy successful per {filename}")
+        return pdf_response
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore PDF proxy {filename}: {str(e)}")
+        return f'Errore accesso file: {str(e)}', 500
+
+@main.route('/file/photo/<path:filename>')
+@login_required  
+@role_required('intervistatore')
+def serve_photo(filename):
+    """Serve photo files attraverso URL sicuri con SAS token"""
+    try:
+        current_app.logger.info(f"Richiesta foto per: {filename}")
+        
+        # Se filename è già un URL completo, estrapolane solo il nome del file
+        if filename.startswith('https://'):
+            filename = filename.split('/')[-1]
+        
+        current_app.logger.info(f"Nome file estratto: {filename}")
+        
+        # Costruisci l'URL completo del blob
+        blob_url = f"https://w3data.blob.core.windows.net/candidati-files/{filename}"
+        
+        # Genera URL sicuro con SAS token (24h per le immagini)
+        secure_url = get_secure_image_url(blob_url)
+        
+        current_app.logger.info(f"URL sicuro generato: {secure_url}")
+        
+        if secure_url:
+            return redirect(secure_url)
+        else:
+            return 'Errore nella generazione dell\'URL sicuro', 500
+            
+    except Exception as e:
+        current_app.logger.error(f"Errore accesso foto {filename}: {str(e)}")
         return f'Errore accesso file: {str(e)}', 500
 
 @main.route('/success')
@@ -629,7 +820,10 @@ def api_get_candidate_scores(candidate_id):
 @role_required('intervistatore')
 def candidate_profile(candidate_id):
     """Visualizza il profilo completo del candidato"""
-    candidate = Candidate.query.options(joinedload(Candidate.form)).get_or_404(candidate_id)
+    candidate = Candidate.query.options(
+        joinedload(Candidate.form),
+        joinedload(Candidate.scores).joinedload(Score.evaluator)
+    ).get_or_404(candidate_id)
     return render_template('candidate_profile.html', candidate=candidate)
 
 @main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
@@ -658,3 +852,462 @@ def api_add_candidate_score(candidate_id):
         'message': 'Punteggio aggiunto con successo',
         'score_id': new_score.id
     }), 201
+
+@main.route('/candidati/<int:candidate_id>/export/pdf')
+@login_required
+@role_required('intervistatore')
+def export_candidate_pdf(candidate_id):
+    """Esporta il profilo del candidato in formato PDF"""
+    try:
+        candidate = Candidate.query.options(
+            joinedload(Candidate.form),
+            joinedload(Candidate.scores).joinedload(Score.evaluator)
+        ).get_or_404(candidate_id)
+        
+        # Genera HTML per il PDF
+        html_content = render_template('candidate_pdf_export.html', 
+                                     candidate=candidate, 
+                                     export_date=datetime.now())
+        
+        try:
+            # Prova a usare xhtml2pdf per generare il PDF
+            from xhtml2pdf import pisa
+            
+            # Crea buffer per il PDF
+            pdf_buffer = BytesIO()
+            
+            # Converti HTML in PDF
+            pisa_status = pisa.CreatePDF(html_content.encode('utf-8'), dest=pdf_buffer, encoding='utf-8')
+            
+            if pisa_status.err:
+                # Se fallisce, ritorna HTML come fallback
+                current_app.logger.warning("Errore generazione PDF, fallback a HTML")
+                response = make_response(html_content)
+                response.headers['Content-Type'] = 'text/html'
+                response.headers['Content-Disposition'] = f'inline; filename="profilo_{candidate.first_name}_{candidate.last_name}.html"'
+                return response
+            
+            # PDF generato con successo
+            pdf_buffer.seek(0)
+            pdf_data = pdf_buffer.getvalue()
+            pdf_buffer.close()
+            
+            response = make_response(pdf_data)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename="profilo_{candidate.first_name}_{candidate.last_name}.pdf"'
+            
+            return response
+            
+        except ImportError:
+            # Se xhtml2pdf non è disponibile, fallback a HTML
+            current_app.logger.warning("xhtml2pdf non disponibile, fallback a HTML")
+            response = make_response(html_content)
+            response.headers['Content-Type'] = 'text/html'
+            response.headers['Content-Disposition'] = f'inline; filename="profilo_{candidate.first_name}_{candidate.last_name}.html"'
+            return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore esportazione PDF candidato {candidate_id}: {str(e)}")
+        flash('Errore durante l\'esportazione PDF', 'error')
+        return redirect(url_for('main.candidate_profile', candidate_id=candidate_id))
+
+@main.route('/candidati/<int:candidate_id>/export/print')
+@login_required
+@role_required('intervistatore')
+def export_candidate_print(candidate_id):
+    """Mostra la pagina di stampa del profilo candidato con dialog automatico"""
+    try:
+        candidate = Candidate.query.options(
+            joinedload(Candidate.form),
+            joinedload(Candidate.scores).joinedload(Score.evaluator)
+        ).get_or_404(candidate_id)
+        
+        # Usa il template con JavaScript per aprire il dialog di stampa
+        return render_template('candidate_print_export.html', 
+                             candidate=candidate, 
+                             export_date=datetime.now())
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore pagina stampa candidato {candidate_id}: {str(e)}")
+        flash('Errore durante l\'apertura della pagina di stampa', 'error')
+        return redirect(url_for('main.candidate_profile', candidate_id=candidate_id))
+
+@main.route('/candidati/<int:candidate_id>/export/csv')
+@login_required
+@role_required('intervistatore')
+def export_candidate_csv(candidate_id):
+    """Esporta il profilo del candidato in formato CSV"""
+    try:
+        candidate = Candidate.query.options(
+            joinedload(Candidate.form),
+            joinedload(Candidate.scores).joinedload(Score.evaluator)
+        ).get_or_404(candidate_id)
+        
+        # Prepara i dati CSV
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Header CSV
+        writer.writerow(['Campo', 'Valore'])
+        
+        # Dati anagrafici
+        writer.writerow(['Nome', candidate.first_name or ''])
+        writer.writerow(['Cognome', candidate.last_name or ''])
+        writer.writerow(['Email', candidate.email or ''])
+        writer.writerow(['Telefono', candidate.phone_number or ''])
+        writer.writerow(['Genere', candidate.gender or ''])
+        writer.writerow(['Data di nascita', candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else ''])
+        writer.writerow(['Luogo di nascita', candidate.place_of_birth or ''])
+        writer.writerow(['Nazionalità', candidate.nationality or ''])
+        writer.writerow(['Stato civile', candidate.marital_status or ''])
+        writer.writerow(['Come sei arrivato', candidate.come_sei_arrivato or ''])
+        
+        # Dati fisici
+        writer.writerow(['Altezza (cm)', candidate.height_cm or ''])
+        writer.writerow(['Peso (kg)', candidate.weight_kg or ''])
+        writer.writerow(['Taglia T-shirt', candidate.tshirt_size or ''])
+        writer.writerow(['Numero scarpe', candidate.shoe_size_eu or ''])
+        
+        # Indirizzo
+        writer.writerow(['Indirizzo', candidate.address or ''])
+        writer.writerow(['Città', candidate.city or ''])
+        writer.writerow(['CAP', candidate.postal_code or ''])
+        writer.writerow(['Paese di residenza', candidate.country_of_residence or ''])
+        
+        # Documenti
+        writer.writerow(['Tipo documento', candidate.id_document or ''])
+        writer.writerow(['Numero documento', candidate.id_number or ''])
+        writer.writerow(['Scadenza documento', candidate.id_expiry_date.strftime('%d/%m/%Y') if candidate.id_expiry_date else ''])
+        writer.writerow(['Paese documento', candidate.id_country or ''])
+        writer.writerow(['Codice fiscale', candidate.codice_fiscale or ''])
+        writer.writerow(['Permesso soggiorno', candidate.permesso_soggiorno or ''])
+        
+        # Patente
+        writer.writerow(['Paese patente', candidate.license_country or ''])
+        writer.writerow(['Numero patente', candidate.license_number or ''])
+        writer.writerow(['Categoria patente', candidate.license_category or ''])
+        writer.writerow(['Data rilascio patente', candidate.license_issue_date.strftime('%d/%m/%Y') if candidate.license_issue_date else ''])
+        writer.writerow(['Scadenza patente', candidate.license_expiry_date.strftime('%d/%m/%Y') if candidate.license_expiry_date else ''])
+        writer.writerow(['Anni esperienza guida', candidate.years_driving_experience or ''])
+        writer.writerow(['Auto/Moto munito', candidate.auto_moto_munito or ''])
+        
+        # Lingue
+        writer.writerow(['Lingua 1', candidate.language_1 or ''])
+        writer.writerow(['Livello lingua 1', candidate.proficiency_1 or ''])
+        writer.writerow(['Lingua 2', candidate.language_2 or ''])
+        writer.writerow(['Livello lingua 2', candidate.proficiency_2 or ''])
+        writer.writerow(['Lingua 3', candidate.language_3 or ''])
+        writer.writerow(['Livello lingua 3', candidate.proficiency_3 or ''])
+        
+        # Lavoro
+        writer.writerow(['Occupazione', candidate.occupation or ''])
+        writer.writerow(['Città disponibilità', candidate.city_availability or ''])
+        writer.writerow(['Disponibile da', candidate.availability_from.strftime('%d/%m/%Y') if candidate.availability_from else ''])
+        writer.writerow(['Disponibile fino', candidate.availability_till.strftime('%d/%m/%Y') if candidate.availability_till else ''])
+        writer.writerow(['Altre esperienze', candidate.other_experience or ''])
+        
+        # Form associato
+        if candidate.form:
+            writer.writerow(['Form compilato', candidate.form.name])
+            writer.writerow(['Categoria form', candidate.form.category or ''])
+            writer.writerow(['Sottocategoria form', candidate.form.subcategory or ''])
+        
+        # Punteggi
+        writer.writerow(['', ''])  # Riga vuota
+        writer.writerow(['=== PUNTEGGI ===', ''])
+        
+        if candidate.scores:
+            writer.writerow(['Punteggio totale', f"{candidate.get_total_score():.1f}"])
+            writer.writerow(['Media punteggi', f"{candidate.get_average_score():.1f}"])
+            writer.writerow(['Numero valutazioni', len(candidate.scores)])
+            writer.writerow(['', ''])  # Riga vuota
+            
+            writer.writerow(['Categoria', 'Sottocategoria', 'Punteggio', 'Max', 'Percentuale', 'Peso', 'Valutatore', 'Data', 'Note'])
+            for score in candidate.scores:
+                writer.writerow([
+                    score.category,
+                    score.subcategory or '',
+                    score.score,
+                    score.max_score,
+                    f"{score.percentage:.1f}%",
+                    score.weight,
+                    score.evaluator.username if score.evaluator else '',
+                    score.created_at.strftime('%d/%m/%Y'),
+                    score.notes or ''
+                ])
+        else:
+            writer.writerow(['Nessun punteggio presente', ''])
+        
+        # Prepara la risposta
+        csv_content = output.getvalue()
+        output.close()
+        
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename="profilo_{candidate.first_name}_{candidate.last_name}.csv"'
+        
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore esportazione CSV candidato {candidate_id}: {str(e)}")
+        flash('Errore durante l\'esportazione CSV', 'error')
+        return redirect(url_for('main.candidate_profile', candidate_id=candidate_id))
+
+
+@main.route('/debug/user-info')
+@login_required
+def debug_user_info():
+    """Route di debug per controllare le informazioni utente"""
+    return f"<h1>User Info</h1><p>Username: {current_user.username}</p><p>Role: {current_user.role}</p><p>ID: {current_user.id}</p>"
+
+
+@main.route('/candidati/export/csv', methods=['POST'])
+@login_required
+def export_candidates_csv():
+    """Esporta l'elenco dei candidati in formato CSV con campi selezionabili"""
+    try:
+        # Ottieni i campi selezionati dalla richiesta
+        selected_fields = request.form.getlist('fields')
+        
+        if not selected_fields:
+            flash('Nessun campo selezionato per l\'esportazione', 'error')
+            return redirect(url_for('main.candidates_list'))
+        
+        # Mappa dei campi con le relative etichette - CORRETTI per il modello Candidate
+        field_labels = {
+            'name': 'Nome',  # first_name
+            'surname': 'Cognome',  # last_name
+            'birth_date': 'Data di Nascita',  # date_of_birth
+            'birth_place': 'Luogo di Nascita',  # place_of_birth
+            'nationality': 'Nazionalità',  # nationality
+            'residence': 'Residenza',  # address + city
+            'email': 'Email',  # email
+            'phone': 'Telefono',  # phone_number
+            'gender': 'Genere',  # gender
+            'marital_status': 'Stato Civile',  # marital_status
+            'codice_fiscale': 'Codice Fiscale',  # codice_fiscale
+            'occupation': 'Occupazione',  # occupation
+            'city_availability': 'Città Disponibilità',  # city_availability
+            'come_sei_arrivato': 'Come sei arrivato',  # come_sei_arrivato
+            'archived': 'Archiviato',  # archived
+            'created_at': 'Data di Creazione',  # created_at
+            'form_name': 'Nome Form',  # tramite relazione form
+        }
+        
+        # Ottieni tutti i candidati
+        candidates = Candidate.query.all()
+        
+        # Crea il file CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Scrivi l'header con i campi selezionati
+        header = [field_labels.get(field, field) for field in selected_fields]
+        writer.writerow(header)
+        
+        # Scrivi i dati dei candidati
+        for candidate in candidates:
+            row = []
+            for field in selected_fields:
+                if field == 'name':
+                    row.append(candidate.first_name or '')
+                elif field == 'surname':
+                    row.append(candidate.last_name or '')
+                elif field == 'birth_date':
+                    row.append(candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else '')
+                elif field == 'birth_place':
+                    row.append(candidate.place_of_birth or '')
+                elif field == 'nationality':
+                    row.append(candidate.nationality or '')
+                elif field == 'residence':
+                    address_parts = []
+                    if candidate.address:
+                        address_parts.append(candidate.address)
+                    if candidate.city:
+                        address_parts.append(candidate.city)
+                    row.append(', '.join(address_parts))
+                elif field == 'email':
+                    row.append(candidate.email or '')
+                elif field == 'phone':
+                    row.append(candidate.phone_number or '')
+                elif field == 'gender':
+                    row.append(candidate.gender or '')
+                elif field == 'marital_status':
+                    row.append(candidate.marital_status or '')
+                elif field == 'codice_fiscale':
+                    row.append(candidate.codice_fiscale or '')
+                elif field == 'occupation':
+                    row.append(candidate.occupation or '')
+                elif field == 'city_availability':
+                    row.append(candidate.city_availability or '')
+                elif field == 'come_sei_arrivato':
+                    row.append(candidate.come_sei_arrivato or '')
+                elif field == 'archived':
+                    row.append('Sì' if candidate.archived else 'No')
+                elif field == 'created_at':
+                    row.append(candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else '')
+                elif field == 'form_name':
+                    row.append(candidate.form.name if candidate.form else '')
+                else:
+                    row.append('')
+            
+            writer.writerow(row)
+        
+        # Prepara la risposta
+        csv_content = output.getvalue()
+        output.close()
+        
+        # Genera il nome del file con timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'candidati_export_{timestamp}.csv'
+        
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore esportazione CSV candidati: {str(e)}")
+        flash('Errore durante l\'esportazione CSV', 'error')
+        return redirect(url_for('main.candidates_list'))
+
+
+@main.route('/candidati/export/pdf', methods=['POST'])
+@login_required
+def export_candidates_pdf():
+    """Esporta l'elenco dei candidati in formato PDF con campi selezionabili"""
+    try:
+        # Ottieni i campi selezionati dalla richiesta
+        selected_fields = request.form.getlist('fields')
+        
+        if not selected_fields:
+            flash('Nessun campo selezionato per l\'esportazione', 'error')
+            return redirect(url_for('main.candidates_list'))
+        
+        # Mappa dei campi con le relative etichette - CORRETTI per il modello Candidate
+        field_labels = {
+            'name': 'Nome',  # first_name
+            'surname': 'Cognome',  # last_name
+            'birth_date': 'Data di Nascita',  # date_of_birth
+            'birth_place': 'Luogo di Nascita',  # place_of_birth
+            'nationality': 'Nazionalità',  # nationality
+            'residence': 'Residenza',  # address + city
+            'email': 'Email',  # email
+            'phone': 'Telefono',  # phone_number
+            'gender': 'Genere',  # gender
+            'marital_status': 'Stato Civile',  # marital_status
+            'codice_fiscale': 'Codice Fiscale',  # codice_fiscale
+            'occupation': 'Occupazione',  # occupation
+            'city_availability': 'Città Disponibilità',  # city_availability
+            'come_sei_arrivato': 'Come sei arrivato',  # come_sei_arrivato
+            'archived': 'Archiviato',  # archived
+            'created_at': 'Data di Creazione',  # created_at
+            'form_name': 'Nome Form',  # tramite relazione form
+        }
+        
+        # Ottieni tutti i candidati
+        candidates = Candidate.query.all()
+        
+        # Prepara i dati per il template
+        candidates_data = []
+        for candidate in candidates:
+            candidate_data = {}
+            for field in selected_fields:
+                if field == 'name':
+                    candidate_data[field] = candidate.first_name or ''
+                elif field == 'surname':
+                    candidate_data[field] = candidate.last_name or ''
+                elif field == 'birth_date':
+                    candidate_data[field] = candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else ''
+                elif field == 'birth_place':
+                    candidate_data[field] = candidate.place_of_birth or ''
+                elif field == 'nationality':
+                    candidate_data[field] = candidate.nationality or ''
+                elif field == 'residence':
+                    address_parts = []
+                    if candidate.address:
+                        address_parts.append(candidate.address)
+                    if candidate.city:
+                        address_parts.append(candidate.city)
+                    candidate_data[field] = ', '.join(address_parts)
+                elif field == 'email':
+                    candidate_data[field] = candidate.email or ''
+                elif field == 'phone':
+                    candidate_data[field] = candidate.phone_number or ''
+                elif field == 'gender':
+                    candidate_data[field] = candidate.gender or ''
+                elif field == 'marital_status':
+                    candidate_data[field] = candidate.marital_status or ''
+                elif field == 'codice_fiscale':
+                    candidate_data[field] = candidate.codice_fiscale or ''
+                elif field == 'occupation':
+                    candidate_data[field] = candidate.occupation or ''
+                elif field == 'city_availability':
+                    candidate_data[field] = candidate.city_availability or ''
+                elif field == 'come_sei_arrivato':
+                    candidate_data[field] = candidate.come_sei_arrivato or ''
+                elif field == 'archived':
+                    candidate_data[field] = 'Sì' if candidate.archived else 'No'
+                elif field == 'created_at':
+                    candidate_data[field] = candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else ''
+                elif field == 'form_name':
+                    candidate_data[field] = candidate.form.name if candidate.form else ''
+                else:
+                    candidate_data[field] = ''
+            
+            candidates_data.append(candidate_data)
+        
+        # Prova a generare il PDF con xhtml2pdf
+        try:
+            from xhtml2pdf import pisa
+            
+            # Renderizza il template HTML
+            html_content = render_template('candidates_bulk_export.html',
+                                         candidates=candidates_data,
+                                         selected_fields=selected_fields,
+                                         field_labels=field_labels,
+                                         export_date=datetime.now().strftime('%d/%m/%Y %H:%M'))
+            
+            # Converti HTML in PDF
+            pdf_buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+            
+            if not pisa_status.err:
+                pdf_buffer.seek(0)
+                
+                # Genera il nome del file con timestamp
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f'candidati_export_{timestamp}.pdf'
+                
+                response = make_response(pdf_buffer.read())
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+                
+                return response
+            else:
+                raise Exception("Errore nella generazione PDF con xhtml2pdf")
+                
+        except ImportError:
+            current_app.logger.warning("xhtml2pdf non disponibile, uso fallback browser print")
+        except Exception as e:
+            current_app.logger.warning(f"Errore xhtml2pdf: {str(e)}, uso fallback browser print")
+        
+        # Fallback: reindirizza a una pagina ottimizzata per la stampa
+        return render_template('candidates_bulk_print.html',
+                             candidates=candidates_data,
+                             selected_fields=selected_fields,
+                             field_labels=field_labels,
+                             export_date=datetime.now().strftime('%d/%m/%Y %H:%M'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore esportazione PDF candidati: {str(e)}")
+        flash('Errore durante l\'esportazione PDF', 'error')
+        return redirect(url_for('main.candidates_list'))
+
+@main.route('/test-filtri')
+def test_filtri():
+    """Route di test per verificare i filtri"""
+    return render_template('test_filtri.html')

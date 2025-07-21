@@ -4,13 +4,35 @@
 <div class="container-fluid my-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{% if archived %}Candidati Archiviati{% else %}Elenco Candidati{% endif %}</h2>
-    <div class="btn-group" role="group">
-      <a href="/candidati" class="btn {% if not archived %}btn-primary{% else %}btn-outline-primary{% endif %}">
-        <i class="bi bi-people"></i> Candidati Attivi
-      </a>
-      <a href="/candidati/archiviati" class="btn {% if archived %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-        <i class="bi bi-archive"></i> Candidati Archiviati
-      </a>
+    <div class="d-flex gap-2">
+      <!-- Pulsanti di esportazione -->
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-download"></i> Esporta Lista
+        </button>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="#" onclick="openExportModal('csv'); return false;">
+              <i class="bi bi-file-earmark-spreadsheet text-success"></i> Esporta CSV
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#" onclick="openExportModal('pdf'); return false;">
+              <i class="bi bi-file-earmark-pdf text-danger"></i> Esporta PDF
+            </a>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Pulsanti navigazione -->
+      <div class="btn-group" role="group">
+        <a href="/candidati" class="btn {% if not archived %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          <i class="bi bi-people"></i> <span class="d-none d-sm-inline">Candidati Attivi</span>
+        </a>
+        <a href="/candidati/archiviati" class="btn {% if archived %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+          <i class="bi bi-archive"></i> <span class="d-none d-sm-inline">Candidati Archiviati</span>
+        </a>
+      </div>
     </div>
   </div>
   <div class="mb-3">
@@ -73,12 +95,23 @@
       <!-- Terza riga -->
       <div class="row g-2">
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <select class="form-select filter-select" id="filter_score_range">
+            <option value="">Tutti i Punteggi</option>
+            <option value="0-20">0-20 (Molto Basso)</option>
+            <option value="20-40">20-40 (Basso)</option>
+            <option value="40-60">40-60 (Medio)</option>
+            <option value="60-80">60-80 (Buono)</option>
+            <option value="80-100">80-100 (Eccellente)</option>
+            <option value="no-score">Nessun Punteggio</option>
+          </select>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <button class="btn btn-outline-secondary w-100" id="resetFilters">
             <i class="bi bi-arrow-clockwise"></i> Reset filtri
           </button>
         </div>
         <!-- Spazio per eventuali filtri futuri -->
-        <div class="col-xl-10 col-lg-9 col-md-8 col-sm-6">
+        <div class="col-xl-8 col-lg-6 col-md-4 col-sm-12">
           <small class="text-muted">Usa i filtri per restringere la ricerca dei candidati</small>
         </div>
       </div>
@@ -137,7 +170,8 @@
             ('proficiency_3', 'Livello 3'),
             ('form_name', 'Form'),
             ('form_category', 'Categoria Form'),
-            ('form_subcategory', 'Sottocategoria Form')
+            ('form_subcategory', 'Sottocategoria Form'),
+            ('total_score', 'Punteggio')
           ] %}
           {% for key, label in columns %}
           <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -152,9 +186,6 @@
           </th>
           <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Foto</span>
-          </th>
-          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Punteggio</span>
           </th>
           <th>Azioni</th>
         </tr>
@@ -558,19 +589,28 @@ function renderTable(data) {
         ${c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>'}
       </td>
       <td>
-        ${c.curriculum_file ? `<a href="${c.curriculum_file}" target="_blank" class="btn btn-outline-primary btn-sm"><i class='bi bi-file-earmark-pdf'></i> Apri</a>` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
         ${(c.scores_count && c.scores_count > 0) ? 
           `<div class="text-center">
-            <span class="badge bg-${c.total_score >= 8 ? 'success' : c.total_score >= 6 ? 'warning' : 'danger'}">${c.total_score ? c.total_score.toFixed(1) : '0.0'}</span>
+            <span class="badge bg-${(c.total_score || 0) >= 80 ? 'success' : (c.total_score || 0) >= 60 ? 'warning' : (c.total_score || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
             <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
           </div>` : 
           '<span class="text-muted">Non valutato</span>'
         }
+      </td>
+      <td>
+        ${c.curriculum_file ? `
+          <div class="btn-group btn-group-sm" role="group">
+            <a href="/curriculum/view/${c.curriculum_file.split('/').pop()}" class="btn btn-outline-info" title="Visualizza PDF">
+              <i class='bi bi-eye'></i>
+            </a>
+            <a href="${c.curriculum_file}" download class="btn btn-outline-success" title="Scarica PDF">
+              <i class='bi bi-download'></i>
+            </a>
+          </div>
+        ` : '<span class="text-muted">-</span>'}
+      </td>
+      <td>
+        ${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}
       </td>
       <td>
         <div class="btn-group" role="group">
@@ -586,6 +626,17 @@ function renderTable(data) {
 function applyFiltersAndSort() {
   let filtered = allCandidates;
   
+  console.log('Tutti i candidati:', allCandidates.length);
+  if(allCandidates.length > 0) {
+    console.log('Esempio dati candidato:', {
+      name: allCandidates[0].first_name + ' ' + allCandidates[0].last_name,
+      total_score: allCandidates[0].total_score,
+      scores_count: allCandidates[0].scores_count,
+      typeof_total_score: typeof allCandidates[0].total_score,
+      typeof_scores_count: typeof allCandidates[0].scores_count
+    });
+  }
+  
   // Applica filtri da input di testo
   document.querySelectorAll('.filter-input').forEach(input => {
     const val = input.value.toLowerCase();
@@ -595,11 +646,61 @@ function applyFiltersAndSort() {
     }
   });
   
-  // Applica filtri da dropdown
+  // Applica filtri da dropdown (escluso il filtro punteggio)
   document.querySelectorAll('.filter-select').forEach(select => {
     const val = select.value;
     const key = select.id.replace('filter_','');
-    if(val) {
+    
+    // Gestisci il filtro per punteggio separatamente
+    if(key === 'score_range') {
+      if(val) {
+        console.log('Filtrando per punteggio:', val);
+        console.log('Candidati prima del filtro:', filtered.length);
+        
+        filtered = filtered.filter(c => {
+          const score = parseFloat(c.total_score);
+          const scoresCount = parseInt(c.scores_count) || 0;
+          
+          // Se total_score è NaN, significa che il candidato non ha punteggi
+          const hasValidScore = !isNaN(score) && scoresCount > 0;
+          const scoreValue = hasValidScore ? score : 0;
+          
+          console.log(`Candidato ${c.first_name} ${c.last_name}: score=${scoreValue}, scoresCount=${scoresCount}, hasValidScore=${hasValidScore}`);
+          
+          let result = false;
+          switch(val) {
+            case '0-20':
+              result = hasValidScore && scoreValue >= 0 && scoreValue <= 20;
+              break;
+            case '20-40':
+              result = hasValidScore && scoreValue > 20 && scoreValue <= 40;
+              break;
+            case '40-60':
+              result = hasValidScore && scoreValue > 40 && scoreValue <= 60;
+              break;
+            case '60-80':
+              result = hasValidScore && scoreValue > 60 && scoreValue <= 80;
+              break;
+            case '80-100':
+              result = hasValidScore && scoreValue > 80 && scoreValue <= 100;
+              break;
+            case 'no-score':
+              result = !hasValidScore || scoresCount === 0;
+              break;
+            default:
+              result = true;
+          }
+          
+          if(result) {
+            console.log(`✓ Candidato ${c.first_name} ${c.last_name} passa il filtro`);
+          }
+          
+          return result;
+        });
+        console.log('Candidati dopo filtro punteggio:', filtered.length);
+      }
+    } else if(val) {
+      // Altri filtri dropdown standard
       filtered = filtered.filter(c => (c[key]||'').toString() === val);
     }
   });
@@ -610,10 +711,19 @@ function applyFiltersAndSort() {
       Object.values(c).some(v => (v||'').toString().toLowerCase().includes(q))
     );
   }
+  
   if(currentSort.key) {
     filtered = filtered.slice().sort((a,b) => {
       let va = (a[currentSort.key]||'').toString().toLowerCase();
       let vb = (b[currentSort.key]||'').toString().toLowerCase();
+      
+      // Gestione speciale per l'ordinamento numerico del punteggio
+      if(currentSort.key === 'total_score') {
+        va = parseFloat(a[currentSort.key]) || 0;
+        vb = parseFloat(b[currentSort.key]) || 0;
+        return currentSort.asc ? va - vb : vb - va;
+      }
+      
       if(va < vb) return currentSort.asc ? -1 : 1;
       if(va > vb) return currentSort.asc ? 1 : -1;
       return 0;
@@ -632,6 +742,15 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.filter-select').forEach(select => {
     select.addEventListener('change', applyFiltersAndSort);
   });
+  
+  // Listener specifico per il filtro punteggio
+  const scoreFilter = document.getElementById('filter_score_range');
+  if (scoreFilter) {
+    scoreFilter.addEventListener('change', function() {
+      console.log('Filtro punteggio cambiato a:', this.value);
+      applyFiltersAndSort();
+    });
+  }
 });
 
 document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
@@ -1012,5 +1131,204 @@ async function toggleArchive(candidateId, archived) {
     alert('Errore di rete durante l operazione');
   }
 }
+
+// Funzioni per l'esportazione
+function openExportModal(type) {
+  console.log('Opening export modal for type:', type);
+  const modal = new bootstrap.Modal(document.getElementById('fieldSelectionModal'));
+  modal.show();
+  document.getElementById('exportType').value = type;
+}
+
+function exportCSV() {
+  const modal = new bootstrap.Modal(document.getElementById('fieldSelectionModal'));
+  modal.show();
+  document.getElementById('exportType').value = 'csv';
+}
+
+function exportPDF() {
+  const modal = new bootstrap.Modal(document.getElementById('fieldSelectionModal'));
+  modal.show();
+  document.getElementById('exportType').value = 'pdf';
+}
+
+function processExport() {
+  const exportType = document.getElementById('exportType').value;
+  console.log('Processing export for type:', exportType);
+  
+  const selectedFields = [];
+  
+  // Raccogli i campi selezionati
+  const checkboxes = document.querySelectorAll('#fieldSelectionModal input[type="checkbox"]:checked');
+  checkboxes.forEach(function(checkbox) {
+    selectedFields.push(checkbox.value);
+  });
+  
+  console.log('Selected fields:', selectedFields);
+  
+  if (selectedFields.length === 0) {
+    alert('Seleziona almeno un campo da esportare');
+    return;
+  }
+  
+  // Crea il form per l'esportazione
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/candidati/export/${exportType}`;
+  
+  console.log('Form action:', form.action);
+  
+  // Aggiungi i campi selezionati
+  selectedFields.forEach(field => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'fields';
+    input.value = field;
+    form.appendChild(input);
+  });
+  
+  document.body.appendChild(form);
+  console.log('Submitting form...');
+  form.submit();
+  document.body.removeChild(form);
+  
+  const modal = bootstrap.Modal.getInstance(document.getElementById('fieldSelectionModal'));
+  modal.hide();
+}
+
+function selectAllFields() {
+  const checkboxes = document.querySelectorAll('#fieldSelectionModal input[type="checkbox"]');
+  checkboxes.forEach(function(checkbox) {
+    checkbox.checked = true;
+  });
+}
+
+function deselectAllFields() {
+  const checkboxes = document.querySelectorAll('#fieldSelectionModal input[type="checkbox"]');
+  checkboxes.forEach(function(checkbox) {
+    checkbox.checked = false;
+  });
+}
 </script>
+
+<!-- Modal per la selezione dei campi -->
+<div class="modal fade" id="fieldSelectionModal" tabindex="-1" aria-labelledby="fieldSelectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fieldSelectionModalLabel">Seleziona Campi da Esportare</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="exportType" value="">
+        
+        <div class="row mb-3">
+          <div class="col-12">
+            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllFields()">Seleziona Tutti</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllFields()">Deseleziona Tutti</button>
+          </div>
+        </div>
+        
+        <div class="row">
+          <!-- Dati Personali -->
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">Dati Personali</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="name" id="field_name" checked>
+              <label class="form-check-label" for="field_name">Nome</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="surname" id="field_surname" checked>
+              <label class="form-check-label" for="field_surname">Cognome</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="birth_date" id="field_birth_date">
+              <label class="form-check-label" for="field_birth_date">Data di Nascita</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="birth_place" id="field_birth_place">
+              <label class="form-check-label" for="field_birth_place">Luogo di Nascita</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="nationality" id="field_nationality">
+              <label class="form-check-label" for="field_nationality">Nazionalità</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="residence" id="field_residence">
+              <label class="form-check-label" for="field_residence">Residenza</label>
+            </div>
+          </div>
+          
+          <!-- Contatti -->
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">Contatti</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="email" id="field_email" checked>
+              <label class="form-check-label" for="field_email">Email</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="phone" id="field_phone" checked>
+              <label class="form-check-label" for="field_phone">Telefono</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="gender" id="field_gender">
+              <label class="form-check-label" for="field_gender">Genere</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="marital_status" id="field_marital_status">
+              <label class="form-check-label" for="field_marital_status">Stato Civile</label>
+            </div>
+          </div>
+        </div>
+        
+        <hr class="my-4">
+        
+        <div class="row">
+          <!-- Informazioni Professionali -->
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">Informazioni Professionali</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="occupation" id="field_occupation" checked>
+              <label class="form-check-label" for="field_occupation">Occupazione</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="city_availability" id="field_city_availability">
+              <label class="form-check-label" for="field_city_availability">Città Disponibilità</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="come_sei_arrivato" id="field_come_sei_arrivato">
+              <label class="form-check-label" for="field_come_sei_arrivato">Come sei arrivato</label>
+            </div>
+          </div>
+          
+          <!-- Dati Amministrativi -->
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3">Dati Amministrativi</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="codice_fiscale" id="field_codice_fiscale">
+              <label class="form-check-label" for="field_codice_fiscale">Codice Fiscale</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="archived" id="field_archived">
+              <label class="form-check-label" for="field_archived">Archiviato</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="created_at" id="field_created_at">
+              <label class="form-check-label" for="field_created_at">Data di Creazione</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="form_name" id="field_form_name">
+              <label class="form-check-label" for="field_form_name">Nome Form</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-primary" onclick="processExport()">Esporta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

@@ -22,6 +22,28 @@
       <a href="/candidati/{{ candidate.id }}/punteggi" class="btn btn-info">
         <i class="bi bi-star"></i> <span class="d-none d-md-inline">Punteggi</span>
       </a>
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-download"></i> <span class="d-none d-lg-inline">Esporta</span>
+        </button>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="{{ url_for('main.export_candidate_pdf', candidate_id=candidate.id) }}" target="_blank">
+              <i class="bi bi-file-earmark-pdf text-danger"></i> Scarica PDF
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('main.export_candidate_print', candidate_id=candidate.id) }}" target="_blank">
+              <i class="bi bi-printer text-primary"></i> Stampa/Salva PDF
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('main.export_candidate_csv', candidate_id=candidate.id) }}">
+              <i class="bi bi-file-earmark-spreadsheet text-success"></i> Scarica CSV
+            </a>
+          </li>
+        </ul>
+      </div>
       <button class="btn btn-primary" onclick="openEdit({{ candidate.id }})">
         <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Modifica</span>
       </button>
@@ -70,10 +92,16 @@
           <h6 class="card-title">
             <i class="bi bi-file-earmark-pdf text-danger"></i> Curriculum Vitae
           </h6>
-          <a href="{{ url_for('main.serve_curriculum', filename=candidate.curricula[0].filename) }}" 
-             target="_blank" class="btn btn-outline-primary w-100">
-            <i class="bi bi-download"></i> Scarica CV
-          </a>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('main.view_curriculum_inline', filename=candidate.curricula[0].filename) }}" 
+               class="btn btn-primary">
+              <i class="bi bi-eye"></i> Visualizza CV
+            </a>
+            <a href="{{ url_for('main.serve_curriculum', filename=candidate.curricula[0].filename) }}" 
+               download class="btn btn-outline-success">
+              <i class="bi bi-download"></i> Scarica CV
+            </a>
+          </div>
         </div>
       </div>
       {% endif %}
@@ -111,6 +139,11 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="lavoro-tab" data-bs-toggle="tab" data-bs-target="#lavoro" type="button" role="tab">
             <i class="bi bi-briefcase d-none d-sm-inline"></i> <span>Lavoro</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="punteggi-tab" data-bs-toggle="tab" data-bs-target="#punteggi" type="button" role="tab">
+            <i class="bi bi-star d-none d-sm-inline"></i> <span>Punteggi</span>
           </button>
         </li>
       </ul>
@@ -290,7 +323,7 @@
                 </div>
                 <div class="col-12 candidate-profile-field">
                   <label class="form-label text-muted">Auto/Moto munito</label>
-                  <p>{{ candidate.auto_moto_munito or '-' }}</p>
+                  <p>{% if candidate.auto_moto_munito == True %}Sì{% elif candidate.auto_moto_munito == False %}No{% else %}-{% endif %}</p>
                 </div>
               </div>
             </div>
@@ -374,6 +407,143 @@
             </div>
           </div>
         </div>
+
+        <!-- Punteggi -->
+        <div class="tab-pane fade" id="punteggi" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                  <i class="bi bi-star-fill text-warning"></i> Valutazioni del candidato
+                </h6>
+                <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-sm btn-primary">
+                  <i class="bi bi-plus"></i> Aggiungi punteggio
+                </a>
+              </div>
+
+              {% if candidate.scores %}
+                <!-- Riepilogo generale -->
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                      <div class="card-body text-center">
+                        <h4 class="text-primary mb-1">{{ "%.1f"|format(candidate.get_total_score()) }}</h4>
+                        <small class="text-muted">Punteggio Totale</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                      <div class="card-body text-center">
+                        <h4 class="text-success mb-1">{{ "%.1f"|format(candidate.get_average_score()) }}</h4>
+                        <small class="text-muted">Media Semplice</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card bg-light border-0">
+                      <div class="card-body text-center">
+                        <h4 class="text-info mb-1">{{ candidate.scores|length }}</h4>
+                        <small class="text-muted">Valutazioni</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Punteggi per categoria -->
+                {% set score_summary = candidate.get_score_summary() %}
+                {% if score_summary %}
+                  <h6 class="mb-3">Punteggi per categoria</h6>
+                  {% for category, data in score_summary.items() %}
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">{{ category }}</h6>
+                        <span class="badge bg-primary">Media: {{ "%.1f"|format(data.average) }}</span>
+                      </div>
+                      {% for score in data.scores %}
+                        <div class="card mb-2">
+                          <div class="card-body py-2">
+                            <div class="row align-items-center">
+                              <div class="col-md-3">
+                                {% if score.subcategory %}
+                                  <small class="text-muted">{{ score.subcategory }}</small>
+                                {% else %}
+                                  <small class="text-muted">Valutazione generale</small>
+                                {% endif %}
+                              </div>
+                              <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                  <span class="fw-bold me-2">{{ score.score }}/{{ score.max_score }}</span>
+                                  <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ score.percentage }}%"></div>
+                                  </div>
+                                  <span class="ms-2 text-muted">{{ "%.0f"|format(score.percentage) }}%</span>
+                                </div>
+                              </div>
+                              <div class="col-md-3">
+                                <small class="text-muted">
+                                  <i class="bi bi-person"></i> 
+                                  {{ score.evaluator.username if score.evaluator else 'N/A' }}
+                                </small>
+                              </div>
+                              <div class="col-md-3 text-end">
+                                <small class="text-muted">
+                                  {{ score.created_at.strftime('%d/%m/%Y') }}
+                                </small>
+                                <div class="btn-group btn-group-sm ms-2">
+                                  <a href="{{ url_for('main.edit_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
+                                     class="btn btn-outline-secondary" title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                  </a>
+                                  <form method="POST" action="{{ url_for('main.delete_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
+                                        style="display: inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo punteggio?')">
+                                    <button type="submit" class="btn btn-outline-danger" title="Elimina">
+                                      <i class="bi bi-trash"></i>
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                            {% if score.notes %}
+                              <div class="row mt-2">
+                                <div class="col-12">
+                                  <small class="text-muted">
+                                    <i class="bi bi-chat-text"></i> {{ score.notes }}
+                                  </small>
+                                </div>
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+
+                <!-- Link alla pagina completa dei punteggi -->
+                <div class="text-center mt-4">
+                  <a href="{{ url_for('main.view_candidate_scores', candidate_id=candidate.id) }}" 
+                     class="btn btn-outline-primary">
+                    <i class="bi bi-list-stars"></i> Visualizza tutti i punteggi
+                  </a>
+                </div>
+
+              {% else %}
+                <!-- Nessun punteggio presente -->
+                <div class="text-center py-4">
+                  <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
+                  <h6 class="mt-3 text-muted">Nessuna valutazione presente</h6>
+                  <p class="text-muted">Aggiungi il primo punteggio per questo candidato</p>
+                  <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" 
+                     class="btn btn-primary">
+                    <i class="bi bi-plus"></i> Aggiungi prima valutazione
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -388,17 +558,324 @@
   </div>
 </div>
 
-<!-- Modal modifica (copia dal template candidates_list.html) -->
+<!-- Modal modifica candidato -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Modifica Candidato</h5>
+        <h5 class="modal-title">
+          <i class="bi bi-pencil"></i> Modifica Candidato
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p class="text-muted">La funzione di modifica verrà implementata qui.</p>
-      </div>
+      <form id="editCandidateForm" method="POST" action="/candidati/modifica/{{ candidate.id }}" enctype="multipart/form-data">
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+          <!-- Nav tabs per organizzare i campi -->
+          <ul class="nav nav-tabs mb-3" id="editTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="edit-anagrafica-tab" data-bs-toggle="tab" data-bs-target="#edit-anagrafica" type="button">
+                Anagrafica
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="edit-contatti-tab" data-bs-toggle="tab" data-bs-target="#edit-contatti" type="button">
+                Contatti
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="edit-documenti-tab" data-bs-toggle="tab" data-bs-target="#edit-documenti" type="button">
+                Documenti
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="edit-patente-tab" data-bs-toggle="tab" data-bs-target="#edit-patente" type="button">
+                Patente
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="edit-lingue-tab" data-bs-toggle="tab" data-bs-target="#edit-lingue" type="button">
+                Lingue
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="edit-lavoro-tab" data-bs-toggle="tab" data-bs-target="#edit-lavoro" type="button">
+                Lavoro
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="editTabContent">
+            <!-- Anagrafica -->
+            <div class="tab-pane fade show active" id="edit-anagrafica">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Nome *</label>
+                  <input type="text" class="form-control" name="first_name" value="{{ candidate.first_name or '' }}" required>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Cognome *</label>
+                  <input type="text" class="form-control" name="last_name" value="{{ candidate.last_name or '' }}" required>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Genere</label>
+                  <select class="form-select" name="gender">
+                    <option value="">Seleziona...</option>
+                    <option value="Maschio" {{ 'selected' if candidate.gender == 'Maschio' }}>Maschio</option>
+                    <option value="Femmina" {{ 'selected' if candidate.gender == 'Femmina' }}>Femmina</option>
+                    <option value="Altro" {{ 'selected' if candidate.gender == 'Altro' }}>Altro</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Data di nascita</label>
+                  <input type="date" class="form-control" name="date_of_birth" 
+                         value="{{ candidate.date_of_birth.strftime('%Y-%m-%d') if candidate.date_of_birth else '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Luogo di nascita</label>
+                  <input type="text" class="form-control" name="place_of_birth" value="{{ candidate.place_of_birth or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Nazionalità</label>
+                  <input type="text" class="form-control" name="nationality" value="{{ candidate.nationality or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Stato civile</label>
+                  <select class="form-select" name="marital_status">
+                    <option value="">Seleziona...</option>
+                    <option value="Single" {{ 'selected' if candidate.marital_status == 'Single' }}>Single</option>
+                    <option value="Fidanzato/a" {{ 'selected' if candidate.marital_status == 'Fidanzato/a' }}>Fidanzato/a</option>
+                    <option value="Sposato/a" {{ 'selected' if candidate.marital_status == 'Sposato/a' }}>Sposato/a</option>
+                    <option value="Divorziato/a" {{ 'selected' if candidate.marital_status == 'Divorziato/a' }}>Divorziato/a</option>
+                    <option value="Vedovo/a" {{ 'selected' if candidate.marital_status == 'Vedovo/a' }}>Vedovo/a</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Come sei arrivato a noi</label>
+                  <input type="text" class="form-control" name="come_sei_arrivato" value="{{ candidate.come_sei_arrivato or '' }}">
+                </div>
+                <div class="col-sm-3">
+                  <label class="form-label">Altezza (cm)</label>
+                  <input type="number" class="form-control" name="height_cm" value="{{ candidate.height_cm or '' }}">
+                </div>
+                <div class="col-sm-3">
+                  <label class="form-label">Peso (kg)</label>
+                  <input type="number" class="form-control" name="weight_kg" value="{{ candidate.weight_kg or '' }}">
+                </div>
+                <div class="col-sm-3">
+                  <label class="form-label">Taglia T-shirt</label>
+                  <select class="form-select" name="tshirt_size">
+                    <option value="">Seleziona...</option>
+                    <option value="XS" {{ 'selected' if candidate.tshirt_size == 'XS' }}>XS</option>
+                    <option value="S" {{ 'selected' if candidate.tshirt_size == 'S' }}>S</option>
+                    <option value="M" {{ 'selected' if candidate.tshirt_size == 'M' }}>M</option>
+                    <option value="L" {{ 'selected' if candidate.tshirt_size == 'L' }}>L</option>
+                    <option value="XL" {{ 'selected' if candidate.tshirt_size == 'XL' }}>XL</option>
+                    <option value="XXL" {{ 'selected' if candidate.tshirt_size == 'XXL' }}>XXL</option>
+                  </select>
+                </div>
+                <div class="col-sm-3">
+                  <label class="form-label">Numero scarpe</label>
+                  <input type="number" class="form-control" name="shoe_size_eu" value="{{ candidate.shoe_size_eu or '' }}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Contatti -->
+            <div class="tab-pane fade" id="edit-contatti">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Email *</label>
+                  <input type="email" class="form-control" name="email" value="{{ candidate.email or '' }}" required>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Telefono</label>
+                  <input type="tel" class="form-control" name="phone_number" value="{{ candidate.phone_number or '' }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Indirizzo</label>
+                  <input type="text" class="form-control" name="address" value="{{ candidate.address or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Città</label>
+                  <input type="text" class="form-control" name="city" value="{{ candidate.city or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">CAP</label>
+                  <input type="text" class="form-control" name="postal_code" value="{{ candidate.postal_code or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Paese di residenza</label>
+                  <input type="text" class="form-control" name="country_of_residence" value="{{ candidate.country_of_residence or '' }}">
+                </div>
+              </div>
+            </div>
+
+            <!-- Documenti -->
+            <div class="tab-pane fade" id="edit-documenti">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Tipo documento</label>
+                  <select class="form-select" name="id_document">
+                    <option value="">Seleziona...</option>
+                    <option value="Carta d'identità" {{ 'selected' if candidate.id_document == "Carta d'identità" }}>Carta d'identità</option>
+                    <option value="Passaporto" {{ 'selected' if candidate.id_document == 'Passaporto' }}>Passaporto</option>
+                    <option value="Patente" {{ 'selected' if candidate.id_document == 'Patente' }}>Patente</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Numero documento</label>
+                  <input type="text" class="form-control" name="id_number" value="{{ candidate.id_number or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Scadenza documento</label>
+                  <input type="date" class="form-control" name="id_expiry_date" 
+                         value="{{ candidate.id_expiry_date.strftime('%Y-%m-%d') if candidate.id_expiry_date else '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Paese rilascio</label>
+                  <input type="text" class="form-control" name="id_country" value="{{ candidate.id_country or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Codice Fiscale</label>
+                  <input type="text" class="form-control" name="codice_fiscale" value="{{ candidate.codice_fiscale or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Permesso di soggiorno</label>
+                  <input type="text" class="form-control" name="permesso_soggiorno" value="{{ candidate.permesso_soggiorno or '' }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Documento aggiuntivo</label>
+                  <textarea class="form-control" name="additional_document" rows="2">{{ candidate.additional_document or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Patente -->
+            <div class="tab-pane fade" id="edit-patente">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Paese patente</label>
+                  <input type="text" class="form-control" name="license_country" value="{{ candidate.license_country or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Numero patente</label>
+                  <input type="text" class="form-control" name="license_number" value="{{ candidate.license_number or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Categoria patente</label>
+                  <input type="text" class="form-control" name="license_category" value="{{ candidate.license_category or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Anni di esperienza</label>
+                  <input type="number" class="form-control" name="years_driving_experience" value="{{ candidate.years_driving_experience or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Data rilascio</label>
+                  <input type="date" class="form-control" name="license_issue_date" 
+                         value="{{ candidate.license_issue_date.strftime('%Y-%m-%d') if candidate.license_issue_date else '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Data scadenza</label>
+                  <input type="date" class="form-control" name="license_expiry_date" 
+                         value="{{ candidate.license_expiry_date.strftime('%Y-%m-%d') if candidate.license_expiry_date else '' }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Auto/Moto munito</label>
+                  <select class="form-select" name="auto_moto_munito">
+                    <option value="">Seleziona...</option>
+                    <option value="True" {{ 'selected' if candidate.auto_moto_munito == True }}>Sì</option>
+                    <option value="False" {{ 'selected' if candidate.auto_moto_munito == False }}>No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lingue -->
+            <div class="tab-pane fade" id="edit-lingue">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Lingua 1</label>
+                  <input type="text" class="form-control" name="language_1" value="{{ candidate.language_1 or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Livello 1</label>
+                  <select class="form-select" name="proficiency_1">
+                    <option value="">Seleziona...</option>
+                    <option value="Base" {{ 'selected' if candidate.proficiency_1 == 'Base' }}>Base</option>
+                    <option value="Intermedio" {{ 'selected' if candidate.proficiency_1 == 'Intermedio' }}>Intermedio</option>
+                    <option value="Avanzato" {{ 'selected' if candidate.proficiency_1 == 'Avanzato' }}>Avanzato</option>
+                    <option value="Madrelingua" {{ 'selected' if candidate.proficiency_1 == 'Madrelingua' }}>Madrelingua</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Lingua 2</label>
+                  <input type="text" class="form-control" name="language_2" value="{{ candidate.language_2 or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Livello 2</label>
+                  <select class="form-select" name="proficiency_2">
+                    <option value="">Seleziona...</option>
+                    <option value="Base" {{ 'selected' if candidate.proficiency_2 == 'Base' }}>Base</option>
+                    <option value="Intermedio" {{ 'selected' if candidate.proficiency_2 == 'Intermedio' }}>Intermedio</option>
+                    <option value="Avanzato" {{ 'selected' if candidate.proficiency_2 == 'Avanzato' }}>Avanzato</option>
+                    <option value="Madrelingua" {{ 'selected' if candidate.proficiency_2 == 'Madrelingua' }}>Madrelingua</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Lingua 3</label>
+                  <input type="text" class="form-control" name="language_3" value="{{ candidate.language_3 or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Livello 3</label>
+                  <select class="form-select" name="proficiency_3">
+                    <option value="">Seleziona...</option>
+                    <option value="Base" {{ 'selected' if candidate.proficiency_3 == 'Base' }}>Base</option>
+                    <option value="Intermedio" {{ 'selected' if candidate.proficiency_3 == 'Intermedio' }}>Intermedio</option>
+                    <option value="Avanzato" {{ 'selected' if candidate.proficiency_3 == 'Avanzato' }}>Avanzato</option>
+                    <option value="Madrelingua" {{ 'selected' if candidate.proficiency_3 == 'Madrelingua' }}>Madrelingua</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lavoro -->
+            <div class="tab-pane fade" id="edit-lavoro">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="form-label">Occupazione</label>
+                  <input type="text" class="form-control" name="occupation" value="{{ candidate.occupation or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Città disponibilità</label>
+                  <input type="text" class="form-control" name="city_availability" value="{{ candidate.city_availability or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Disponibile da</label>
+                  <input type="date" class="form-control" name="availability_from" 
+                         value="{{ candidate.availability_from.strftime('%Y-%m-%d') if candidate.availability_from else '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Disponibile fino</label>
+                  <input type="date" class="form-control" name="availability_till" 
+                         value="{{ candidate.availability_till.strftime('%Y-%m-%d') if candidate.availability_till else '' }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Altre esperienze</label>
+                  <textarea class="form-control" name="other_experience" rows="3">{{ candidate.other_experience or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle"></i> Annulla
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Salva modifiche
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -407,7 +884,7 @@
 {% block scripts %}
 <script>
 function openEdit(candidateId) {
-  // Per ora mostra solo il modal, la funzionalità sarà implementata dopo
+  // Mostra il modal di modifica
   new bootstrap.Modal(document.getElementById('editModal')).show();
 }
 
@@ -422,6 +899,20 @@ document.addEventListener('DOMContentLoaded', function() {
   if (imgModal) {
     imgModal.addEventListener('click', function() {
       bootstrap.Modal.getInstance(imgModal).hide();
+    });
+  }
+  
+  // Gestione submit del form di modifica
+  const editForm = document.getElementById('editCandidateForm');
+  if (editForm) {
+    editForm.addEventListener('submit', function(e) {
+      // Mostra un loading
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Salvando...';
+      submitBtn.disabled = true;
+      
+      // Il form si invia normalmente - non usiamo preventDefault()
     });
   }
 });

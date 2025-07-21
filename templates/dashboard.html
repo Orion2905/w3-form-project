@@ -1,6 +1,41 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
 <h2 class="mb-4">Dashboard</h2>
+
+<!-- Sezione Filtri -->
+<div class="card mb-4" style="background-color: #e3f2fd; border: 3px solid #1976d2;">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="card-title mb-0" style="color: #1976d2; font-weight: bold;">🔍 FILTRI DASHBOARD</h5>
+      <span id="filter-status" class="badge bg-primary" style="display: block; font-size: 14px;">Filtri attivi</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="filter-evento" class="form-label" style="font-weight: bold; color: #1976d2;">Evento</label>
+        <select class="form-select" id="filter-evento" style="border: 2px solid #4caf50; font-size: 16px;">
+          <option value="">Tutti gli eventi</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="filter-azienda" class="form-label" style="font-weight: bold; color: #1976d2;">Azienda</label>
+        <select class="form-select" id="filter-azienda" style="border: 2px solid #4caf50; font-size: 16px;">
+          <option value="">Tutte le aziende</option>
+        </select>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-12">
+        <button type="button" class="btn btn-primary btn-lg" onclick="applyFilters()" style="font-size: 18px;">
+          <i class="fas fa-filter me-2"></i>Applica Filtri
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="clearFilters()" style="font-size: 18px;">
+          <i class="fas fa-times me-2"></i>Rimuovi Filtri
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-4 mb-4">
   <div class="col-12 col-md-4">
     <div class="card text-center p-3">
@@ -48,6 +83,12 @@
       <canvas id="chart-roles" height="120" style="max-width:180px;"></canvas>
     </div>
   </div>
+  <div class="col-6 col-lg-3 order-lg-1">
+    <div class="card p-3">
+      <h5 class="mb-3">Auto/Moto</h5>
+      <canvas id="chart-auto" height="120" style="max-width:180px;"></canvas>
+    </div>
+  </div>
   <div class="col-12 col-lg-6 order-lg-2">
     <div class="card p-3 h-100 d-flex flex-column justify-content-between">
       <h5 class="mb-3">Ultimi candidati inseriti</h5>
@@ -73,12 +114,6 @@
       </div>
     </div>
   </div>
-  <div class="col-6 col-lg-3 order-lg-3">
-    <div class="card p-3 d-flex align-items-center justify-content-center" style="min-height:100%;">
-      <h5 class="mb-3">Auto/Moto</h5>
-      <canvas id="chart-auto" height="90" width="90" style="max-width:90px;"></canvas>
-    </div>
-  </div>
 </div>
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-6">
@@ -87,22 +122,104 @@
       <canvas id="chart-monthly" height="180"></canvas>
     </div>
   </div>
+  <div class="col-12 col-lg-6">
+    <div class="card p-3">
+      <h5 class="mb-3">Top 10 Città</h5>
+      <canvas id="chart-cities" height="180"></canvas>
+    </div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
+// Variabili globali per i grafici
+window.charts = {};
+
+// Funzioni per gestire i filtri
+async function loadFilters() {
+  try {
+    // Carica eventi
+    const eventi = await fetch('/api/stats/eventi').then(r => r.json());
+    const eventoSelect = document.getElementById('filter-evento');
+    eventi.forEach(evento => {
+      const option = document.createElement('option');
+      option.value = evento;
+      option.textContent = evento;
+      eventoSelect.appendChild(option);
+    });
+
+    // Carica aziende
+    const aziende = await fetch('/api/stats/aziende').then(r => r.json());
+    const aziendaSelect = document.getElementById('filter-azienda');
+    aziende.forEach(azienda => {
+      const option = document.createElement('option');
+      option.value = azienda;
+      option.textContent = azienda;
+      aziendaSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Errore nel caricamento dei filtri:', error);
+  }
+}
+
+// Applica i filtri
+function applyFilters() {
+  updateFilterStatus();
+  fetchStats();
+}
+
+// Rimuove tutti i filtri
+function clearFilters() {
+  document.getElementById('filter-evento').value = '';
+  document.getElementById('filter-azienda').value = '';
+  updateFilterStatus();
+  fetchStats();
+}
+
+// Aggiorna lo stato dei filtri
+function updateFilterStatus() {
+  const evento = document.getElementById('filter-evento').value;
+  const azienda = document.getElementById('filter-azienda').value;
+  const statusBadge = document.getElementById('filter-status');
+  
+  if (evento || azienda) {
+    statusBadge.style.display = 'inline-block';
+    statusBadge.className = 'badge bg-primary';
+    statusBadge.textContent = 'Filtri attivi';
+  } else {
+    statusBadge.style.display = 'none';
+  }
+}
+
 async function fetchStats() {
   // Loader visibile
   document.getElementById('latest-loader').style.display = '';
   document.getElementById('latest-table').classList.remove('animate__fadeIn');
 
-  const summary = await fetch('/api/stats/summary').then(r=>r.json());
+  // Distruggi i grafici esistenti
+  if (typeof charts !== 'undefined') {
+    Object.values(charts).forEach(chart => {
+      if (chart && typeof chart.destroy === 'function') chart.destroy();
+    });
+  }
+  window.charts = {};
+
+  // Ottieni parametri filtro
+  const evento = document.getElementById('filter-evento') ? document.getElementById('filter-evento').value : '';
+  const azienda = document.getElementById('filter-azienda') ? document.getElementById('filter-azienda').value : '';
+  
+  const params = new URLSearchParams();
+  if (evento) params.append('evento', evento);
+  if (azienda) params.append('azienda', azienda);
+  const queryString = params.toString() ? `?${params.toString()}` : '';
+
+  const summary = await fetch(`/api/stats/summary${queryString}`).then(r=>r.json());
   document.getElementById('stat-total').textContent = summary.total;
   document.getElementById('stat-cv').textContent = summary.with_cv;
   document.getElementById('stat-photo').textContent = summary.with_photo;
 
-  const roles = await fetch('/api/stats/roles').then(r=>r.json());
+  const roles = await fetch(`/api/stats/roles${queryString}`).then(r=>r.json());
   const ctxRoles = document.getElementById('chart-roles').getContext('2d');
-  new Chart(ctxRoles, {
+  window.charts.roles = new Chart(ctxRoles, {
     type: 'doughnut',
     data: {
       labels: Object.keys(roles),
@@ -114,9 +231,9 @@ async function fetchStats() {
     options: {responsive:true, cutout:'70%', plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
   });
 
-  const gender = await fetch('/api/stats/gender').then(r=>r.json());
+  const gender = await fetch(`/api/stats/gender${queryString}`).then(r=>r.json());
   const ctxGender = document.getElementById('chart-gender').getContext('2d');
-  new Chart(ctxGender, {
+  window.charts.gender = new Chart(ctxGender, {
     type: 'pie',
     data: {
       labels: Object.keys(gender),
@@ -128,9 +245,9 @@ async function fetchStats() {
     options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
   });
 
-  const marital = await fetch('/api/stats/marital_status').then(r=>r.json());
+  const marital = await fetch(`/api/stats/marital_status${queryString}`).then(r=>r.json());
   const ctxMarital = document.getElementById('chart-marital').getContext('2d');
-  new Chart(ctxMarital, {
+  window.charts.marital = new Chart(ctxMarital, {
     type: 'pie',
     data: {
       labels: Object.keys(marital),
@@ -142,9 +259,9 @@ async function fetchStats() {
     options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
   });
 
-  const tshirt = await fetch('/api/stats/tshirt_size').then(r=>r.json());
+  const tshirt = await fetch(`/api/stats/tshirt_size${queryString}`).then(r=>r.json());
   const ctxTshirt = document.getElementById('chart-tshirt').getContext('2d');
-  new Chart(ctxTshirt, {
+  window.charts.tshirt = new Chart(ctxTshirt, {
     type: 'doughnut',
     data: {
       labels: Object.keys(tshirt),
@@ -156,9 +273,9 @@ async function fetchStats() {
     options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
   });
 
-  const auto = await fetch('/api/stats/auto_moto_munito').then(r=>r.json());
+  const auto = await fetch(`/api/stats/auto_moto_munito${queryString}`).then(r=>r.json());
   const ctxAuto = document.getElementById('chart-auto').getContext('2d');
-  new Chart(ctxAuto, {
+  window.charts.auto = new Chart(ctxAuto, {
     type: 'doughnut',
     data: {
       labels: Object.keys(auto),
@@ -170,9 +287,9 @@ async function fetchStats() {
     options: {responsive:true, cutout:'75%', plugins:{legend:{display:false}}}
   });
 
-  const monthly = await fetch('/api/stats/monthly').then(r=>r.json());
+  const monthly = await fetch(`/api/stats/monthly${queryString}`).then(r=>r.json());
   const ctxMonthly = document.getElementById('chart-monthly').getContext('2d');
-  new Chart(ctxMonthly, {
+  window.charts.monthly = new Chart(ctxMonthly, {
     type: 'bar',
     data: {
       labels: Object.keys(monthly),
@@ -186,7 +303,27 @@ async function fetchStats() {
       scales:{x:{ticks:{color:getComputedStyle(document.body).color}},y:{ticks:{color:getComputedStyle(document.body).color}}}}
   });
 
-  const latest = await fetch('/api/stats/latest').then(r=>r.json());
+  const cities = await fetch(`/api/stats/cities${queryString}`).then(r=>r.json());
+  const ctxCities = document.getElementById('chart-cities').getContext('2d');
+  window.charts.cities = new Chart(ctxCities, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(cities),
+      datasets: [{
+        label: 'Candidati',
+        data: Object.values(cities),
+        backgroundColor: ['#7db7e8','#bfaee0','#ffd6a5','#b6e2d3','#ffb3b3','#d4a5a5','#a5d4d4','#d4d4a5','#a5a5d4','#d4a5d4'],
+      }]
+    },
+    options: {
+      responsive:true, 
+      indexAxis: 'y',
+      plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}},
+      scales:{x:{ticks:{color:getComputedStyle(document.body).color}},y:{ticks:{color:getComputedStyle(document.body).color}}}
+    }
+  });
+
+  const latest = await fetch(`/api/stats/latest${queryString}`).then(r=>r.json());
   const tbody = document.getElementById('latest-candidates');
   tbody.innerHTML = latest.map(c => `
     <tr class="animate__animated animate__fadeInUp">
@@ -202,7 +339,11 @@ async function fetchStats() {
   document.getElementById('latest-loader').style.display = 'none';
   document.getElementById('latest-table').classList.add('animate__fadeIn');
 }
-fetchStats();
+// Carica filtri e dati all'avvio
+document.addEventListener('DOMContentLoaded', function() {
+  loadFilters();
+  fetchStats();
+});
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 {% endblock %}

@@ -39,6 +39,146 @@ body[data-theme="dark"] .form-select:focus {
   border-color: var(--primary);
 }
 
+body[data-theme="dark"] .text-muted {
+  color: #adb5bd !important;
+}
+
+/* Profilo candidato - tema scuro */
+body[data-theme="dark"] .candidate-profile-header {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .candidate-profile-card {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .candidate-profile-field .form-label {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .candidate-profile-field p {
+  color: var(--text-dark) !important;
+}
+
+/* Modal - tema scuro */
+body[data-theme="dark"] .modal-content {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .modal-header {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-bottom-color: #444 !important;
+}
+
+body[data-theme="dark"] .modal-footer {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-top-color: #444 !important;
+}
+
+body[data-theme="dark"] .modal-body {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .modal-title {
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .btn-close {
+  filter: invert(1) brightness(1.5);
+}
+
+/* Nav tabs nel modal - tema scuro */
+body[data-theme="dark"] .nav-tabs {
+  border-bottom-color: #444 !important;
+}
+
+body[data-theme="dark"] .nav-tabs .nav-link {
+  background: transparent !important;
+  color: #adb5bd !important;
+  border-color: transparent !important;
+}
+
+body[data-theme="dark"] .nav-tabs .nav-link:hover {
+  background: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .nav-tabs .nav-link.active {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: #444 #444 var(--card-bg-dark) !important;
+}
+
+/* Form elements nel modal - tema scuro */
+body[data-theme="dark"] .modal .form-label {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .modal .form-control,
+body[data-theme="dark"] .modal .form-select,
+body[data-theme="dark"] .modal textarea {
+  background: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .modal .form-control:focus,
+body[data-theme="dark"] .modal .form-select:focus,
+body[data-theme="dark"] .modal textarea:focus {
+  background: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(125, 183, 232, 0.25) !important;
+}
+
+body[data-theme="dark"] .modal .form-control::placeholder,
+body[data-theme="dark"] .modal textarea::placeholder {
+  color: #6c757d !important;
+}
+
+/* Login: testo sempre leggibile */
+body[data-theme="dark"] .card .form-label,
+body[data-theme="dark"] .card .form-control,
+body[data-theme="dark"] .card .form-text {
+  color: var(--text-dark) !important;
+}
+
+body {
+  background: var(--background-light);
+  color: var(--text-light);
+  transition: background var(--transition), color var(--transition);
+}
+
+body[data-theme="dark"] {
+  background: var(--background-dark);
+  color: var(--text-dark);
+}
+
+body[data-theme="dark"] .card {
+  background: var(--card-bg-dark);
+  color: var(--text-dark);
+}
+body[data-theme="dark"] .form-control,
+body[data-theme="dark"] .form-select {
+  background: #292b3e;
+  color: var(--text-dark);
+  border-color: #444;
+}
+body[data-theme="dark"] .form-control:focus,
+body[data-theme="dark"] .form-select:focus {
+  background: #292b3e;
+  color: var(--text-dark);
+  border-color: var(--primary);
+}
+
 body {
   background: var(--background-light);
   color: var(--text-light);
@@ -130,11 +270,27 @@ body[data-theme="dark"] .theme-toggle {
   padding-right: 0;
   flex-shrink: 0 !important;
 }
+
 .sidebar.sidebar-collapsed {
-  width: 56px;
-  min-width: 56px;
-  max-width: 56px;
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
   transition: width 0.3s cubic-bezier(.4,2,.6,1), min-width 0.3s cubic-bezier(.4,2,.6,1), max-width 0.3s cubic-bezier(.4,2,.6,1), background var(--transition), color var(--transition), height 0.3s cubic-bezier(.4,2,.6,1), min-height 0.3s cubic-bezier(.4,2,.6,1), max-height 0.3s cubic-bezier(.4,2,.6,1);
+}
+
+/* Assicura che il contenuto principale si espanda correttamente */
+.app-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+}
+
+.app-shell .flex-grow-1 {
+  flex: 1 !important;
+  min-width: 0 !important; /* Importante per il flexbox */
+  transition: all 0.3s cubic-bezier(.4,2,.6,1) !important;
+  width: 100% !important;
+  max-width: none !important;
 }
 .sidebar .nav-link {
   color: var(--text-light);

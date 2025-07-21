@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esportazione Candidati</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+            @bottom-right {
+                content: "Pagina " counter(page) " di " counter(pages);
+                font-size: 10px;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .export-info {
+            font-size: 9px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .candidates-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 9px;
+        }
+        
+        .candidates-table th {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: bold;
+            color: #495057;
+            font-size: 9px;
+            white-space: nowrap;
+        }
+        
+        .candidates-table td {
+            border: 1px solid #dee2e6;
+            padding: 6px 4px;
+            vertical-align: top;
+            word-wrap: break-word;
+            max-width: 120px;
+        }
+        
+        .candidates-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .candidates-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .text-truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-small {
+            font-size: 8px;
+        }
+        
+        .summary {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            font-size: 9px;
+        }
+        
+        .summary strong {
+            color: #007bff;
+        }
+        
+        /* Stili specifici per campi lunghi */
+        .field-email, .field-linkedin, .field-website {
+            font-size: 8px;
+            word-break: break-all;
+        }
+        
+        .field-skills, .field-education, .field-notes {
+            font-size: 8px;
+            max-height: 40px;
+            overflow: hidden;
+        }
+        
+        /* Responsive per campi numerosi */
+        .candidates-table-small {
+            font-size: 8px;
+        }
+        
+        .candidates-table-small th,
+        .candidates-table-small td {
+            padding: 4px 3px;
+        }
+        
+        .status-badge {
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+        }
+        
+        .status-attivo { background-color: #28a745; }
+        .status-inattivo { background-color: #dc3545; }
+        .status-in-valutazione { background-color: #ffc107; }
+        .status-default { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Esportazione Candidati</h1>
+        <div class="export-info">
+            Generato il: {{ export_date }} | Totale candidati: {{ candidates|length }} | Campi selezionati: {{ selected_fields|length }}
+        </div>
+    </div>
+    
+    {% if candidates %}
+    <table class="candidates-table{% if selected_fields|length > 8 %} candidates-table-small{% endif %}">
+        <thead>
+            <tr>
+                <th style="width: 30px;">#</th>
+                {% for field in selected_fields %}
+                <th>{{ field_labels.get(field, field) }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for candidate in candidates %}
+            <tr>
+                <td class="text-center">{{ loop.index }}</td>
+                {% for field in selected_fields %}
+                <td class="
+                    {% if field in ['email', 'linkedin', 'website'] %}field-email
+                    {% elif field in ['skills', 'education', 'notes'] %}field-skills
+                    {% endif %}
+                ">
+                    {% set value = candidate.get(field, '') %}
+                    {% if field == 'email' and value %}
+                        <span class="text-small">{{ value }}</span>
+                    {% elif field in ['linkedin', 'website'] and value %}
+                        <span class="text-small">{{ value[:50] }}{% if value|length > 50 %}...{% endif %}</span>
+                    {% elif field in ['skills', 'education', 'notes'] and value %}
+                        <span class="text-small">{{ value[:100] }}{% if value|length > 100 %}...{% endif %}</span>
+                    {% elif field == 'status' and value %}
+                        <span class="status-badge
+                            {% if value == 'attivo' %}status-attivo
+                            {% elif value == 'inattivo' %}status-inattivo
+                            {% elif value == 'in_valutazione' %}status-in-valutazione
+                            {% else %}status-default{% endif %}
+                        ">{{ value.replace('_', ' ').title() }}</span>
+                    {% else %}
+                        {{ value }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="summary">
+        <strong>Riepilogo Esportazione:</strong><br>
+        • Totale candidati esportati: {{ candidates|length }}<br>
+        • Campi inclusi: {% for field in selected_fields %}{{ field_labels.get(field, field) }}{% if not loop.last %}, {% endif %}{% endfor %}<br>
+        • Data di generazione: {{ export_date }}
+    </div>
+    
+    {% else %}
+    <div class="text-center" style="padding: 50px; color: #666;">
+        <h3>Nessun candidato trovato</h3>
+        <p>Non sono presenti candidati da esportare.</p>
+    </div>
+    {% endif %}
+</body>
+</html>

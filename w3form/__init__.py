@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from w3form.config import Config
 from flask_migrate import Migrate  # Importa Flask-Migrate
 from flask_cors import CORS
+from w3form.azure_utils import get_secure_image_url, get_secure_document_url
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -28,6 +29,20 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+    
+    # Aggiungi funzioni helper per i template
+    @app.template_filter('secure_blob_url')
+    def secure_blob_url_filter(blob_url, file_type='document'):
+        """
+        Filtro template per generare URL sicuri per i blob
+        Usage: {{ blob_url|secure_blob_url('image') }}
+        """
+        if not blob_url:
+            return None
+        if file_type == 'image':
+            return get_secure_image_url(blob_url)
+        else:
+            return get_secure_document_url(blob_url)
 
     # Importa e registra i blueprint
     from w3form.routes import main

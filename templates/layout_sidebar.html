@@ -12,12 +12,6 @@
       </a>
     </li>
     <li class="nav-item mb-2">
-      <a class="nav-link d-flex align-items-center px-3 py-2" href="/candidato/aggiungi">
-        <span class="sidebar-icon me-2"><i class="bi bi-person-plus"></i></span>
-        <span class="sidebar-text">Aggiungi Candidato</span>
-      </a>
-    </li>
-    <li class="nav-item mb-2">
       <a class="nav-link d-flex align-items-center px-3 py-2" href="/candidati">
         <span class="sidebar-icon me-2"><i class="bi bi-people"></i></span>
         <span class="sidebar-text">Elenco Candidati</span>
@@ -33,18 +27,6 @@
       <a class="nav-link d-flex align-items-center px-3 py-2" href="/punteggi/categorie">
         <span class="sidebar-icon me-2"><i class="bi bi-star"></i></span>
         <span class="sidebar-text">Punteggi</span>
-      </a>
-    </li>
-    <li class="nav-item mb-2">
-      <a class="nav-link d-flex align-items-center px-3 py-2" href="/esporta/pdf">
-        <span class="sidebar-icon me-2"><i class="bi bi-file-earmark-pdf"></i></span>
-        <span class="sidebar-text">Esporta PDF</span>
-      </a>
-    </li>
-    <li class="nav-item mb-2">
-      <a class="nav-link d-flex align-items-center px-3 py-2" href="/esporta/excel">
-        <span class="sidebar-icon me-2"><i class="bi bi-file-earmark-excel"></i></span>
-        <span class="sidebar-text">Esporta Excel</span>
       </a>
     </li>
     <li class="nav-item mt-4">
@@ -70,6 +52,9 @@
   if(sidebar && sidebarToggle) {
     sidebarToggle.onclick = function() {
       sidebar.classList.toggle('sidebar-collapsed');
+      // Aggiungi classe al body per gestire il layout
+      document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
+      
       document.querySelectorAll('.sidebar-text').forEach(function(el) {
         el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
       });
@@ -79,6 +64,8 @@
     document.querySelectorAll('.sidebar-text').forEach(function(el) {
       el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
     });
+    // Inizializza classe body se sidebar è già collassata
+    document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
   }
 })();
 </script>
