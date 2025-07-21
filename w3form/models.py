@@ -29,6 +29,9 @@ class Candidate(db.Model):
     id_number = db.Column(db.String(64))
     id_expiry_date = db.Column(db.Date)
     id_country = db.Column(db.String(32))
+    additional_document = db.Column(db.String(128))  # Documento aggiuntivo come testo libero
+    codice_fiscale = db.Column(db.String(16))  # Codice fiscale italiano
+    permesso_soggiorno = db.Column(db.String(64))  # Numero permesso di soggiorno
     license_country = db.Column(db.String(32))
     license_number = db.Column(db.String(64))
     license_category = db.Column(db.String(16))  # tendina: A/B/C/D/E
@@ -38,8 +41,9 @@ class Candidate(db.Model):
     auto_moto_munito = db.Column(db.Boolean)  # tendina: Sì/No
     occupation = db.Column(db.String(64))
     other_experience = db.Column(db.Text)
-    availability = db.Column(db.String(64))  # tendina: Immediata, 1 settimana, etc.
-    other_location = db.Column(db.String(64))
+    availability_from = db.Column(db.Date)  # Data di disponibilità da
+    availability_till = db.Column(db.Date)  # Data di disponibilità fino a
+    other_location = db.Column(db.String(64))  # Città di disponibilità (una o più città)
     language_1 = db.Column(db.String(32))
     proficiency_1 = db.Column(db.String(16))  # tendina: Base/Intermedio/Avanzato/Madrelingua
     language_2 = db.Column(db.String(32))
@@ -52,6 +56,7 @@ class Candidate(db.Model):
 
     photos = db.relationship('Photo', back_populates='candidate', cascade="all, delete-orphan")
     curricula = db.relationship('Curriculum', back_populates='candidate', cascade="all, delete-orphan")
+    scores = db.relationship('Score', back_populates='candidate', cascade="all, delete-orphan")
     form = db.relationship('DynamicForm', back_populates='candidates')
 
     def set_password(self, password):
@@ -64,8 +69,54 @@ class Candidate(db.Model):
 
     def __repr__(self):
         return f"<User {self.email}>"
-
-
+    
+    def get_total_score(self):
+        """Calcola il punteggio totale del candidato"""
+        try:
+            if not hasattr(self, 'scores') or not self.scores:
+                return 0
+            
+            total_weighted = sum(score.weighted_score for score in self.scores)
+            total_weight = sum(score.weight for score in self.scores)
+            
+            if total_weight > 0:
+                return total_weighted / total_weight
+            return 0
+        except Exception:
+            return 0
+    
+    def get_average_score(self):
+        """Calcola il punteggio medio del candidato"""
+        try:
+            if not hasattr(self, 'scores') or not self.scores:
+                return 0
+            
+            total_score = sum(score.score for score in self.scores)
+            return total_score / len(self.scores)
+        except Exception:
+            return 0
+    
+    def get_scores_by_category(self, category):
+        """Ottiene i punteggi per una specifica categoria"""
+        return [score for score in self.scores if score.category == category]
+    
+    def get_score_summary(self):
+        """Ottiene un riassunto dei punteggi per categoria"""
+        summary = {}
+        for score in self.scores:
+            if score.category not in summary:
+                summary[score.category] = {
+                    'scores': [],
+                    'total': 0,
+                    'count': 0,
+                    'average': 0
+                }
+            summary[score.category]['scores'].append(score)
+            summary[score.category]['total'] += score.score
+            summary[score.category]['count'] += 1
+            summary[score.category]['average'] = summary[score.category]['total'] / summary[score.category]['count']
+        
+        return summary
 
 # Per la gestione utenti/ruoli puoi aggiungere questi modelli base:
 
@@ -104,6 +155,61 @@ class DynamicForm(db.Model):
     active_from = db.Column(db.DateTime, nullable=True)
     active_until = db.Column(db.DateTime, nullable=True)
     candidates = db.relationship('Candidate', back_populates='form', cascade="all, delete-orphan")
+
+class Score(db.Model):
+    """Tabella per gestire i punteggi dei candidati"""
+    id = db.Column(db.Integer, primary_key=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)  # chi ha dato il punteggio
+    
+    # Categorie di punteggio
+    category = db.Column(db.String(64), nullable=False)  # es: "Intervista", "Competenze Tecniche", "Soft Skills", etc.
+    subcategory = db.Column(db.String(64), nullable=True)  # sottocategoria opzionale
+    
+    # Punteggio
+    score = db.Column(db.Numeric(10, 2), nullable=False)  # punteggio numerico
+    max_score = db.Column(db.Numeric(10, 2), nullable=False, default=10.0)  # punteggio massimo possibile
+    
+    # Dettagli aggiuntivi
+    notes = db.Column(db.Text, nullable=True)  # note dell'intervistatore
+    weight = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)  # peso del punteggio nel calcolo totale
+    
+    # Metadati
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relazioni
+    candidate = db.relationship('Candidate', back_populates='scores')
+    evaluator = db.relationship('User', backref='scores_given')
+    
+    def __repr__(self):
+        return f"<Score {self.candidate_id} - {self.category}: {self.score}/{self.max_score}>"
+    
+    @property
+    def percentage(self):
+        """Calcola il punteggio come percentuale"""
+        if self.max_score > 0:
+            return (self.score / self.max_score) * 100
+        return 0
+    
+    @property
+    def weighted_score(self):
+        """Calcola il punteggio ponderato"""
+        return self.score * self.weight
+
+
+class ScoreCategory(db.Model):
+    """Tabella per gestire le categorie di punteggio predefinite"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+    max_score = db.Column(db.Numeric(10, 2), nullable=False, default=10.0)
+    weight = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    def __repr__(self):
+        return f"<ScoreCategory {self.name}>"
 
 
 

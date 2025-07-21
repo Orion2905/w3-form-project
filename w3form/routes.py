@@ -13,7 +13,7 @@ from flask import (
 from flask_login import login_user, login_required, logout_user, current_user
 from w3form import db
 from w3form.models import (
-    User, Candidate, DynamicForm
+    User, Candidate, DynamicForm, Score, ScoreCategory
 )
 from w3form.decorators import role_required
 import requests, time
@@ -226,7 +226,10 @@ def api_get_candidates():
             'language_3': c.language_3,
             'proficiency_3': c.proficiency_3,
             'curriculum_file': url_for('main.serve_curriculum', filename=c.curricula[0].filename) if c.curricula else '',
-            'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename) if c.photos else ''
+            'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename) if c.photos else '',
+            'total_score': 0,
+            'average_score': 0,
+            'scores_count': 0
         } for c in candidates
     ])
 
@@ -317,3 +320,246 @@ def serve_photo(filename):
 @main.route('/success')
 def success():
     return render_template('success.html')
+
+# === GESTIONE PUNTEGGI ===
+
+@main.route('/candidati/<int:candidate_id>/punteggi')
+@login_required
+def view_candidate_scores(candidate_id):
+    """Visualizza i punteggi di un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    categories = ScoreCategory.query.filter_by(is_active=True).all()
+    
+    # Raggruppa i punteggi per categoria
+    score_summary = candidate.get_score_summary()
+    
+    return render_template('candidate_scores.html', 
+                         candidate=candidate, 
+                         categories=categories,
+                         score_summary=score_summary,
+                         total_score=candidate.get_total_score(),
+                         average_score=candidate.get_average_score())
+
+@main.route('/candidati/<int:candidate_id>/punteggi/aggiungi', methods=['GET', 'POST'])
+@login_required
+def add_candidate_score(candidate_id):
+    """Aggiungi un punteggio a un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    categories = ScoreCategory.query.filter_by(is_active=True).all()
+    
+    if request.method == 'POST':
+        category = request.form.get('category')
+        subcategory = request.form.get('subcategory')
+        score = float(request.form.get('score', 0))
+        max_score = float(request.form.get('max_score', 10))
+        weight = float(request.form.get('weight', 1.0))
+        notes = request.form.get('notes')
+        
+        # Crea nuovo punteggio
+        new_score = Score(
+            candidate_id=candidate_id,
+            user_id=current_user.id,
+            category=category,
+            subcategory=subcategory,
+            score=score,
+            max_score=max_score,
+            weight=weight,
+            notes=notes
+        )
+        
+        db.session.add(new_score)
+        db.session.commit()
+        
+        flash(f'Punteggio aggiunto con successo per {category}', 'success')
+        return redirect(url_for('main.view_candidate_scores', candidate_id=candidate_id))
+    
+    return render_template('add_candidate_score.html', 
+                         candidate=candidate, 
+                         categories=categories)
+
+@main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/modifica', methods=['GET', 'POST'])
+@login_required
+def edit_candidate_score(candidate_id, score_id):
+    """Modifica un punteggio di un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    score = Score.query.get_or_404(score_id)
+    categories = ScoreCategory.query.filter_by(is_active=True).all()
+    
+    # Verifica che il punteggio appartenga al candidato
+    if score.candidate_id != candidate_id:
+        abort(404)
+    
+    if request.method == 'POST':
+        score.category = request.form.get('category')
+        score.subcategory = request.form.get('subcategory')
+        score.score = float(request.form.get('score', 0))
+        score.max_score = float(request.form.get('max_score', 10))
+        score.weight = float(request.form.get('weight', 1.0))
+        score.notes = request.form.get('notes')
+        
+        db.session.commit()
+        
+        flash(f'Punteggio modificato con successo per {score.category}', 'success')
+        return redirect(url_for('main.view_candidate_scores', candidate_id=candidate_id))
+    
+    return render_template('edit_candidate_score.html', 
+                         candidate=candidate, 
+                         score=score,
+                         categories=categories)
+
+@main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/elimina', methods=['POST'])
+@login_required
+def delete_candidate_score(candidate_id, score_id):
+    """Elimina un punteggio di un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    score = Score.query.get_or_404(score_id)
+    
+    # Verifica che il punteggio appartenga al candidato
+    if score.candidate_id != candidate_id:
+        abort(404)
+    
+    db.session.delete(score)
+    db.session.commit()
+    
+    flash(f'Punteggio per {score.category} eliminato con successo', 'success')
+    return redirect(url_for('main.view_candidate_scores', candidate_id=candidate_id))
+
+@main.route('/punteggi/categorie')
+@login_required
+@role_required('intervistatore')
+def score_categories():
+    """Gestione categorie di punteggio"""
+    categories = ScoreCategory.query.all()
+    return render_template('score_categories.html', categories=categories)
+
+@main.route('/punteggi/categorie/aggiungi', methods=['GET', 'POST'])
+@login_required
+@role_required('intervistatore')
+def add_score_category():
+    """Aggiungi una nuova categoria di punteggio"""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        max_score = float(request.form.get('max_score', 10))
+        weight = float(request.form.get('weight', 1.0))
+        
+        # Controlla se la categoria esiste già
+        existing = ScoreCategory.query.filter_by(name=name).first()
+        if existing:
+            flash('Una categoria con questo nome esiste già', 'danger')
+            return redirect(url_for('main.add_score_category'))
+        
+        new_category = ScoreCategory(
+            name=name,
+            description=description,
+            max_score=max_score,
+            weight=weight
+        )
+        
+        db.session.add(new_category)
+        db.session.commit()
+        
+        flash(f'Categoria "{name}" aggiunta con successo', 'success')
+        return redirect(url_for('main.score_categories'))
+    
+    return render_template('add_score_category.html')
+
+@main.route('/punteggi/categorie/<int:category_id>/modifica', methods=['GET', 'POST'])
+@login_required
+@role_required('intervistatore')
+def edit_score_category(category_id):
+    """Modifica una categoria di punteggio"""
+    category = ScoreCategory.query.get_or_404(category_id)
+    
+    if request.method == 'POST':
+        category.name = request.form.get('name')
+        category.description = request.form.get('description')
+        category.max_score = float(request.form.get('max_score', 10))
+        category.weight = float(request.form.get('weight', 1.0))
+        category.is_active = bool(request.form.get('is_active'))
+        
+        db.session.commit()
+        
+        flash(f'Categoria "{category.name}" modificata con successo', 'success')
+        return redirect(url_for('main.score_categories'))
+    
+    return render_template('edit_score_category.html', category=category)
+
+@main.route('/punteggi/categorie/<int:category_id>/elimina', methods=['POST'])
+@login_required
+@role_required('intervistatore')
+def delete_score_category(category_id):
+    """Elimina una categoria di punteggio"""
+    category = ScoreCategory.query.get_or_404(category_id)
+    
+    # Controlla se ci sono punteggi associati
+    existing_scores = Score.query.filter_by(category=category.name).first()
+    if existing_scores:
+        flash('Impossibile eliminare la categoria: ci sono punteggi associati', 'danger')
+        return redirect(url_for('main.score_categories'))
+    
+    db.session.delete(category)
+    db.session.commit()
+    
+    flash(f'Categoria "{category.name}" eliminata con successo', 'success')
+    return redirect(url_for('main.score_categories'))
+
+# === API ENDPOINTS PER PUNTEGGI ===
+
+@main.route('/api/candidates/<int:candidate_id>/scores', methods=['GET'])
+@login_required
+def api_get_candidate_scores(candidate_id):
+    """API per ottenere i punteggi di un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    
+    scores_data = []
+    for score in candidate.scores:
+        scores_data.append({
+            'id': score.id,
+            'category': score.category,
+            'subcategory': score.subcategory,
+            'score': score.score,
+            'max_score': score.max_score,
+            'percentage': score.percentage,
+            'weight': score.weight,
+            'weighted_score': score.weighted_score,
+            'notes': score.notes,
+            'evaluator': score.evaluator.username if score.evaluator else None,
+            'created_at': score.created_at.isoformat(),
+            'updated_at': score.updated_at.isoformat()
+        })
+    
+    return jsonify({
+        'candidate_id': candidate_id,
+        'scores': scores_data,
+        'total_score': candidate.get_total_score(),
+        'average_score': candidate.get_average_score(),
+        'score_summary': candidate.get_score_summary()
+    })
+
+@main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
+@login_required
+def api_add_candidate_score(candidate_id):
+    """API per aggiungere un punteggio a un candidato"""
+    candidate = Candidate.query.get_or_404(candidate_id)
+    
+    data = request.get_json()
+    
+    new_score = Score(
+        candidate_id=candidate_id,
+        user_id=current_user.id,
+        category=data.get('category'),
+        subcategory=data.get('subcategory'),
+        score=float(data.get('score', 0)),
+        max_score=float(data.get('max_score', 10)),
+        weight=float(data.get('weight', 1.0)),
+        notes=data.get('notes')
+    )
+    
+    db.session.add(new_score)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Punteggio aggiunto con successo',
+        'score_id': new_score.id
+    }), 201

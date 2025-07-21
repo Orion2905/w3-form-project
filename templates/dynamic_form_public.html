@@ -1,29 +1,72 @@
 {% extends 'layout_full.html' %}
 {% set show_sidebar_toggle = False %}
 {% block main_content %}
+<style>
+.required-field::after {
+  content: " *";
+  color: red;
+  font-weight: bold;
+}
+
+.missing-field {
+  border: 2px solid #dc3545 !important;
+  background-color: #f8d7da !important;
+}
+
+.missing-fields-summary {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.missing-fields-summary.show {
+  display: block;
+}
+
+.validation-error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+</style>
+
 <div class="d-flex justify-content-center">
   <div class="card p-4 my-5" style="width: 100%; max-width: 900px;">
     <h2 class="mb-4 text-center">{{ form.name }}</h2>
+    
+    <!-- Sommario campi mancanti -->
+    <div id="missingFieldsSummary" class="missing-fields-summary">
+      <h5><i class="bi bi-exclamation-triangle"></i> Campi Obbligatori Mancanti:</h5>
+      <ul id="missingFieldsList"></ul>
+      <p class="mb-0"><small>I campi contrassegnati con <span class="text-danger">*</span> sono obbligatori.</small></p>
+    </div>
+    
     <div class="step-indicator mb-4">
       <div class="step active" id="step-ind-1">1</div>
       <div class="step" id="step-ind-2">2</div>
       <div class="step" id="step-ind-3">3</div>
     </div>
     <form id="candidateForm" enctype="multipart/form-data" method="post">
+      <!-- Campo nascosto per l'ID del form -->
+      <input type="hidden" name="form_id" value="{{ form.id }}">
+      
       <!-- Step 1: Dati anagrafici -->
       <div class="form-step active" id="step-1">
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="first_name" class="form-label">First Name</label>
+              <label for="first_name" class="form-label required-field">Nome</label>
               <input type="text" class="form-control" id="first_name" name="first_name" required>
             </div>
             <div class="mb-3">
-              <label for="last_name" class="form-label">Last Name</label>
+              <label for="last_name" class="form-label required-field">Cognome</label>
               <input type="text" class="form-control" id="last_name" name="last_name" required>
             </div>
             <div class="mb-3">
-              <label for="gender" class="form-label">Gender</label>
+              <label for="gender" class="form-label required-field">Genere</label>
               <select class="form-select" id="gender" name="gender" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.gender or ['M','F','Altro'] %}
@@ -32,19 +75,19 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="date_of_birth" class="form-label">Date of Birth</label>
+              <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
               <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
             </div>
             <div class="mb-3">
-              <label for="place_of_birth" class="form-label">Place of Birth</label>
+              <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
               <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
             </div>
             <div class="mb-3">
-              <label for="nationality" class="form-label">Nationality</label>
+              <label for="nationality" class="form-label required-field">Nazionalità</label>
               <input type="text" class="form-control" id="nationality" name="nationality" required>
             </div>
             <div class="mb-3">
-              <label for="marital_status" class="form-label">Marital Status</label>
+              <label for="marital_status" class="form-label required-field">Stato Civile</label>
               <select class="form-select" id="marital_status" name="marital_status" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.marital_status or ['Celibe/Nubile','Sposato/a','Divorziato/a','Vedovo/a'] %}
@@ -52,19 +95,28 @@
                 {% endfor %}
               </select>
             </div>
+            <div class="mb-3">
+              <label for="come_sei_arrivato" class="form-label required-field">Come sei arrivato a noi</label>
+              <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
+                <option value="">Seleziona</option>
+                {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social Media','Sito Web','Altro'] %}
+                <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="height_cm" class="form-label">Height (cm)</label>
-              <input type="number" class="form-control" id="height_cm" name="height_cm">
+              <label for="height_cm" class="form-label required-field">Altezza (cm)</label>
+              <input type="number" class="form-control" id="height_cm" name="height_cm" required>
             </div>
             <div class="mb-3">
-              <label for="weight_kg" class="form-label">Weight (kg)</label>
-              <input type="number" class="form-control" id="weight_kg" name="weight_kg">
+              <label for="weight_kg" class="form-label required-field">Peso (kg)</label>
+              <input type="number" class="form-control" id="weight_kg" name="weight_kg" required>
             </div>
             <div class="mb-3">
-              <label for="tshirt_size" class="form-label">T-Shirt Size</label>
-              <select class="form-select" id="tshirt_size" name="tshirt_size">
+              <label for="tshirt_size" class="form-label required-field">Taglia T-shirt</label>
+              <select class="form-select" id="tshirt_size" name="tshirt_size" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.tshirt_size or ['S','M','L','XL','XXL'] %}
                 <option value="{{ opt }}">{{ opt }}</option>
@@ -72,19 +124,19 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="shoe_size_eu" class="form-label">Shoe Size (EU)</label>
-              <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu">
+              <label for="shoe_size_eu" class="form-label required-field">Numero Scarpe (EU)</label>
+              <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu" required>
             </div>
             <div class="mb-3">
-              <label for="phone_number" class="form-label">Phone Number</label>
-              <input type="text" class="form-control" id="phone_number" name="phone_number">
+              <label for="phone_number" class="form-label required-field">Numero di Telefono</label>
+              <input type="text" class="form-control" id="phone_number" name="phone_number" required>
             </div>
             <div class="mb-3">
-              <label for="email" class="form-label">Email Address</label>
-              <input type="email" class="form-control" id="email" name="email">
+              <label for="email" class="form-label required-field">Indirizzo Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">Immagine Profilo</label>
+              <label class="form-label required-field">Immagine Profilo</label>
               <div class="btn-group mb-2" role="group">
                 <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_upload" autocomplete="off" checked>
                 <label class="btn btn-outline-primary" for="photo_mode_upload">Carica file</label>
@@ -92,12 +144,18 @@
                 <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
               </div>
               <div id="photo_upload_area">
-                <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+                <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
               </div>
               <div id="photo_camera_area" style="display:none;">
-                <video id="profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
-                <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
-                <canvas id="profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+                <div id="camera_instructions_area" class="alert alert-info">
+                  <p><strong>Prima di scattare la foto, leggi le istruzioni!</strong></p>
+                  <button type="button" class="btn btn-primary btn-sm" id="showInstructionsBtn">Visualizza Istruzioni Foto</button>
+                </div>
+                <div id="camera_ready_area" style="display:none;">
+                  <video id="profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
+                  <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
+                  <canvas id="profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+                </div>
               </div>
               <div class="mt-2">
                 <img id="profile_photo_preview" src="" alt="Anteprima foto" class="rounded shadow" style="max-width:100px; max-height:100px; display:none;">
@@ -105,15 +163,6 @@
             </div>
           </div>
         </div>
-        <div class="mb-3">
-              <label for="come_sei_arrivato" class="form-label">Come sei arrivato a noi?</label>
-              <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social','Sito web','Altro'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
         <div class="d-flex justify-content-end">
           <button type="button" class="btn btn-primary" id="next1">Avanti &rarr;</button>
         </div>
@@ -123,85 +172,91 @@
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="address" class="form-label">Address</label>
-              <input type="text" class="form-control" id="address" name="address">
+              <label for="address" class="form-label required-field">Indirizzo</label>
+              <input type="text" class="form-control" id="address" name="address" required>
             </div>
             <div class="mb-3">
-              <label for="city" class="form-label">City</label>
-              <input type="text" class="form-control" id="city" name="city">
+              <label for="city" class="form-label required-field">Città</label>
+              <input type="text" class="form-control" id="city" name="city" required>
             </div>
             <div class="mb-3">
-              <label for="postal_code" class="form-label">Postal Code</label>
-              <input type="text" class="form-control" id="postal_code" name="postal_code">
+              <label for="postal_code" class="form-label required-field">Codice Postale</label>
+              <input type="text" class="form-control" id="postal_code" name="postal_code" required>
             </div>
             <div class="mb-3">
-              <label for="country_of_residence" class="form-label">Country of Residence</label>
-              <input type="text" class="form-control" id="country_of_residence" name="country_of_residence">
+              <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
+              <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
             </div>
             <div class="mb-3">
-              <label for="id_document" class="form-label">ID (Document)</label>
-              <select class="form-select" id="id_document" name="id_document">
+              <label for="id_document" class="form-label required-field">Tipo Documento</label>
+              <select class="form-select" id="id_document" name="id_document" required>
                 <option value="">Seleziona</option>
-                {% for opt in dropdown_options.id_document or ['Carta identità','Passaporto','Patente'] %}
+                {% for opt in dropdown_options.id_document or ['Carta identità','Passaporto','Permesso di soggiorno','Codice Fiscale'] %}
                 <option value="{{ opt }}">{{ opt }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="mb-3">
-              <label for="id_number" class="form-label">ID Number</label>
-              <input type="text" class="form-control" id="id_number" name="id_number">
+              <label for="id_number" class="form-label required-field">Numero Documento</label>
+              <input type="text" class="form-control" id="id_number" name="id_number" required>
             </div>
             <div class="mb-3">
-              <label for="id_expiry_date" class="form-label">ID Expiry Date</label>
-              <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date">
+              <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
+              <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
             </div>
             <div class="mb-3">
-              <label for="id_country" class="form-label">ID Country</label>
-              <input type="text" class="form-control" id="id_country" name="id_country">
+              <label for="id_country" class="form-label required-field">Paese Documento</label>
+              <input type="text" class="form-control" id="id_country" name="id_country" required>
+            </div>
+            <div class="mb-3">
+              <label for="additional_document" class="form-label">Additional Document</label>
+              <input type="text" class="form-control" id="additional_document" name="additional_document" placeholder="Es: Tessera sanitaria, Carta regionale servizi, ecc.">
+            </div>
+            <div class="mb-3">
+              <label for="codice_fiscale" class="form-label">Codice Fiscale</label>
+              <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z">
+            </div>
+            <div class="mb-3">
+              <label for="permesso_soggiorno" class="form-label">Numero Permesso di Soggiorno</label>
+              <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789">
             </div>
           </div>
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="license_country" class="form-label">License Country</label>
-              <input type="text" class="form-control" id="license_country" name="license_country">
+              <label for="license_country" class="form-label required-field">Paese Patente</label>
+              <input type="text" class="form-control" id="license_country" name="license_country" required>
             </div>
             <div class="mb-3">
-              <label for="license_number" class="form-label">License Number</label>
-              <input type="text" class="form-control" id="license_number" name="license_number">
+              <label for="license_number" class="form-label required-field">Numero Patente</label>
+              <input type="text" class="form-control" id="license_number" name="license_number" required>
             </div>
             <div class="mb-3">
-              <label for="license_category" class="form-label">License Category</label>
-              <select class="form-select" id="license_category" name="license_category">
+              <label for="license_category" class="form-label required-field">Drive License</label>
+              <input type="text" class="form-control" id="license_category" name="license_category" required>
+            </div>
+            <div class="mb-3">
+              <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
+              <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
+            </div>
+            <div class="mb-3">
+              <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
+              <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
+            </div>
+            <div class="mb-3">
+              <label for="years_driving_experience" class="form-label required-field">Anni di Esperienza di Guida</label>
+              <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience" required>
+            </div>
+            <div class="mb-3">
+              <label for="auto_moto_munito" class="form-label required-field">Auto/Moto Munito</label>
+              <select class="form-select" id="auto_moto_munito" name="auto_moto_munito" required>
                 <option value="">Seleziona</option>
-                {% for opt in dropdown_options.license_category or ['A','B','C','D','E'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
+                <option value="1">Sì</option>
+                <option value="0">No</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="license_issue_date" class="form-label">License Issue Date</label>
-              <input type="date" class="form-control" id="license_issue_date" name="license_issue_date">
-            </div>
-            <div class="mb-3">
-              <label for="license_expiry_date" class="form-label">License Expiry Date</label>
-              <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date">
-            </div>
-            <div class="mb-3">
-              <label for="years_driving_experience" class="form-label">Years of Driving Experience</label>
-              <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience">
-            </div>
-            <div class="mb-3">
-              <label for="auto_moto_munito" class="form-label">Auto/Moto Munito</label>
-              <select class="form-select" id="auto_moto_munito" name="auto_moto_munito">
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.auto_moto_munito or ['Sì','No'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="curriculum_file" class="form-label">Curriculum (PDF/DOCX)</label>
-              <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx">
+              <label for="curriculum_file" class="form-label required-field">Curriculum (PDF/DOCX)</label>
+              <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx" required>
             </div>
           </div>
         </div>
@@ -215,36 +270,40 @@
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="occupation" class="form-label">Occupation</label>
-              <input type="text" class="form-control" id="occupation" name="occupation">
+              <label for="occupation" class="form-label required-field">Occupazione</label>
+              <input type="text" class="form-control" id="occupation" name="occupation" required>
             </div>
             <div class="mb-3">
-              <label for="other_experience" class="form-label">Other Experience</label>
-              <textarea class="form-control" id="other_experience" name="other_experience"></textarea>
+              <label for="other_experience" class="form-label required-field">Altre Esperienze</label>
+              <textarea class="form-control" id="other_experience" name="other_experience" required></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="availability_from" class="form-label required-field">Disponibilità Da</label>
+                  <input type="date" class="form-control" id="availability_from" name="availability_from" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="availability_till" class="form-label">Disponibilità Fino A</label>
+                  <input type="date" class="form-control" id="availability_till" name="availability_till">
+                </div>
+              </div>
             </div>
             <div class="mb-3">
-              <label for="availability" class="form-label">Availability</label>
-              <select class="form-select" id="availability" name="availability">
-                <option value="">Seleziona</option>
-                <option value="Immediata">Immediata</option>
-                <option value="1 settimana">1 settimana</option>
-                <option value="2 settimane">2 settimane</option>
-                <option value="Altro">Altro</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="other_location" class="form-label">Other Location</label>
-              <input type="text" class="form-control" id="other_location" name="other_location">
+              <label for="other_location" class="form-label required-field">City/Cities of Availability</label>
+              <input type="text" class="form-control" id="other_location" name="other_location" required placeholder="Es: Milano, Roma, Torino o disponibile per trasferte">
             </div>
           </div>
           <div class="col-md-6">
             <div class="mb-3">
-              <label for="language_1" class="form-label">Language 1</label>
-              <input type="text" class="form-control" id="language_1" name="language_1">
+              <label for="language_1" class="form-label required-field">Lingua 1</label>
+              <input type="text" class="form-control" id="language_1" name="language_1" required>
             </div>
             <div class="mb-3">
-              <label for="proficiency_1" class="form-label">Proficiency 1</label>
-              <select class="form-select" id="proficiency_1" name="proficiency_1">
+              <label for="proficiency_1" class="form-label required-field">Livello 1</label>
+              <select class="form-select" id="proficiency_1" name="proficiency_1" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.proficiency_1 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
                 <option value="{{ opt }}">{{ opt }}</option>
@@ -252,11 +311,11 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="language_2" class="form-label">Language 2</label>
+              <label for="language_2" class="form-label">Lingua 2</label>
               <input type="text" class="form-control" id="language_2" name="language_2">
             </div>
             <div class="mb-3">
-              <label for="proficiency_2" class="form-label">Proficiency 2</label>
+              <label for="proficiency_2" class="form-label">Livello 2</label>
               <select class="form-select" id="proficiency_2" name="proficiency_2">
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.proficiency_2 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
@@ -265,11 +324,11 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="language_3" class="form-label">Language 3</label>
+              <label for="language_3" class="form-label">Lingua 3</label>
               <input type="text" class="form-control" id="language_3" name="language_3">
             </div>
             <div class="mb-3">
-              <label for="proficiency_3" class="form-label">Proficiency 3</label>
+              <label for="proficiency_3" class="form-label">Livello 3</label>
               <select class="form-select" id="proficiency_3" name="proficiency_3">
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.proficiency_3 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
@@ -279,6 +338,21 @@
             </div>
           </div>
         </div>
+        
+        <!-- Consenso GDPR -->
+        <div class="row">
+          <div class="col-12">
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="gdpr_consent" name="gdpr_consent" required>
+                <label class="form-check-label required-field" for="gdpr_consent">
+                  <strong>ACCONSENTE</strong> ai sensi e per gli effetti degli artt. 13 e 23 del D. Lgs. n. 196/2003, con la sottoscrizione del presente modulo, al trattamento dei dati personali secondo le modalità e nei limiti di cui all'informativa allegata. <span class="text-danger">*</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="d-flex justify-content-between">
           <button type="button" class="btn btn-secondary" id="prev3">&larr; Indietro</button>
           <button type="submit" class="btn btn-success">Invia candidatura</button>
@@ -295,18 +369,240 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Istruzioni Foto -->
+<div class="modal fade" id="photoInstructionsModal" tabindex="-1" aria-labelledby="photoInstructionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="photoInstructionsModalLabel">
+          <i class="bi bi-camera"></i> Istruzioni per la Foto Profilo
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <p class="lead">Leggi attentamente le istruzioni per scattare una foto perfetta</p>
+        </div>
+        
+        <!-- PDF Iframe -->
+        <div class="ratio ratio-16x9 mb-4">
+          <iframe 
+            src="https://w3data.blob.core.windows.net/public-docs/Istruzioni%20foto.pdf" 
+            title="Istruzioni Foto PDF"
+            style="border: 1px solid #dee2e6; border-radius: 0.375rem;">
+          </iframe>
+        </div>
+        
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i>
+          <strong>Importante:</strong> Assicurati di seguire tutte le indicazioni del documento per ottenere una foto di qualità professionale.
+        </div>
+        
+        <div class="text-center">
+          <h5 class="mb-3">Hai capito come fare la foto?</h5>
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-success btn-lg" id="confirmInstructionsBtn">
+              <i class="bi bi-check-circle"></i> Sì, ho capito
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+              <i class="bi bi-arrow-left"></i> Rileggi le istruzioni
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
+// CONFIGURAZIONE TEST - Imposta a true per disabilitare la validazione obbligatoria
+const DISABLE_REQUIRED_VALIDATION = false; // Cambia a true per i test
+
 // Gestione step form
 const steps = document.querySelectorAll('.form-step');
 const indicators = document.querySelectorAll('.step-indicator .step');
 let currentStep = 0;
+
+// Lista di tutti i campi obbligatori
+const requiredFields = [
+  'first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
+  'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
+  'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo',
+  'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
+  'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
+  'license_category', 'license_issue_date', 'license_expiry_date', 
+  'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
+  'occupation', 'other_experience', 'availability_from', 'other_location', 
+  'language_1', 'proficiency_1', 'gdpr_consent'
+];
+
+// Mappatura dei nomi dei campi in italiano
+const fieldLabels = {
+  'first_name': 'Nome',
+  'last_name': 'Cognome',
+  'gender': 'Genere',
+  'date_of_birth': 'Data di Nascita',
+  'place_of_birth': 'Luogo di Nascita',
+  'nationality': 'Nazionalità',
+  'marital_status': 'Stato Civile',
+  'come_sei_arrivato': 'Come sei arrivato a noi',
+  'height_cm': 'Altezza (cm)',
+  'weight_kg': 'Peso (kg)',
+  'tshirt_size': 'Taglia T-shirt',
+  'shoe_size_eu': 'Numero Scarpe (EU)',
+  'phone_number': 'Numero di Telefono',
+  'email': 'Indirizzo Email',
+  'profile_photo': 'Immagine Profilo',
+  'address': 'Indirizzo',
+  'city': 'Città',
+  'postal_code': 'Codice Postale',
+  'country_of_residence': 'Paese di Residenza',
+  'id_document': 'Tipo Documento',
+  'id_number': 'Numero Documento',
+  'id_expiry_date': 'Scadenza Documento',
+  'id_country': 'Paese Documento',
+  'codice_fiscale': 'Codice Fiscale',
+  'permesso_soggiorno': 'Numero Permesso di Soggiorno',
+  'license_country': 'Paese Patente',
+  'license_number': 'Numero Patente',
+  'license_category': 'Drive License',
+  'license_issue_date': 'Data Rilascio Patente',
+  'license_expiry_date': 'Scadenza Patente',
+  'years_driving_experience': 'Anni di Esperienza di Guida',
+  'auto_moto_munito': 'Auto/Moto Munito',
+  'curriculum_file': 'Curriculum',
+  'occupation': 'Occupazione',
+  'other_experience': 'Altre Esperienze',
+  'availability_from': 'Disponibilità Da',
+  'availability_till': 'Disponibilità Fino A',
+  'other_location': 'City/Cities of Availability',
+  'language_1': 'Lingua 1',
+  'proficiency_1': 'Livello 1',
+  'gdpr_consent': 'Consenso al trattamento dei dati personali'
+};
+
+function validateField(fieldId) {
+  const field = document.getElementById(fieldId);
+  if (!field) return true;
+  
+  // Se la validazione è disabilitata per i test, considera tutti i campi validi
+  if (DISABLE_REQUIRED_VALIDATION) {
+    field.classList.remove('missing-field');
+    return true;
+  }
+  
+  let isValid = true;
+  
+  if (field.type === 'file') {
+    // Per il campo foto, considera anche la foto scattata con webcam
+    if (fieldId === 'profile_photo') {
+      if (photoModeCamera.checked) {
+        // Se è in modalità camera, deve aver confermato le istruzioni e scattato la foto
+        isValid = instructionsConfirmed && capturedPhotoBlob;
+      } else {
+        // Se è in modalità upload, deve aver selezionato un file
+        isValid = field.files && field.files.length > 0;
+      }
+    } else {
+      isValid = field.files && field.files.length > 0;
+    }
+  } else if (field.tagName === 'SELECT') {
+    isValid = field.value !== '';
+  } else if (field.type === 'checkbox') {
+    isValid = field.checked;
+  } else {
+    isValid = field.value.trim() !== '';
+  }
+  
+  // Aggiungi/rimuovi la classe per evidenziare i campi mancanti
+  if (isValid) {
+    field.classList.remove('missing-field');
+  } else {
+    field.classList.add('missing-field');
+  }
+  
+  return isValid;
+}
+
+function validateCurrentStep() {
+  const stepFields = {
+    0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
+        'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
+        'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
+    1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
+        'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
+        'license_category', 'license_issue_date', 'license_expiry_date', 
+        'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
+    2: ['occupation', 'other_experience', 'availability_from', 'other_location', 
+        'language_1', 'proficiency_1', 'gdpr_consent']
+  };
+  
+  const currentStepFields = stepFields[currentStep] || [];
+  let allValid = true;
+  
+  currentStepFields.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      allValid = false;
+    }
+  });
+  
+  return allValid;
+}
+
+function showMissingFieldsSummary() {
+  // Se la validazione è disabilitata per i test, considera sempre valido
+  if (DISABLE_REQUIRED_VALIDATION) {
+    const summaryDiv = document.getElementById('missingFieldsSummary');
+    summaryDiv.classList.remove('show');
+    return true;
+  }
+  
+  const missingFields = [];
+  
+  requiredFields.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      missingFields.push(fieldLabels[fieldId] || fieldId);
+    }
+  });
+  
+  const summaryDiv = document.getElementById('missingFieldsSummary');
+  const listEl = document.getElementById('missingFieldsList');
+  
+  if (missingFields.length > 0) {
+    listEl.innerHTML = missingFields.map(field => `<li>${field}</li>`).join('');
+    summaryDiv.classList.add('show');
+    
+    // Scroll alla summary
+    summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    summaryDiv.classList.remove('show');
+  }
+  
+  return missingFields.length === 0;
+}
+
 function showStep(idx) {
   steps.forEach((s, i) => s.classList.toggle('active', i === idx));
   indicators.forEach((el, i) => el.classList.toggle('active', i === idx));
   currentStep = idx;
+  
+  // Nascondi il sommario quando cambi step
+  document.getElementById('missingFieldsSummary').classList.remove('show');
 }
-document.getElementById('next1').onclick = () => showStep(1);
-document.getElementById('next2').onclick = () => showStep(2);
+
+function nextStep() {
+  if (validateCurrentStep()) {
+    if (currentStep < steps.length - 1) {
+      showStep(currentStep + 1);
+    }
+  } else {
+    alert('Per favore, compila tutti i campi obbligatori prima di continuare.');
+  }
+}
+
+// Event listeners per i pulsanti di navigazione
+document.getElementById('next1').onclick = nextStep;
+document.getElementById('next2').onclick = nextStep;
 document.getElementById('prev2').onclick = () => showStep(0);
 document.getElementById('prev3').onclick = () => showStep(1);
 
@@ -315,12 +611,17 @@ const photoModeUpload = document.getElementById('photo_mode_upload');
 const photoModeCamera = document.getElementById('photo_mode_camera');
 const photoUploadArea = document.getElementById('photo_upload_area');
 const photoCameraArea = document.getElementById('photo_camera_area');
+const cameraInstructionsArea = document.getElementById('camera_instructions_area');
+const cameraReadyArea = document.getElementById('camera_ready_area');
 const profilePhotoFile = document.getElementById('profile_photo');
 const profilePhotoVideo = document.getElementById('profile_photo_video');
 const profilePhotoCanvas = document.getElementById('profile_photo_canvas');
 const profilePhotoPreview = document.getElementById('profile_photo_preview');
+const showInstructionsBtn = document.getElementById('showInstructionsBtn');
+const confirmInstructionsBtn = document.getElementById('confirmInstructionsBtn');
 let webcamStream = null;
 let capturedPhotoBlob = null;
+let instructionsConfirmed = false;
 
 photoModeUpload.addEventListener('change', function() {
   if(this.checked) {
@@ -329,7 +630,10 @@ photoModeUpload.addEventListener('change', function() {
     profilePhotoFile.value = '';
     profilePhotoPreview.style.display = 'none';
     capturedPhotoBlob = null;
+    instructionsConfirmed = false;
     stopWebcam();
+    // Rivalidare il campo foto
+    validateField('profile_photo');
   }
 });
 
@@ -337,11 +641,38 @@ photoModeCamera.addEventListener('change', function() {
   if(this.checked) {
     photoUploadArea.style.display = 'none';
     photoCameraArea.style.display = 'block';
+    cameraInstructionsArea.style.display = 'block';
+    cameraReadyArea.style.display = 'none';
     profilePhotoPreview.style.display = 'none';
     profilePhotoFile.value = '';
     capturedPhotoBlob = null;
-    startWebcam();
+    instructionsConfirmed = false;
+    stopWebcam();
   }
+});
+
+// Gestione modal istruzioni
+showInstructionsBtn.addEventListener('click', function() {
+  const modal = new bootstrap.Modal(document.getElementById('photoInstructionsModal'));
+  modal.show();
+});
+
+confirmInstructionsBtn.addEventListener('click', function() {
+  instructionsConfirmed = true;
+  
+  // Chiudi il modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('photoInstructionsModal'));
+  modal.hide();
+  
+  // Nascondi le istruzioni e mostra la webcam
+  cameraInstructionsArea.style.display = 'none';
+  cameraReadyArea.style.display = 'block';
+  
+  // Avvia la webcam
+  startWebcam();
+  
+  // Rivalidare il campo foto quando le istruzioni sono confermate
+  setTimeout(() => validateField('profile_photo'), 100);
 });
 
 function startWebcam() {
@@ -355,6 +686,7 @@ function startWebcam() {
       alert('Impossibile accedere alla webcam.');
     });
 }
+
 function stopWebcam() {
   if (webcamStream) {
     webcamStream.getTracks().forEach(track => track.stop());
@@ -362,6 +694,7 @@ function stopWebcam() {
   }
   profilePhotoVideo.srcObject = null;
 }
+
 document.getElementById('takePhotoBtn').addEventListener('click', function() {
   profilePhotoCanvas.width = profilePhotoVideo.videoWidth;
   profilePhotoCanvas.height = profilePhotoVideo.videoHeight;
@@ -371,8 +704,11 @@ document.getElementById('takePhotoBtn').addEventListener('click', function() {
     const url = URL.createObjectURL(blob);
     profilePhotoPreview.src = url;
     profilePhotoPreview.style.display = 'block';
+    // Rivalidare il campo foto dopo aver scattato
+    validateField('profile_photo');
   }, 'image/jpeg');
 });
+
 profilePhotoFile.addEventListener('change', function() {
   const file = this.files[0];
   if(file) {
@@ -381,28 +717,51 @@ profilePhotoFile.addEventListener('change', function() {
     profilePhotoPreview.style.display = 'block';
     capturedPhotoBlob = null;
   }
+  // Rivalidare il campo foto dopo il caricamento
+  validateField('profile_photo');
 });
-// Modifica invio form per includere foto scattata
+
+// Aggiungi validazione in tempo reale
+requiredFields.forEach(fieldId => {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.addEventListener('change', () => validateField(fieldId));
+    field.addEventListener('input', () => validateField(fieldId));
+  }
+});
+
+// Modifica invio form per includere foto scattata e validazione
 const form = document.getElementById('candidateForm');
 form.onsubmit = async function(e) {
   e.preventDefault();
+  
+  // Valida tutti i campi prima dell'invio
+  if (!showMissingFieldsSummary()) {
+    alert('Per favore, compila tutti i campi obbligatori prima di inviare il form.');
+    return;
+  }
+  
   document.getElementById('form-error').classList.add('d-none');
   document.getElementById('form-success').classList.add('d-none');
   document.getElementById('form-loading').classList.remove('d-none');
   const submitBtn = form.querySelector('[type="submit"]');
   if(submitBtn) submitBtn.disabled = true;
+  
   try {
     const formData = new FormData(form);
     if(photoModeCamera.checked && capturedPhotoBlob) {
       formData.set('profile_photo', capturedPhotoBlob, 'profile_photo.jpg');
     }
+    
     const resp = await fetch('/api/candidates/upload', {
       method: 'POST',
       body: formData
     });
     const data = await resp.json();
+    
     document.getElementById('form-loading').classList.add('d-none');
     if(submitBtn) submitBtn.disabled = false;
+    
     if(data.success) {
       window.location.href = '/success';
     } else {
@@ -415,7 +774,158 @@ form.onsubmit = async function(e) {
     document.getElementById('form-error').textContent = 'Errore di rete o server';
     document.getElementById('form-error').classList.remove('d-none');
   }
+  
   stopWebcam();
 };
+
+// Validazione iniziale
+document.addEventListener('DOMContentLoaded', function() {
+  // Nascondi il sommario all'inizio
+  document.getElementById('missingFieldsSummary').classList.remove('show');
+  
+  // Log per modalità test
+  if (DISABLE_REQUIRED_VALIDATION) {
+    console.warn('⚠️ MODALITÀ TEST ATTIVA: La validazione dei campi obbligatori è disabilitata!');
+    console.warn('Per riabilitare la validazione, imposta DISABLE_REQUIRED_VALIDATION = false');
+    
+    // Aggiungi banner di avviso visuale
+    const testBanner = document.createElement('div');
+    testBanner.className = 'alert alert-warning alert-dismissible fade show';
+    testBanner.style.marginBottom = '1rem';
+    testBanner.innerHTML = `
+      <strong><i class="bi bi-exclamation-triangle"></i> MODALITÀ TEST ATTIVA</strong><br>
+      La validazione dei campi obbligatori è disabilitata per i test.
+      <button type="button" class="btn btn-primary btn-sm mt-2" id="fillTestDataBtn">
+        <i class="bi bi-magic"></i> Compila dati di test
+      </button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+    `;
+    
+    // Inserisci il banner dopo il titolo
+    const titleElement = document.querySelector('h2');
+    if (titleElement) {
+      titleElement.insertAdjacentElement('afterend', testBanner);
+    }
+    
+    // Aggiungi event listener per il pulsante di auto-compilazione
+    setTimeout(() => {
+      const fillTestDataBtn = document.getElementById('fillTestDataBtn');
+      if (fillTestDataBtn) {
+        fillTestDataBtn.addEventListener('click', fillTestData);
+      }
+    }, 100);
+  }
+});
+
+// Funzione per compilare automaticamente i campi con dati di test
+function fillTestData() {
+  console.log('🔧 Compilazione automatica dati di test...');
+  
+  // Dati di test
+  const testData = {
+    // Step 1: Dati anagrafici
+    'first_name': 'Mario',
+    'last_name': 'Rossi',
+    'gender': 'M',
+    'date_of_birth': '1990-05-15',
+    'place_of_birth': 'Roma',
+    'nationality': 'Italiana',
+    'marital_status': 'Celibe/Nubile',
+    'come_sei_arrivato': 'Passaparola',
+    'height_cm': '175',
+    'weight_kg': '70',
+    'tshirt_size': 'M',
+    'shoe_size_eu': '42',
+    'phone_number': '+39 333 1234567',
+    'email': 'mario.rossi@test.com',
+    
+    // Step 2: Documenti e patente
+    'address': 'Via Roma 123',
+    'city': 'Milano',
+    'postal_code': '20100',
+    'country_of_residence': 'Italia',
+    'id_document': 'Carta identità',
+    'id_number': 'CA1234567',
+    'id_expiry_date': '2030-12-31',
+    'id_country': 'Italia',
+    'additional_document': 'Tessera sanitaria',
+    'codice_fiscale': 'RSSMRA90E15H501Z',
+    'permesso_soggiorno': '',
+    'license_country': 'Italia',
+    'license_number': 'MI1234567',
+    'license_category': 'B',
+    'license_issue_date': '2010-06-01',
+    'license_expiry_date': '2040-06-01',
+    'years_driving_experience': '14',
+    'auto_moto_munito': '1',
+    
+    // Step 3: Esperienze e lingue
+    'occupation': 'Sviluppatore Software',
+    'other_experience': 'Esperienza di 5 anni nel settore IT, specializzato in applicazioni web e mobile. Competenze in JavaScript, Python, React.',
+    'availability_from': '2025-08-01',
+    'availability_till': '2025-12-31',
+    'other_location': 'Milano, Roma, disponibile per trasferte',
+    'language_1': 'Italiano',
+    'proficiency_1': 'Madrelingua',
+    'language_2': 'Inglese',
+    'proficiency_2': 'Avanzato',
+    'language_3': 'Francese',
+    'proficiency_3': 'Base',
+    'gdpr_consent': true
+  };
+  
+  // Compila i campi (esclusi curriculum e foto)
+  Object.entries(testData).forEach(([fieldId, value]) => {
+    if (!value) return; // Salta campi vuoti
+    
+    const field = document.getElementById(fieldId);
+    if (field) {
+      if (field.tagName === 'SELECT') {
+        // Per i campi select, trova l'opzione corrispondente
+        const options = field.querySelectorAll('option');
+        for (let option of options) {
+          if (option.value === value || option.textContent.trim() === value) {
+            field.value = option.value;
+            break;
+          }
+        }
+      } else if (field.type === 'checkbox') {
+        // Per i checkbox, imposta checked
+        field.checked = Boolean(value);
+      } else {
+        field.value = value;
+      }
+      
+      // Trigger evento per aggiornare la validazione
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+  
+  console.log('✅ Dati di test compilati automaticamente!');
+  console.log('📄 Ricorda di caricare manualmente il curriculum e la foto');
+  
+  // Mostra un messaggio di conferma
+  const successMessage = document.createElement('div');
+  successMessage.className = 'alert alert-success alert-dismissible fade show mt-2';
+  successMessage.innerHTML = `
+    <strong><i class="bi bi-check-circle"></i> Dati di test compilati!</strong><br>
+    <small>Ricorda di caricare manualmente il curriculum e la foto profilo.</small>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+  `;
+  
+  // Inserisci dopo il banner di test
+  const testBanner = document.querySelector('.alert-warning');
+  if (testBanner) {
+    testBanner.insertAdjacentElement('afterend', successMessage);
+    
+    // Rimuovi il messaggio dopo 5 secondi
+    setTimeout(() => {
+      if (successMessage.parentNode) {
+        successMessage.remove();
+      }
+    }, 5000);
+  }
+}
 </script>
 {% endblock %}

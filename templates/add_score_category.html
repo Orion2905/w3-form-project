@@ -1,0 +1,62 @@
+{% extends "layout_sidebar.html" %}
+
+{% block title %}Aggiungi Categoria Punteggio{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Aggiungi Categoria Punteggio</h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="name">Nome Categoria *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="es. Competenze Tecniche, Soft Skills, etc." required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Descrizione</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Descrizione della categoria di punteggio..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_score">Punteggio Massimo</label>
+                                    <input type="number" class="form-control" id="max_score" name="max_score" 
+                                           min="1" max="100" step="0.1" value="10">
+                                    <small class="form-text text-muted">Punteggio massimo assegnabile per questa categoria</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="weight">Peso</label>
+                                    <input type="number" class="form-control" id="weight" name="weight" 
+                                           min="0.1" max="10" step="0.1" value="1.0">
+                                    <small class="form-text text-muted">Peso della categoria nel calcolo del punteggio totale</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Salva Categoria
+                            </button>
+                            <a href="{{ url_for('main.score_categories') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

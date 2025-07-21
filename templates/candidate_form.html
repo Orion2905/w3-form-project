@@ -1,7 +1,47 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+.required-field::after {
+  content: " *";
+  color: red;
+  font-weight: bold;
+}
+
+.missing-field {
+  border: 2px solid #dc3545 !important;
+  background-color: #f8d7da !important;
+}
+
+.missing-fields-summary {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+
+.missing-fields-summary.show {
+  display: block;
+}
+
+.validation-error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+</style>
+
 <div class="card p-4 mx-auto" style="max-width: 900px;">
   <h2 class="mb-4 text-center">{% if request.path.endswith('aggiungi') %}Aggiungi Candidato{% else %}Modifica Candidato{% endif %}</h2>
+  
+  <!-- Sommario campi mancanti -->
+  <div id="missingFieldsSummary" class="missing-fields-summary">
+    <h5><i class="bi bi-exclamation-triangle"></i> Campi Obbligatori Mancanti:</h5>
+    <ul id="missingFieldsList"></ul>
+    <p class="mb-0"><small>I campi contrassegnati con <span class="text-danger">*</span> sono obbligatori.</small></p>
+  </div>
+  
   <div class="step-indicator mb-4">
     <div class="step active" id="step-ind-1">1</div>
     <div class="step" id="step-ind-2">2</div>
@@ -13,15 +53,15 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="first_name" class="form-label">First Name</label>
+            <label for="first_name" class="form-label required-field">Nome</label>
             <input type="text" class="form-control" id="first_name" name="first_name" required>
           </div>
           <div class="mb-3">
-            <label for="last_name" class="form-label">Last Name</label>
+            <label for="last_name" class="form-label required-field">Cognome</label>
             <input type="text" class="form-control" id="last_name" name="last_name" required>
           </div>
           <div class="mb-3">
-            <label for="gender" class="form-label">Gender</label>
+            <label for="gender" class="form-label required-field">Genere</label>
             <select class="form-select" id="gender" name="gender" required>
               <option value="">Seleziona</option>
               <option value="M">Maschio</option>
@@ -30,19 +70,19 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="date_of_birth" class="form-label">Date of Birth</label>
+            <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
             <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
           </div>
           <div class="mb-3">
-            <label for="place_of_birth" class="form-label">Place of Birth</label>
+            <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
             <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
           </div>
           <div class="mb-3">
-            <label for="nationality" class="form-label">Nationality</label>
+            <label for="nationality" class="form-label required-field">Nazionalità</label>
             <input type="text" class="form-control" id="nationality" name="nationality" required>
           </div>
           <div class="mb-3">
-            <label for="marital_status" class="form-label">Marital Status</label>
+            <label for="marital_status" class="form-label required-field">Stato Civile</label>
             <select class="form-select" id="marital_status" name="marital_status" required>
               <option value="">Seleziona</option>
               <option value="Celibe/Nubile">Celibe/Nubile</option>
@@ -51,19 +91,29 @@
               <option value="Vedovo/a">Vedovo/a</option>
             </select>
           </div>
+          <div class="mb-3">
+            <label for="come_sei_arrivato" class="form-label required-field">Come sei arrivato a noi</label>
+            <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
+              <option value="">Seleziona</option>
+              <option value="Passaparola">Passaparola</option>
+              <option value="Social Media">Social Media</option>
+              <option value="Sito Web">Sito Web</option>
+              <option value="Altro">Altro</option>
+            </select>
+          </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="height_cm" class="form-label">Height (cm)</label>
-            <input type="number" class="form-control" id="height_cm" name="height_cm">
+            <label for="height_cm" class="form-label required-field">Altezza (cm)</label>
+            <input type="number" class="form-control" id="height_cm" name="height_cm" required>
           </div>
           <div class="mb-3">
-            <label for="weight_kg" class="form-label">Weight (kg)</label>
-            <input type="number" class="form-control" id="weight_kg" name="weight_kg">
+            <label for="weight_kg" class="form-label required-field">Peso (kg)</label>
+            <input type="number" class="form-control" id="weight_kg" name="weight_kg" required>
           </div>
           <div class="mb-3">
-            <label for="tshirt_size" class="form-label">T-Shirt Size</label>
-            <select class="form-select" id="tshirt_size" name="tshirt_size">
+            <label for="tshirt_size" class="form-label required-field">Taglia T-shirt</label>
+            <select class="form-select" id="tshirt_size" name="tshirt_size" required>
               <option value="">Seleziona</option>
               <option value="S">S</option>
               <option value="M">M</option>
@@ -73,20 +123,20 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="shoe_size_eu" class="form-label">Shoe Size (EU)</label>
-            <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu">
+            <label for="shoe_size_eu" class="form-label required-field">Numero Scarpe (EU)</label>
+            <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu" required>
           </div>
           <div class="mb-3">
-            <label for="phone_number" class="form-label">Phone Number</label>
-            <input type="text" class="form-control" id="phone_number" name="phone_number">
+            <label for="phone_number" class="form-label required-field">Numero di Telefono</label>
+            <input type="text" class="form-control" id="phone_number" name="phone_number" required>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">Email Address</label>
-            <input type="email" class="form-control" id="email" name="email">
+            <label for="email" class="form-label required-field">Indirizzo Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
           </div>
           <div class="mb-3">
-            <label for="profile_photo" class="form-label">Immagine Profilo</label>
-            <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+            <label for="profile_photo" class="form-label required-field">Immagine Profilo</label>
+            <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
           </div>
         </div>
       </div>
@@ -99,24 +149,24 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="address" class="form-label">Address</label>
-            <input type="text" class="form-control" id="address" name="address">
+            <label for="address" class="form-label required-field">Indirizzo</label>
+            <input type="text" class="form-control" id="address" name="address" required>
           </div>
           <div class="mb-3">
-            <label for="city" class="form-label">City</label>
-            <input type="text" class="form-control" id="city" name="city">
+            <label for="city" class="form-label required-field">Città</label>
+            <input type="text" class="form-control" id="city" name="city" required>
           </div>
           <div class="mb-3">
-            <label for="postal_code" class="form-label">Postal Code</label>
-            <input type="text" class="form-control" id="postal_code" name="postal_code">
+            <label for="postal_code" class="form-label required-field">Codice Postale</label>
+            <input type="text" class="form-control" id="postal_code" name="postal_code" required>
           </div>
           <div class="mb-3">
-            <label for="country_of_residence" class="form-label">Country of Residence</label>
-            <input type="text" class="form-control" id="country_of_residence" name="country_of_residence">
+            <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
+            <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
           </div>
           <div class="mb-3">
-            <label for="id_document" class="form-label">ID (Document)</label>
-            <select class="form-select" id="id_document" name="id_document">
+            <label for="id_document" class="form-label required-field">Tipo Documento</label>
+            <select class="form-select" id="id_document" name="id_document" required>
               <option value="">Seleziona</option>
               <option value="Carta identità">Carta identità</option>
               <option value="Passaporto">Passaporto</option>
@@ -124,30 +174,30 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="id_number" class="form-label">ID Number</label>
-            <input type="text" class="form-control" id="id_number" name="id_number">
+            <label for="id_number" class="form-label required-field">Numero Documento</label>
+            <input type="text" class="form-control" id="id_number" name="id_number" required>
           </div>
           <div class="mb-3">
-            <label for="id_expiry_date" class="form-label">ID Expiry Date</label>
-            <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date">
+            <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
+            <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
           </div>
           <div class="mb-3">
-            <label for="id_country" class="form-label">ID Country</label>
-            <input type="text" class="form-control" id="id_country" name="id_country">
+            <label for="id_country" class="form-label required-field">Paese Documento</label>
+            <input type="text" class="form-control" id="id_country" name="id_country" required>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="license_country" class="form-label">License Country</label>
-            <input type="text" class="form-control" id="license_country" name="license_country">
+            <label for="license_country" class="form-label required-field">Paese Patente</label>
+            <input type="text" class="form-control" id="license_country" name="license_country" required>
           </div>
           <div class="mb-3">
-            <label for="license_number" class="form-label">License Number</label>
-            <input type="text" class="form-control" id="license_number" name="license_number">
+            <label for="license_number" class="form-label required-field">Numero Patente</label>
+            <input type="text" class="form-control" id="license_number" name="license_number" required>
           </div>
           <div class="mb-3">
-            <label for="license_category" class="form-label">License Category</label>
-            <select class="form-select" id="license_category" name="license_category">
+            <label for="license_category" class="form-label required-field">Categoria Patente</label>
+            <select class="form-select" id="license_category" name="license_category" required>
               <option value="">Seleziona</option>
               <option value="A">A</option>
               <option value="B">B</option>
@@ -157,28 +207,28 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="license_issue_date" class="form-label">License Issue Date</label>
-            <input type="date" class="form-control" id="license_issue_date" name="license_issue_date">
+            <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
+            <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
           </div>
           <div class="mb-3">
-            <label for="license_expiry_date" class="form-label">License Expiry Date</label>
-            <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date">
+            <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
+            <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
           </div>
           <div class="mb-3">
-            <label for="years_driving_experience" class="form-label">Years of Driving Experience</label>
-            <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience">
+            <label for="years_driving_experience" class="form-label required-field">Anni di Esperienza di Guida</label>
+            <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience" required>
           </div>
           <div class="mb-3">
-            <label for="auto_moto_munito" class="form-label">Auto/Moto Munito</label>
-            <select class="form-select" id="auto_moto_munito" name="auto_moto_munito">
+            <label for="auto_moto_munito" class="form-label required-field">Auto/Moto Munito</label>
+            <select class="form-select" id="auto_moto_munito" name="auto_moto_munito" required>
               <option value="">Seleziona</option>
               <option value="1">Sì</option>
               <option value="0">No</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="curriculum_file" class="form-label">Curriculum (PDF/DOCX)</label>
-            <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx">
+            <label for="curriculum_file" class="form-label required-field">Curriculum (PDF/DOCX)</label>
+            <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx" required>
           </div>
         </div>
       </div>
@@ -192,16 +242,16 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="occupation" class="form-label">Occupation</label>
-            <input type="text" class="form-control" id="occupation" name="occupation">
+            <label for="occupation" class="form-label required-field">Occupazione</label>
+            <input type="text" class="form-control" id="occupation" name="occupation" required>
           </div>
           <div class="mb-3">
-            <label for="other_experience" class="form-label">Other Experience</label>
-            <textarea class="form-control" id="other_experience" name="other_experience"></textarea>
+            <label for="other_experience" class="form-label required-field">Altre Esperienze</label>
+            <textarea class="form-control" id="other_experience" name="other_experience" required></textarea>
           </div>
           <div class="mb-3">
-            <label for="availability" class="form-label">Availability</label>
-            <select class="form-select" id="availability" name="availability">
+            <label for="availability" class="form-label required-field">Disponibilità</label>
+            <select class="form-select" id="availability" name="availability" required>
               <option value="">Seleziona</option>
               <option value="Immediata">Immediata</option>
               <option value="1 settimana">1 settimana</option>
@@ -210,18 +260,18 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="other_location" class="form-label">Other Location</label>
-            <input type="text" class="form-control" id="other_location" name="other_location">
+            <label for="other_location" class="form-label required-field">Altra Località</label>
+            <input type="text" class="form-control" id="other_location" name="other_location" required>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="language_1" class="form-label">Language 1</label>
-            <input type="text" class="form-control" id="language_1" name="language_1">
+            <label for="language_1" class="form-label required-field">Lingua 1</label>
+            <input type="text" class="form-control" id="language_1" name="language_1" required>
           </div>
           <div class="mb-3">
-            <label for="proficiency_1" class="form-label">Proficiency 1</label>
-            <select class="form-select" id="proficiency_1" name="proficiency_1">
+            <label for="proficiency_1" class="form-label required-field">Livello 1</label>
+            <select class="form-select" id="proficiency_1" name="proficiency_1" required>
               <option value="">Seleziona</option>
               <option value="Base">Base</option>
               <option value="Intermedio">Intermedio</option>
@@ -230,11 +280,11 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="language_2" class="form-label">Language 2</label>
+            <label for="language_2" class="form-label">Lingua 2</label>
             <input type="text" class="form-control" id="language_2" name="language_2">
           </div>
           <div class="mb-3">
-            <label for="proficiency_2" class="form-label">Proficiency 2</label>
+            <label for="proficiency_2" class="form-label">Livello 2</label>
             <select class="form-select" id="proficiency_2" name="proficiency_2">
               <option value="">Seleziona</option>
               <option value="Base">Base</option>
@@ -244,11 +294,11 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="language_3" class="form-label">Language 3</label>
+            <label for="language_3" class="form-label">Lingua 3</label>
             <input type="text" class="form-control" id="language_3" name="language_3">
           </div>
           <div class="mb-3">
-            <label for="proficiency_3" class="form-label">Proficiency 3</label>
+            <label for="proficiency_3" class="form-label">Livello 3</label>
             <select class="form-select" id="proficiency_3" name="proficiency_3">
               <option value="">Seleziona</option>
               <option value="Base">Base</option>
@@ -271,28 +321,191 @@
 const steps = document.querySelectorAll('.form-step');
 const indicators = document.querySelectorAll('.step-indicator .step');
 let currentStep = 0;
+
+// Lista di tutti i campi obbligatori
+const requiredFields = [
+  'first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
+  'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
+  'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo',
+  'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
+  'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
+  'license_category', 'license_issue_date', 'license_expiry_date', 
+  'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
+  'occupation', 'other_experience', 'availability', 'other_location', 
+  'language_1', 'proficiency_1'
+];
+
+// Mappatura dei nomi dei campi in italiano
+const fieldLabels = {
+  'first_name': 'Nome',
+  'last_name': 'Cognome',
+  'gender': 'Genere',
+  'date_of_birth': 'Data di Nascita',
+  'place_of_birth': 'Luogo di Nascita',
+  'nationality': 'Nazionalità',
+  'marital_status': 'Stato Civile',
+  'come_sei_arrivato': 'Come sei arrivato a noi',
+  'height_cm': 'Altezza (cm)',
+  'weight_kg': 'Peso (kg)',
+  'tshirt_size': 'Taglia T-shirt',
+  'shoe_size_eu': 'Numero Scarpe (EU)',
+  'phone_number': 'Numero di Telefono',
+  'email': 'Indirizzo Email',
+  'profile_photo': 'Immagine Profilo',
+  'address': 'Indirizzo',
+  'city': 'Città',
+  'postal_code': 'Codice Postale',
+  'country_of_residence': 'Paese di Residenza',
+  'id_document': 'Tipo Documento',
+  'id_number': 'Numero Documento',
+  'id_expiry_date': 'Scadenza Documento',
+  'id_country': 'Paese Documento',
+  'license_country': 'Paese Patente',
+  'license_number': 'Numero Patente',
+  'license_category': 'Categoria Patente',
+  'license_issue_date': 'Data Rilascio Patente',
+  'license_expiry_date': 'Scadenza Patente',
+  'years_driving_experience': 'Anni di Esperienza di Guida',
+  'auto_moto_munito': 'Auto/Moto Munito',
+  'curriculum_file': 'Curriculum',
+  'occupation': 'Occupazione',
+  'other_experience': 'Altre Esperienze',
+  'availability': 'Disponibilità',
+  'other_location': 'Altra Località',
+  'language_1': 'Lingua 1',
+  'proficiency_1': 'Livello 1'
+};
+
+function validateField(fieldId) {
+  const field = document.getElementById(fieldId);
+  if (!field) return true;
+  
+  let isValid = true;
+  
+  if (field.type === 'file') {
+    isValid = field.files && field.files.length > 0;
+  } else if (field.tagName === 'SELECT') {
+    isValid = field.value !== '';
+  } else {
+    isValid = field.value.trim() !== '';
+  }
+  
+  // Aggiungi/rimuovi la classe per evidenziare i campi mancanti
+  if (isValid) {
+    field.classList.remove('missing-field');
+  } else {
+    field.classList.add('missing-field');
+  }
+  
+  return isValid;
+}
+
+function validateCurrentStep() {
+  const stepFields = {
+    0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
+        'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
+        'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
+    1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
+        'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
+        'license_category', 'license_issue_date', 'license_expiry_date', 
+        'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
+    2: ['occupation', 'other_experience', 'availability', 'other_location', 
+        'language_1', 'proficiency_1']
+  };
+  
+  const currentStepFields = stepFields[currentStep] || [];
+  let allValid = true;
+  
+  currentStepFields.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      allValid = false;
+    }
+  });
+  
+  return allValid;
+}
+
+function showMissingFieldsSummary() {
+  const missingFields = [];
+  
+  requiredFields.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      missingFields.push(fieldLabels[fieldId] || fieldId);
+    }
+  });
+  
+  const summaryDiv = document.getElementById('missingFieldsSummary');
+  const listEl = document.getElementById('missingFieldsList');
+  
+  if (missingFields.length > 0) {
+    listEl.innerHTML = missingFields.map(field => `<li>${field}</li>`).join('');
+    summaryDiv.classList.add('show');
+    
+    // Scroll alla summary
+    summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    summaryDiv.classList.remove('show');
+  }
+  
+  return missingFields.length === 0;
+}
+
 function showStep(idx) {
   steps.forEach((s, i) => s.classList.toggle('active', i === idx));
   indicators.forEach((el, i) => el.classList.toggle('active', i === idx));
   currentStep = idx;
+  
+  // Nascondi il sommario quando cambi step
+  document.getElementById('missingFieldsSummary').classList.remove('show');
 }
-document.getElementById('next1').onclick = () => showStep(1);
-document.getElementById('next2').onclick = () => showStep(2);
+
+function nextStep() {
+  if (validateCurrentStep()) {
+    if (currentStep < steps.length - 1) {
+      showStep(currentStep + 1);
+    }
+  } else {
+    alert('Per favore, compila tutti i campi obbligatori prima di continuare.');
+  }
+}
+
+// Event listeners per i pulsanti di navigazione
+document.getElementById('next1').onclick = nextStep;
+document.getElementById('next2').onclick = nextStep;
 document.getElementById('prev2').onclick = () => showStep(0);
 document.getElementById('prev3').onclick = () => showStep(1);
+
+// Aggiungi validazione in tempo reale
+requiredFields.forEach(fieldId => {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.addEventListener('change', () => validateField(fieldId));
+    field.addEventListener('input', () => validateField(fieldId));
+  }
+});
 
 // Invio dati via API
 const form = document.getElementById('candidateForm');
 form.onsubmit = async function(e) {
   e.preventDefault();
+  
+  // Valida tutti i campi prima dell'invio
+  if (!showMissingFieldsSummary()) {
+    alert('Per favore, compila tutti i campi obbligatori prima di inviare il form.');
+    return;
+  }
+  
   const formData = new FormData(form);
+  
   try {
     const response = await fetch('/api/candidates/upload', {
       method: 'POST',
       body: formData,
       credentials: 'include'
     });
+    
     const result = await response.json();
+    
     if(result.success) {
       alert('Candidato salvato con successo!');
       window.location.href = '/';
@@ -303,5 +516,11 @@ form.onsubmit = async function(e) {
     alert('Errore di rete: ' + err);
   }
 };
+
+// Validazione iniziale
+document.addEventListener('DOMContentLoaded', function() {
+  // Nascondi il sommario all'inizio
+  document.getElementById('missingFieldsSummary').classList.remove('show');
+});
 </script>
 {% endblock %}

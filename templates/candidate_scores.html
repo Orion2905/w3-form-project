@@ -1,0 +1,167 @@
+{% extends "layout_sidebar.html" %}
+
+{% block title %}Punteggi - {{ candidate.first_name }} {{ candidate.last_name }}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Punteggi - {{ candidate.first_name }} {{ candidate.last_name }}</h4>
+                    <div>
+                        <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Aggiungi Punteggio
+                        </a>
+                        <a href="{{ url_for('main.candidates_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Torna alla Lista
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Riassunto Punteggi -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5>Punteggio Totale Ponderato</h5>
+                                    <h2>{{ "%.2f"|format(total_score) }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5>Punteggio Medio</h5>
+                                    <h2>{{ "%.2f"|format(average_score) }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Punteggi per Categoria -->
+                    {% if score_summary %}
+                        <h5>Punteggi per Categoria</h5>
+                        <div class="row">
+                            {% for category, data in score_summary.items() %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>{{ category }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Media:</span>
+                                            <strong>{{ "%.2f"|format(data.average) }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Punteggi:</span>
+                                            <strong>{{ data.count }}</strong>
+                                        </div>
+                                        <div class="progress mt-2">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ (data.average/10)*100 }}%"
+                                                 aria-valuenow="{{ data.average }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="10">
+                                                {{ "%.1f"|format(data.average) }}/10
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Tabella Dettagli Punteggi -->
+                    <h5>Dettagli Punteggi</h5>
+                    {% if candidate.scores %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th>Sottocategoria</th>
+                                        <th>Punteggio</th>
+                                        <th>Max</th>
+                                        <th>%</th>
+                                        <th>Peso</th>
+                                        <th>Valutatore</th>
+                                        <th>Data</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for score in candidate.scores %}
+                                    <tr>
+                                        <td>{{ score.category }}</td>
+                                        <td>{{ score.subcategory or '-' }}</td>                        <td>
+                            <span class="badge bg-${score.percentage >= 80 ? 'success' : score.percentage >= 60 ? 'warning' : 'danger'}">
+                                {{ score.score }}
+                            </span>
+                        </td>
+                                        <td>{{ score.max_score }}</td>
+                                        <td>{{ "%.1f"|format(score.percentage) }}%</td>
+                                        <td>{{ score.weight }}</td>
+                                        <td>{{ score.evaluator.username if score.evaluator else '-' }}</td>
+                                        <td>{{ score.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('main.edit_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
+                                               class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" style="display: inline;" 
+                                                  action="{{ url_for('main.delete_candidate_score', candidate_id=candidate.id, score_id=score.id) }}"
+                                                  onsubmit="return confirm('Sei sicuro di voler eliminare questo punteggio?')">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Nessun punteggio assegnato a questo candidato.
+                            <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-primary btn-sm ml-2">
+                                Aggiungi il primo punteggio
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Note sui Punteggi -->
+                    {% if candidate.scores %}
+                        <h5 class="mt-4">Note</h5>
+                        <div class="row">
+                            {% for score in candidate.scores %}
+                                {% if score.notes %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <strong>{{ score.category }}</strong>
+                                            {% if score.subcategory %} - {{ score.subcategory }}{% endif %}
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text">{{ score.notes }}</p>
+                                            <small class="text-muted">
+                                                {{ score.evaluator.username if score.evaluator else 'Sconosciuto' }} - 
+                                                {{ score.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -103,6 +103,9 @@
           <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Foto</span>
           </th>
+          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Punteggio</span>
+          </th>
           <th>Azioni</th>
         </tr>
       </thead>
@@ -359,12 +362,32 @@
 let allCandidates = [];
 let currentSort = { key: null, asc: true };
 async function loadCandidates() {
-  const resp = await fetch('/api/candidates');
-  allCandidates = await resp.json();
-  applyFiltersAndSort();
+  try {
+    console.log('Caricamento candidati...');
+    const resp = await fetch('/api/candidates');
+    console.log('Risposta ricevuta:', resp.status);
+    if (!resp.ok) {
+      throw new Error(`HTTP error! status: ${resp.status}`);
+    }
+    allCandidates = await resp.json();
+    console.log('Candidati caricati:', allCandidates.length);
+    applyFiltersAndSort();
+  } catch (error) {
+    console.error('Errore nel caricamento dei candidati:', error);
+    document.querySelector('#candidatesTable tbody').innerHTML = `
+      <tr><td colspan="100%" class="text-center text-danger">
+        Errore nel caricamento dei candidati: ${error.message}
+      </td></tr>
+    `;
+  }
 }
 function renderTable(data) {
+  console.log('Rendering table con:', data.length, 'candidati');
   const tbody = document.querySelector('#candidatesTable tbody');
+  if (!tbody) {
+    console.error('Elemento tbody non trovato!');
+    return;
+  }
   tbody.innerHTML = '';
   data.forEach(c => {
     const tr = document.createElement('tr');
@@ -414,7 +437,21 @@ function renderTable(data) {
       <td>
         ${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}
       </td>
-      <td><button class="btn btn-sm btn-primary" onclick="openEdit(${c.id})"><i class="bi bi-pencil"></i> Modifica</button></td>
+      <td>
+        ${(c.scores_count && c.scores_count > 0) ? 
+          `<div class="text-center">
+            <span class="badge bg-${c.total_score >= 8 ? 'success' : c.total_score >= 6 ? 'warning' : 'danger'}">${c.total_score ? c.total_score.toFixed(1) : '0.0'}</span>
+            <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
+          </div>` : 
+          '<span class="text-muted">Non valutato</span>'
+        }
+      </td>
+      <td>
+        <div class="btn-group" role="group">
+          <button class="btn btn-sm btn-primary" onclick="openEdit(${c.id})"><i class="bi bi-pencil"></i> Modifica</button>
+          <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -449,11 +486,14 @@ document.querySelectorAll('.filter-input').forEach(input => {
   input.addEventListener('input', applyFiltersAndSort);
 });
 document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
-document.getElementById('resetFilters').onclick = function() {
-  document.querySelectorAll('.filter-input').forEach(input => input.value = '');
-  document.getElementById('searchInput').value = '';
-  applyFiltersAndSort();
-};
+const resetFiltersBtn = document.getElementById('resetFilters');
+if (resetFiltersBtn) {
+  resetFiltersBtn.onclick = function() {
+    document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+    document.getElementById('searchInput').value = '';
+    applyFiltersAndSort();
+  };
+}
 document.querySelectorAll('.sort-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     const key = this.getAttribute('data-sort');
@@ -693,10 +733,14 @@ function setPhotoMode(mode) {
   }
 }
 
-document.getElementById('photoModeUpload').onclick = () => setPhotoMode('upload');
-document.getElementById('photoModeWebcam').onclick = () => setPhotoMode('webcam');
+const photoModeUploadBtn = document.getElementById('photoModeUpload');
+if (photoModeUploadBtn) photoModeUploadBtn.onclick = () => setPhotoMode('upload');
 
-document.getElementById('photoUploadBtn').onclick = () => photoInput.click();
+const photoModeWebcamBtn = document.getElementById('photoModeWebcam');
+if (photoModeWebcamBtn) photoModeWebcamBtn.onclick = () => setPhotoMode('webcam');
+
+const photoUploadBtnEl = document.getElementById('photoUploadBtn');
+if (photoUploadBtnEl) photoUploadBtnEl.onclick = () => photoInput.click();
 photoInput.onchange = function() {
   if (this.files && this.files[0]) {
     const reader = new FileReader();
@@ -706,26 +750,32 @@ photoInput.onchange = function() {
   }
 };
 
-document.getElementById('capturePhotoBtn').onclick = function() {
-  const video = document.getElementById('webcamVideo');
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  canvas.toBlob(blob => {
-    capturedPhotoBlob = blob;
-    setPhotoPreview(URL.createObjectURL(blob));
-  }, 'image/jpeg');
-};
+const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+if (capturePhotoBtn) {
+  capturePhotoBtn.onclick = function() {
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      capturedPhotoBlob = blob;
+      setPhotoPreview(URL.createObjectURL(blob));
+    }, 'image/jpeg');
+  };
+}
 
-document.getElementById('removePhotoBtn').onclick = function() {
-  setPhotoPreview('');
-  capturedPhotoBlob = null;
-  photoInput.value = '';
-};
+const removePhotoBtn = document.getElementById('removePhotoBtn');
+if (removePhotoBtn) {
+  removePhotoBtn.onclick = function() {
+    setPhotoPreview('');
+    capturedPhotoBlob = null;
+    photoInput.value = '';
+  };
+}
 
 // On modal close, stop webcam
 const editModalEl = document.getElementById('editModal');
-editModalEl.addEventListener('hidden.bs.modal', stopWebcam);
+if (editModalEl) editModalEl.addEventListener('hidden.bs.modal', stopWebcam);
 </script>
 {% endblock %}

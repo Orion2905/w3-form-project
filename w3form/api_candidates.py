@@ -58,6 +58,12 @@ def candidate_to_dict(c):
         'proficiency_2': c.proficiency_2,
         'language_3': c.language_3,
         'proficiency_3': c.proficiency_3,
+        'scores': {
+            'total_score': c.get_total_score(),
+            'average_score': c.get_average_score(),
+            'count': len(c.scores),
+            'summary': c.get_score_summary()
+        } if hasattr(c, 'scores') else {'total_score': 0, 'average_score': 0, 'count': 0, 'summary': {}},
     }
 
 # Aggiungi candidato
@@ -87,6 +93,7 @@ def add_candidate_api():
             id_number=data.get('id_number'),
             id_expiry_date=datetime.fromisoformat(data.get('id_expiry_date')) if data.get('id_expiry_date') else None,
             id_country=data.get('id_country'),
+            additional_document=data.get('additional_document'),
             license_country=data.get('license_country'),
             license_number=data.get('license_number'),
             license_category=data.get('license_category'),
@@ -96,7 +103,8 @@ def add_candidate_api():
             auto_moto_munito=data.get('auto_moto_munito'),
             occupation=data.get('occupation'),
             other_experience=data.get('other_experience'),
-            availability=data.get('availability'),
+            availability_from=datetime.fromisoformat(data.get('availability_from')) if data.get('availability_from') else None,
+            availability_till=datetime.fromisoformat(data.get('availability_till')) if data.get('availability_till') else None,
             other_location=data.get('other_location'),
             language_1=data.get('language_1'),
             proficiency_1=data.get('proficiency_1'),
@@ -180,11 +188,12 @@ def upload_candidate_api():
             address=data.get('address'),
             city=data.get('city'),
             postal_code=data.get('postal_code'),
-            country_of_residence=data.get('country_of_residence'),
+            country_of_residence=data.get('country_of_residenza'),
             id_document=data.get('id_document'),
             id_number=data.get('id_number'),
             id_expiry_date=datetime.fromisoformat(data.get('id_expiry_date')) if data.get('id_expiry_date') else None,
             id_country=data.get('id_country'),
+            additional_document=data.get('additional_document'),
             license_country=data.get('license_country'),
             license_number=data.get('license_number'),
             license_category=data.get('license_category'),
@@ -194,7 +203,8 @@ def upload_candidate_api():
             auto_moto_munito=auto_moto_munito,
             occupation=data.get('occupation'),
             other_experience=data.get('other_experience'),
-            availability=data.get('availability'),
+            availability_from=datetime.fromisoformat(data.get('availability_from')) if data.get('availability_from') else None,
+            availability_till=datetime.fromisoformat(data.get('availability_till')) if data.get('availability_till') else None,
             other_location=data.get('other_location'),
             language_1=data.get('language_1'),
             proficiency_1=data.get('proficiency_1'),
@@ -202,6 +212,10 @@ def upload_candidate_api():
             proficiency_2=data.get('proficiency_2'),
             language_3=data.get('language_3'),
             proficiency_3=data.get('proficiency_3'),
+            codice_fiscale=data.get('codice_fiscale'),
+            permesso_soggiorno=data.get('permesso_soggiorno'),
+            come_sei_arrivato=data.get('come_sei_arrivato'),
+            form_id=data.get('form_id'),
         )
         db.session.add(c)
         db.session.flush()  # Per ottenere l'id

@@ -1,0 +1,110 @@
+{% extends "layout_sidebar.html" %}
+
+{% block title %}Aggiungi Punteggio - {{ candidate.first_name }} {{ candidate.last_name }}{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Aggiungi Punteggio - {{ candidate.first_name }} {{ candidate.last_name }}</h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="category">Categoria *</label>
+                                    <select class="form-control" id="category" name="category" required>
+                                        <option value="">Seleziona una categoria</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.name }}" data-max-score="{{ category.max_score }}" data-weight="{{ category.weight }}">
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                        <option value="Altro">Altro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subcategory">Sottocategoria</label>
+                                    <input type="text" class="form-control" id="subcategory" name="subcategory" 
+                                           placeholder="es. Comunicazione, Leadership, etc.">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="score">Punteggio *</label>
+                                    <input type="number" class="form-control" id="score" name="score" 
+                                           min="0" max="10" step="0.1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="max_score">Punteggio Massimo</label>
+                                    <input type="number" class="form-control" id="max_score" name="max_score" 
+                                           min="1" max="100" step="0.1" value="10">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="weight">Peso</label>
+                                    <input type="number" class="form-control" id="weight" name="weight" 
+                                           min="0.1" max="10" step="0.1" value="1.0">
+                                    <small class="form-text text-muted">Peso del punteggio nel calcolo totale</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notes">Note</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                      placeholder="Inserisci note aggiuntive sul punteggio..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Salva Punteggio
+                            </button>
+                            <a href="{{ url_for('main.view_candidate_scores', candidate_id=candidate.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-compila i campi quando si seleziona una categoria predefinita
+document.getElementById('category').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const maxScore = selectedOption.getAttribute('data-max-score');
+    const weight = selectedOption.getAttribute('data-weight');
+    
+    if (maxScore) {
+        document.getElementById('max_score').value = maxScore;
+    }
+    if (weight) {
+        document.getElementById('weight').value = weight;
+    }
+});
+
+// Aggiorna il range del punteggio quando cambia il punteggio massimo
+document.getElementById('max_score').addEventListener('change', function() {
+    const scoreInput = document.getElementById('score');
+    scoreInput.max = this.value;
+});
+</script>
+{% endblock %}
