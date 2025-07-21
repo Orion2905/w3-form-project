@@ -11,6 +11,7 @@ from flask import (
     send_file
 )
 from flask_login import login_user, login_required, logout_user, current_user
+from sqlalchemy.orm import joinedload
 from w3form import db
 from w3form.models import (
     User, Candidate, DynamicForm, Score, ScoreCategory
@@ -21,7 +22,7 @@ from requests.auth import HTTPBasicAuth
 from werkzeug.utils import secure_filename
 import os
 import json
-from datetime import datetime
+from datetime import datetime, date
 from flask import abort
 from io import BytesIO
 from azure.storage.blob import BlobServiceClient
@@ -69,6 +70,14 @@ def candidates_list():
     candidates = Candidate.query.all()
     return render_template('candidates_list.html', candidates=candidates)
 
+@main.route('/candidati/archiviati')
+@login_required
+@role_required('intervistatore')
+def archived_candidates_list():
+    """Vista per candidati archiviati"""
+    candidates = Candidate.query.filter_by(archived=True).all()
+    return render_template('candidates_list.html', candidates=candidates, archived=True)
+
 @main.route('/candidati/modifica/<int:candidate_id>', methods=['GET', 'POST'])
 @login_required
 @role_required('intervistatore')
@@ -111,6 +120,8 @@ def create_dynamic_form():
         name = request.form['name']
         slug = request.form['slug']
         description = request.form.get('description')
+        category = request.form.get('category')  # Nuovo campo categoria
+        subcategory = request.form.get('subcategory')  # Nuovo campo sottocategoria
         is_active = bool(request.form.get('is_active'))
         active_from = request.form.get('active_from')
         active_until = request.form.get('active_until')
@@ -124,6 +135,8 @@ def create_dynamic_form():
             name=name,
             slug=slug,
             description=description,
+            category=category,
+            subcategory=subcategory,
             dropdown_options=dropdown_options,
             is_active=is_active,
             active_from=datetime.strptime(active_from, '%Y-%m-%dT%H:%M') if active_from else None,
@@ -160,6 +173,8 @@ def edit_dynamic_form(form_id):
         form.name = request.form.get('name')
         form.slug = request.form.get('slug')
         form.description = request.form.get('description')
+        form.category = request.form.get('category')  # Nuovo campo categoria
+        form.subcategory = request.form.get('subcategory')  # Nuovo campo sottocategoria
         form.is_active = bool(request.form.get('is_active'))
         active_from = request.form.get('active_from')
         active_until = request.form.get('active_until')
@@ -182,7 +197,9 @@ def edit_dynamic_form(form_id):
 @login_required
 @role_required('intervistatore')
 def api_get_candidates():
-    candidates = Candidate.query.all()
+    # Filtra per candidati non archiviati per default
+    archived = request.args.get('archived', 'false').lower() == 'true'
+    candidates = Candidate.query.options(joinedload(Candidate.form)).filter_by(archived=archived).all()
     return jsonify([
         {
             'id': c.id,
@@ -217,14 +234,21 @@ def api_get_candidates():
             'auto_moto_munito': c.auto_moto_munito,
             'occupation': c.occupation,
             'other_experience': c.other_experience,
-            'availability': c.availability,
-            'other_location': c.other_location,
+            'availability_from': c.availability_from.isoformat() if c.availability_from else '',
+            'availability_till': c.availability_till.isoformat() if c.availability_till else '',
+            'city_availability': c.city_availability,
+            'additional_document': c.additional_document,
+            'codice_fiscale': c.codice_fiscale,
+            'permesso_soggiorno': c.permesso_soggiorno,
             'language_1': c.language_1,
             'proficiency_1': c.proficiency_1,
             'language_2': c.language_2,
             'proficiency_2': c.proficiency_2,
             'language_3': c.language_3,
             'proficiency_3': c.proficiency_3,
+            'form_name': c.form.name if c.form else '',
+            'form_category': c.form.category if c.form else '',
+            'form_subcategory': c.form.subcategory if c.form else '',
             'curriculum_file': url_for('main.serve_curriculum', filename=c.curricula[0].filename) if c.curricula else '',
             'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename) if c.photos else '',
             'total_score': 0,
@@ -232,6 +256,36 @@ def api_get_candidates():
             'scores_count': 0
         } for c in candidates
     ])
+
+@main.route('/api/filter-options', methods=['GET'])
+@login_required
+@role_required('intervistatore')
+def api_get_filter_options():
+    """Restituisce le opzioni disponibili per i filtri dropdown"""
+    # Query per ottenere tutti i form distinti con le loro categorie e sottocategorie
+    forms_query = db.session.query(
+        DynamicForm.name,
+        DynamicForm.category,
+        DynamicForm.subcategory
+    ).distinct().all()
+    
+    form_names = []
+    categories = []
+    subcategories = []
+    
+    for form_name, category, subcategory in forms_query:
+        if form_name and form_name not in form_names:
+            form_names.append(form_name)
+        if category and category not in categories:
+            categories.append(category)
+        if subcategory and subcategory not in subcategories:
+            subcategories.append(subcategory)
+    
+    return jsonify({
+        'form_names': sorted(form_names),
+        'categories': sorted(categories),
+        'subcategories': sorted(subcategories)
+    })
 
 @main.route('/api/candidates/<int:candidate_id>', methods=['PUT'])
 @login_required
@@ -270,8 +324,26 @@ def api_update_candidate(candidate_id):
     c.auto_moto_munito = data.get('auto_moto_munito', c.auto_moto_munito)
     c.occupation = data.get('occupation', c.occupation)
     c.other_experience = data.get('other_experience', c.other_experience)
-    c.availability = data.get('availability', c.availability)
-    c.other_location = data.get('other_location', c.other_location)
+    
+    # Gestione dei nuovi campi data per availability
+    availability_from = data.get('availability_from')
+    if availability_from:
+        try:
+            c.availability_from = datetime.strptime(availability_from, '%Y-%m-%d').date()
+        except:
+            c.availability_from = availability_from if isinstance(availability_from, date) else None
+    
+    availability_till = data.get('availability_till')
+    if availability_till:
+        try:
+            c.availability_till = datetime.strptime(availability_till, '%Y-%m-%d').date()
+        except:
+            c.availability_till = availability_till if isinstance(availability_till, date) else None
+    
+    c.city_availability = data.get('city_availability', c.city_availability)
+    c.additional_document = data.get('additional_document', c.additional_document)
+    c.codice_fiscale = data.get('codice_fiscale', c.codice_fiscale)
+    c.permesso_soggiorno = data.get('permesso_soggiorno', c.permesso_soggiorno)
     c.language_1 = data.get('language_1', c.language_1)
     c.proficiency_1 = data.get('proficiency_1', c.proficiency_1)
     c.language_2 = data.get('language_2', c.language_2)
@@ -280,6 +352,21 @@ def api_update_candidate(candidate_id):
     c.proficiency_3 = data.get('proficiency_3', c.proficiency_3)
     db.session.commit()
     return jsonify({'success': True})
+
+@main.route('/api/candidates/<int:candidate_id>/archive', methods=['POST'])
+@login_required
+@role_required('intervistatore')
+def api_archive_candidate(candidate_id):
+    """Archivia o desarchivia un candidato"""
+    c = Candidate.query.get_or_404(candidate_id)
+    data = request.json or {}
+    archived = data.get('archived', True)  # Default: archivia
+    
+    c.archived = archived
+    db.session.commit()
+    
+    action = "archiviato" if archived else "ripristinato"
+    return jsonify({'success': True, 'message': f'Candidato {action} con successo'})
 
 @main.route('/file/curriculum/<filename>')
 @login_required
@@ -536,6 +623,14 @@ def api_get_candidate_scores(candidate_id):
         'average_score': candidate.get_average_score(),
         'score_summary': candidate.get_score_summary()
     })
+
+@main.route('/candidati/<int:candidate_id>/profilo')
+@login_required
+@role_required('intervistatore')
+def candidate_profile(candidate_id):
+    """Visualizza il profilo completo del candidato"""
+    candidate = Candidate.query.options(joinedload(Candidate.form)).get_or_404(candidate_id)
+    return render_template('candidate_profile.html', candidate=candidate)
 
 @main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
 @login_required

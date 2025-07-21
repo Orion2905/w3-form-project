@@ -1,0 +1,429 @@
+{% extends 'layout_sidebar.html' %}
+{% block title %}Profilo di {{ candidate.first_name }} {{ candidate.last_name }}{% endblock %}
+{% block main_content %}
+<div class="container-fluid my-4">
+  <!-- Header del profilo -->
+  <div class="d-flex justify-content-between align-items-center mb-4 candidate-profile-header">
+    <div class="d-flex align-items-center flex-wrap">
+      <a href="/candidati" class="btn btn-outline-secondary me-3 mb-2 mb-md-0 candidate-breadcrumb">
+        <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Torna all'elenco</span><span class="d-sm-none">Indietro</span>
+      </a>
+      <div>
+        <h2 class="mb-1">{{ candidate.first_name }} {{ candidate.last_name }}</h2>
+        <p class="text-muted mb-0">
+          <i class="bi bi-envelope"></i> {{ candidate.email or 'Email non disponibile' }}
+          {% if candidate.phone_number %}
+          <span class="ms-2 d-block d-sm-inline"><i class="bi bi-telephone"></i> {{ candidate.phone_number }}</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="btn-group" role="group">
+      <a href="/candidati/{{ candidate.id }}/punteggi" class="btn btn-info">
+        <i class="bi bi-star"></i> <span class="d-none d-md-inline">Punteggi</span>
+      </a>
+      <button class="btn btn-primary" onclick="openEdit({{ candidate.id }})">
+        <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Modifica</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="row candidate-profile-layout">
+    <!-- Colonna sinistra - Foto e informazioni principali -->
+    <div class="col-lg-4 col-md-5 mb-4">
+      <!-- Foto profilo -->
+      <div class="card mb-3 candidate-profile-card">
+        <div class="card-body text-center">
+          {% if candidate.photos and candidate.photos[0] %}
+            <img src="{{ url_for('main.serve_photo', filename=candidate.photos[0].filename) }}" 
+                 class="rounded-circle shadow mb-3 candidate-profile-photo" 
+                 style="width: 150px; height: 150px; object-fit: cover; cursor: pointer;"
+                 alt="Foto profilo"
+                 onclick="showImgModal('{{ url_for('main.serve_photo', filename=candidate.photos[0].filename) }}')">
+          {% else %}
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3 candidate-profile-photo" 
+                 style="width: 150px; height: 150px;">
+              <i class="bi bi-person-fill text-muted" style="font-size: 3rem;"></i>
+            </div>
+          {% endif %}
+          <h5 class="card-title">{{ candidate.first_name }} {{ candidate.last_name }}</h5>
+          {% if candidate.form %}
+            <div class="mb-2">
+              <span class="badge bg-info">{{ candidate.form.name }}</span>
+            </div>
+            {% if candidate.form.category %}
+              <div class="d-flex flex-wrap justify-content-center gap-1">
+                <span class="badge bg-primary">{{ candidate.form.category }}</span>
+                {% if candidate.form.subcategory %}
+                  <span class="badge bg-secondary">{{ candidate.form.subcategory }}</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Curriculum -->
+      {% if candidate.curricula and candidate.curricula[0] %}
+      <div class="card candidate-profile-card">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="bi bi-file-earmark-pdf text-danger"></i> Curriculum Vitae
+          </h6>
+          <a href="{{ url_for('main.serve_curriculum', filename=candidate.curricula[0].filename) }}" 
+             target="_blank" class="btn btn-outline-primary w-100">
+            <i class="bi bi-download"></i> Scarica CV
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Colonna destra - Informazioni dettagliate -->
+    <div class="col-lg-8 col-md-7">
+      <!-- Tab navigation -->
+      <ul class="nav nav-tabs mb-3" id="profileTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="anagrafica-tab" data-bs-toggle="tab" data-bs-target="#anagrafica" type="button" role="tab">
+            <i class="bi bi-person d-none d-sm-inline"></i> <span>Anagrafica</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="contatti-tab" data-bs-toggle="tab" data-bs-target="#contatti" type="button" role="tab">
+            <i class="bi bi-geo-alt d-none d-sm-inline"></i> <span>Contatti</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="documenti-tab" data-bs-toggle="tab" data-bs-target="#documenti" type="button" role="tab">
+            <i class="bi bi-file-text d-none d-sm-inline"></i> <span>Documenti</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="patente-tab" data-bs-toggle="tab" data-bs-target="#patente" type="button" role="tab">
+            <i class="bi bi-car-front d-none d-sm-inline"></i> <span>Patente</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="lingue-tab" data-bs-toggle="tab" data-bs-target="#lingue" type="button" role="tab">
+            <i class="bi bi-translate d-none d-sm-inline"></i> <span>Lingue</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="lavoro-tab" data-bs-toggle="tab" data-bs-target="#lavoro" type="button" role="tab">
+            <i class="bi bi-briefcase d-none d-sm-inline"></i> <span>Lavoro</span>
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab content -->
+      <div class="tab-content" id="profileTabContent">
+        <!-- Anagrafica -->
+        <div class="tab-pane fade show active" id="anagrafica" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Nome</label>
+                  <p class="fw-bold">{{ candidate.first_name or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Cognome</label>
+                  <p class="fw-bold">{{ candidate.last_name or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Genere</label>
+                  <p>{{ candidate.gender or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Data di nascita</label>
+                  <p>{{ candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Luogo di nascita</label>
+                  <p>{{ candidate.place_of_birth or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Nazionalità</label>
+                  <p>{{ candidate.nationality or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Stato civile</label>
+                  <p>{{ candidate.marital_status or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Come sei arrivato a noi</label>
+                  <p>{{ candidate.come_sei_arrivato or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Altezza (cm)</label>
+                  <p>{{ candidate.height_cm or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Peso (kg)</label>
+                  <p>{{ candidate.weight_kg or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Taglia T-shirt</label>
+                  <p>{{ candidate.tshirt_size or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Numero scarpe</label>
+                  <p>{{ candidate.shoe_size_eu or '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contatti -->
+        <div class="tab-pane fade" id="contatti" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Email</label>
+                  <p class="fw-bold">
+                    {% if candidate.email %}
+                      <a href="mailto:{{ candidate.email }}" class="text-break">{{ candidate.email }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Telefono</label>
+                  <p class="fw-bold">
+                    {% if candidate.phone_number %}
+                      <a href="tel:{{ candidate.phone_number }}">{{ candidate.phone_number }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </p>
+                </div>
+                <div class="col-12 candidate-profile-field">
+                  <label class="form-label text-muted">Indirizzo</label>
+                  <p>{{ candidate.address or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">Città</label>
+                  <p>{{ candidate.city or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">CAP</label>
+                  <p>{{ candidate.postal_code or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">Paese di residenza</label>
+                  <p>{{ candidate.country_of_residence or '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documenti -->
+        <div class="tab-pane fade" id="documenti" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Tipo documento</label>
+                  <p>{{ candidate.id_document or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Numero documento</label>
+                  <p class="fw-bold">{{ candidate.id_number or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Scadenza documento</label>
+                  <p>{{ candidate.id_expiry_date.strftime('%d/%m/%Y') if candidate.id_expiry_date else '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Paese rilascio</label>
+                  <p>{{ candidate.id_country or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Codice Fiscale</label>
+                  <p class="fw-bold">{{ candidate.codice_fiscale or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Permesso di soggiorno</label>
+                  <p>{{ candidate.permesso_soggiorno or '-' }}</p>
+                </div>
+                <div class="col-12 candidate-profile-field">
+                  <label class="form-label text-muted">Documento aggiuntivo</label>
+                  <p>{{ candidate.additional_document or '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Patente -->
+        <div class="tab-pane fade" id="patente" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Paese patente</label>
+                  <p>{{ candidate.license_country or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Numero patente</label>
+                  <p class="fw-bold">{{ candidate.license_number or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Categoria patente</label>
+                  <p>{{ candidate.license_category or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Anni di esperienza</label>
+                  <p>{{ candidate.years_driving_experience or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Data rilascio</label>
+                  <p>{{ candidate.license_issue_date.strftime('%d/%m/%Y') if candidate.license_issue_date else '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Data scadenza</label>
+                  <p>{{ candidate.license_expiry_date.strftime('%d/%m/%Y') if candidate.license_expiry_date else '-' }}</p>
+                </div>
+                <div class="col-12 candidate-profile-field">
+                  <label class="form-label text-muted">Auto/Moto munito</label>
+                  <p>{{ candidate.auto_moto_munito or '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lingue -->
+        <div class="tab-pane fade" id="lingue" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                {% if candidate.language_1 %}
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Lingua 1</label>
+                  <p class="fw-bold">{{ candidate.language_1 }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Livello 1</label>
+                  <p>{{ candidate.proficiency_1 or '-' }}</p>
+                </div>
+                {% endif %}
+                
+                {% if candidate.language_2 %}
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Lingua 2</label>
+                  <p class="fw-bold">{{ candidate.language_2 }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Livello 2</label>
+                  <p>{{ candidate.proficiency_2 or '-' }}</p>
+                </div>
+                {% endif %}
+                
+                {% if candidate.language_3 %}
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Lingua 3</label>
+                  <p class="fw-bold">{{ candidate.language_3 }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Livello 3</label>
+                  <p>{{ candidate.proficiency_3 or '-' }}</p>
+                </div>
+                {% endif %}
+                
+                {% if not candidate.language_1 and not candidate.language_2 and not candidate.language_3 %}
+                <div class="col-12">
+                  <p class="text-muted">Nessuna lingua specificata</p>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lavoro -->
+        <div class="tab-pane fade" id="lavoro" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Occupazione</label>
+                  <p>{{ candidate.occupation or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Città disponibilità</label>
+                  <p>{{ candidate.city_availability or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Disponibile da</label>
+                  <p>{{ candidate.availability_from.strftime('%d/%m/%Y') if candidate.availability_from else '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Disponibile fino</label>
+                  <p>{{ candidate.availability_till.strftime('%d/%m/%Y') if candidate.availability_till else '-' }}</p>
+                </div>
+                <div class="col-12 candidate-profile-field">
+                  <label class="form-label text-muted">Altre esperienze</label>
+                  <p>{{ candidate.other_experience or '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal per visualizzare l'immagine ingrandita -->
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <img id="imgModalSrc" src="" class="img-fluid rounded shadow" style="max-height:80vh; max-width:90vw;">
+    </div>
+  </div>
+</div>
+
+<!-- Modal modifica (copia dal template candidates_list.html) -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modifica Candidato</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">La funzione di modifica verrà implementata qui.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEdit(candidateId) {
+  // Per ora mostra solo il modal, la funzionalità sarà implementata dopo
+  new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function showImgModal(src) {
+  document.getElementById('imgModalSrc').src = src;
+  new bootstrap.Modal(document.getElementById('imgModal')).show();
+}
+
+// Chiudi la modal immagine cliccando sull'immagine stessa
+document.addEventListener('DOMContentLoaded', function() {
+  const imgModal = document.getElementById('imgModal');
+  if (imgModal) {
+    imgModal.addEventListener('click', function() {
+      bootstrap.Modal.getInstance(imgModal).hide();
+    });
+  }
+});
+</script>
+{% endblock %}

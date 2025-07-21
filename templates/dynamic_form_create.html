@@ -2,14 +2,38 @@
 {% block content %}
 <h2>{% if form %}Modifica form dinamico{% else %}Crea nuovo form dinamico{% endif %}</h2>
 <form method="post">
-  <div class="mb-3">
-    <label class="form-label">Nome form</label>
-    <input type="text" class="form-control" name="name" required value="{{ form.name if form else '' }}">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">Nome form</label>
+        <input type="text" class="form-control" name="name" required value="{{ form.name if form else '' }}">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">Slug (URL univoca)</label>
+        <input type="text" class="form-control" name="slug" required value="{{ form.slug if form else '' }}">
+      </div>
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Slug (URL univoca)</label>
-    <input type="text" class="form-control" name="slug" required value="{{ form.slug if form else '' }}">
+  
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">Categoria</label>
+        <input type="text" class="form-control" name="category" placeholder="es. Evento" value="{{ form.category if form else '' }}">
+        <small class="form-text text-muted">Categoria principale del form (es: Evento, Lavoro, etc.)</small>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">Sottocategoria</label>
+        <input type="text" class="form-control" name="subcategory" placeholder="es. Azienda" value="{{ form.subcategory if form else '' }}">
+        <small class="form-text text-muted">Sottocategoria specifica (es: Azienda, Privato, etc.)</small>
+      </div>
+    </div>
   </div>
+  
   <div class="mb-3">
     <label class="form-label">Descrizione</label>
     <textarea class="form-control" name="description">{{ form.description if form else '' }}</textarea>

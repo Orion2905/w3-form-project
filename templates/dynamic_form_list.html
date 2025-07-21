@@ -16,6 +16,8 @@
           <th style="min-width:40px;">#</th>
           <th>Nome</th>
           <th>Slug</th>
+          <th>Categoria</th>
+          <th>Sottocategoria</th>
           <th>Descrizione</th>
           <th>Azioni</th>
         </tr>
@@ -26,6 +28,20 @@
           <td>{{ form.id }}</td>
           <td class="fw-semibold">{{ form.name }}</td>
           <td><span class="badge bg-secondary bg-opacity-75">{{ form.slug }}</span> <a href="/form/{{ form.slug }}" target="_blank" class="ms-1 text-decoration-none" title="Vai al form pubblico"><i class="bi bi-box-arrow-up-right"></i></a></td>
+          <td>
+            {% if form.category %}
+              <span class="badge bg-primary">{{ form.category }}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if form.subcategory %}
+              <span class="badge bg-info">{{ form.subcategory }}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
           <td class="text-truncate" style="max-width: 300px;">{{ form.description }}</td>
           <td>
             <a href="/forms/modifica/{{ form.id }}" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil"></i> Modifica</a>

@@ -43,7 +43,7 @@ class Candidate(db.Model):
     other_experience = db.Column(db.Text)
     availability_from = db.Column(db.Date)  # Data di disponibilità da
     availability_till = db.Column(db.Date)  # Data di disponibilità fino a
-    other_location = db.Column(db.String(64))  # Città di disponibilità (una o più città)
+    city_availability = db.Column(db.String(64))  # Città di disponibilità (una o più città)
     language_1 = db.Column(db.String(32))
     proficiency_1 = db.Column(db.String(16))  # tendina: Base/Intermedio/Avanzato/Madrelingua
     language_2 = db.Column(db.String(32))
@@ -51,6 +51,7 @@ class Candidate(db.Model):
     language_3 = db.Column(db.String(32))
     proficiency_3 = db.Column(db.String(16))
     come_sei_arrivato = db.Column(db.String(64))  # nuovo campo a tendina personalizzabile
+    archived = db.Column(db.Boolean, default=False, nullable=False)  # Campo per archiviazione
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     form_id = db.Column(db.Integer, db.ForeignKey('dynamic_form.id', ondelete='CASCADE'), nullable=True)
 
@@ -149,6 +150,8 @@ class DynamicForm(db.Model):
     name = db.Column(db.String(128), nullable=False)
     slug = db.Column(db.String(64), unique=True, nullable=False)  # per url univoca
     description = db.Column(db.Text)
+    category = db.Column(db.String(64), nullable=True)  # Categoria del form (es: "Evento")
+    subcategory = db.Column(db.String(64), nullable=True)  # Sottocategoria del form (es: "Azienda")
     dropdown_options = db.Column(db.JSON, nullable=False, default=dict)  # opzioni menu a tendina per questo form
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)

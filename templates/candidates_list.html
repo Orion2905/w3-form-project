@@ -1,42 +1,85 @@
 {% extends 'layout_sidebar.html' %}
-{% block title %}Gestione Candidati{% endblock %}
+{% block title %}{% if archived %}Candidati Archiviati{% else %}Gestione Candidati{% endif %}{% endblock %}
 {% block main_content %}
 <div class="container-fluid my-4">
-  <h2 class="mb-4">Elenco Candidati</h2>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{% if archived %}Candidati Archiviati{% else %}Elenco Candidati{% endif %}</h2>
+    <div class="btn-group" role="group">
+      <a href="/candidati" class="btn {% if not archived %}btn-primary{% else %}btn-outline-primary{% endif %}">
+        <i class="bi bi-people"></i> Candidati Attivi
+      </a>
+      <a href="/candidati/archiviati" class="btn {% if archived %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+        <i class="bi bi-archive"></i> Candidati Archiviati
+      </a>
+    </div>
+  </div>
   <div class="mb-3">
     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
       <i class="bi bi-funnel"></i> Filtri avanzati
     </button>
   </div>
   <div class="collapse mb-3" id="filtersCollapse">
-    <div class="card card-body bg-light">
-      <div class="row g-2">
-        <div class="col-md-2">
+    <div class="card card-body bg-light" style="min-width: 0; overflow-x: auto;">
+      <!-- Prima riga -->
+      <div class="row g-2 mb-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_first_name" placeholder="Nome">
         </div>
-        <div class="col-md-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_last_name" placeholder="Cognome">
         </div>
-        <div class="col-md-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_email" placeholder="Email">
         </div>
-        <div class="col-md-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_phone_number" placeholder="Telefono">
         </div>
-        <div class="col-md-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_come_sei_arrivato" placeholder="Come sei arrivato">
         </div>
-        <div class="col-md-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_gender" placeholder="Genere">
         </div>
-        <div class="col-md-2">
+      </div>
+      
+      <!-- Seconda riga -->
+      <div class="row g-2 mb-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_marital_status" placeholder="Stato civile">
         </div>
-        <div class="col-md-2">
-          <input type="text" class="form-control filter-input" id="filter_availability" placeholder="Disponibilità">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <input type="text" class="form-control filter-input" id="filter_codice_fiscale" placeholder="Codice Fiscale">
         </div>
-        <div class="col-md-2">
-          <button class="btn btn-outline-secondary w-100" id="resetFilters">Reset filtri</button>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <input type="text" class="form-control filter-input" id="filter_city_availability" placeholder="Città Disponibilità">
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <select class="form-select filter-select" id="filter_form_name">
+            <option value="">Tutti i Form</option>
+          </select>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <select class="form-select filter-select" id="filter_form_category">
+            <option value="">Tutte le Categorie</option>
+          </select>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <select class="form-select filter-select" id="filter_form_subcategory">
+            <option value="">Tutte le Sottocategorie</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Terza riga -->
+      <div class="row g-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <button class="btn btn-outline-secondary w-100" id="resetFilters">
+            <i class="bi bi-arrow-clockwise"></i> Reset filtri
+          </button>
+        </div>
+        <!-- Spazio per eventuali filtri futuri -->
+        <div class="col-xl-10 col-lg-9 col-md-8 col-sm-6">
+          <small class="text-muted">Usa i filtri per restringere la ricerca dei candidati</small>
         </div>
       </div>
     </div>
@@ -71,23 +114,30 @@
             ('id_number', 'Numero documento'),
             ('id_expiry_date', 'Scadenza documento'),
             ('id_country', 'Paese documento'),
+            ('additional_document', 'Additional Document'),
+            ('codice_fiscale', 'Codice Fiscale'),
+            ('permesso_soggiorno', 'Permesso Soggiorno'),
             ('license_country', 'Patente paese'),
             ('license_number', 'Patente numero'),
-            ('license_category', 'Categoria patente'),
+            ('license_category', 'Drive License'),
             ('license_issue_date', 'Rilascio patente'),
             ('license_expiry_date', 'Scadenza patente'),
             ('years_driving_experience', 'Anni guida'),
             ('auto_moto_munito', 'Auto/Moto munito'),
             ('occupation', 'Occupazione'),
             ('other_experience', 'Altre esperienze'),
-            ('availability', 'Disponibilità'),
-            ('other_location', 'Altra località'),
+            ('availability_from', 'Disponibilità Da'),
+            ('availability_till', 'Disponibilità Fino A'),
+            ('city_availability', 'City/Cities of Availability'),
             ('language_1', 'Lingua 1'),
             ('proficiency_1', 'Livello 1'),
             ('language_2', 'Lingua 2'),
             ('proficiency_2', 'Livello 2'),
             ('language_3', 'Lingua 3'),
-            ('proficiency_3', 'Livello 3')
+            ('proficiency_3', 'Livello 3'),
+            ('form_name', 'Form'),
+            ('form_category', 'Categoria Form'),
+            ('form_subcategory', 'Sottocategoria Form')
           ] %}
           {% for key, label in columns %}
           <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -241,6 +291,18 @@
                   <label for="edit_id_country" class="form-label">Paese doc</label>
                   <input type="text" class="form-control" id="edit_id_country">
                 </div>
+                <div class="col-md-6">
+                  <label for="edit_additional_document" class="form-label">Documento aggiuntivo</label>
+                  <input type="text" class="form-control" id="edit_additional_document">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_codice_fiscale" class="form-label">Codice Fiscale</label>
+                  <input type="text" class="form-control" id="edit_codice_fiscale">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_permesso_soggiorno" class="form-label">Permesso di soggiorno</label>
+                  <input type="text" class="form-control" id="edit_permesso_soggiorno">
+                </div>
               </div>
             </div>
             <div class="tab-pane fade" id="patente" role="tabpanel">
@@ -254,7 +316,7 @@
                   <input type="text" class="form-control" id="edit_license_number">
                 </div>
                 <div class="col-md-6">
-                  <label for="edit_license_category" class="form-label">Categoria patente</label>
+                  <label for="edit_license_category" class="form-label">Drive License</label>
                   <input type="text" class="form-control" id="edit_license_category">
                 </div>
                 <div class="col-md-6">
@@ -318,12 +380,16 @@
                   <input type="text" class="form-control" id="edit_other_experience">
                 </div>
                 <div class="col-md-6">
-                  <label for="edit_availability" class="form-label">Disponibilità</label>
-                  <input type="text" class="form-control" id="edit_availability">
+                  <label for="edit_availability_from" class="form-label">Disponibilità da</label>
+                  <input type="date" class="form-control" id="edit_availability_from">
                 </div>
                 <div class="col-md-6">
-                  <label for="edit_other_location" class="form-label">Altra località</label>
-                  <input type="text" class="form-control" id="edit_other_location">
+                  <label for="edit_availability_till" class="form-label">Disponibilità fino</label>
+                  <input type="date" class="form-control" id="edit_availability_till">
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_city_availability" class="form-label">Città/Località di disponibilità</label>
+                  <input type="text" class="form-control" id="edit_city_availability">
                 </div>
                 <div class="col-md-12 mb-3">
                   <label class="form-label">Foto profilo</label>
@@ -361,10 +427,57 @@
 <script>
 let allCandidates = [];
 let currentSort = { key: null, asc: true };
+
+// Carica le opzioni per i filtri dropdown
+async function loadFilterOptions() {
+  try {
+    const resp = await fetch('/api/filter-options');
+    const options = await resp.json();
+    
+    // Popola il dropdown dei nomi form
+    const formNameSelect = document.getElementById('filter_form_name');
+    formNameSelect.innerHTML = '<option value="">Tutti i Form</option>';
+    options.form_names.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      formNameSelect.appendChild(option);
+    });
+    
+    // Popola il dropdown delle categorie
+    const categorySelect = document.getElementById('filter_form_category');
+    categorySelect.innerHTML = '<option value="">Tutte le Categorie</option>';
+    options.categories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      categorySelect.appendChild(option);
+    });
+    
+    // Popola il dropdown delle sottocategorie
+    const subcategorySelect = document.getElementById('filter_form_subcategory');
+    subcategorySelect.innerHTML = '<option value="">Tutte le Sottocategorie</option>';
+    options.subcategories.forEach(subcategory => {
+      const option = document.createElement('option');
+      option.value = subcategory;
+      option.textContent = subcategory;
+      subcategorySelect.appendChild(option);
+    });
+    
+  } catch (error) {
+    console.error('Errore nel caricamento delle opzioni dei filtri:', error);
+  }
+}
+
 async function loadCandidates() {
   try {
     console.log('Caricamento candidati...');
-    const resp = await fetch('/api/candidates');
+    // Determina l'URL dell'API in base alla pagina corrente
+    const apiUrl = window.location.pathname.includes('/archiviati') 
+      ? '/api/candidates?archived=true' 
+      : '/api/candidates';
+    
+    const resp = await fetch(apiUrl);
     console.log('Risposta ricevuta:', resp.status);
     if (!resp.ok) {
       throw new Error(`HTTP error! status: ${resp.status}`);
@@ -414,6 +527,9 @@ function renderTable(data) {
       <td>${c.id_number||''}</td>
       <td>${c.id_expiry_date||''}</td>
       <td>${c.id_country||''}</td>
+      <td>${c.additional_document||''}</td>
+      <td>${c.codice_fiscale||''}</td>
+      <td>${c.permesso_soggiorno||''}</td>
       <td>${c.license_country||''}</td>
       <td>${c.license_number||''}</td>
       <td>${c.license_category||''}</td>
@@ -423,14 +539,24 @@ function renderTable(data) {
       <td>${c.auto_moto_munito||''}</td>
       <td>${c.occupation||''}</td>
       <td>${c.other_experience||''}</td>
-      <td>${c.availability||''}</td>
-      <td>${c.other_location||''}</td>
+      <td>${c.availability_from||''}</td>
+      <td>${c.availability_till||''}</td>
+      <td>${c.city_availability||''}</td>
       <td>${c.language_1||''}</td>
       <td>${c.proficiency_1||''}</td>
       <td>${c.language_2||''}</td>
       <td>${c.proficiency_2||''}</td>
       <td>${c.language_3||''}</td>
       <td>${c.proficiency_3||''}</td>
+      <td>
+        ${c.form_name ? `<span class="badge bg-info">${c.form_name}</span>` : '<span class="text-muted">-</span>'}
+      </td>
+      <td>
+        ${c.form_category ? `<span class="badge bg-primary">${c.form_category}</span>` : '<span class="text-muted">-</span>'}
+      </td>
+      <td>
+        ${c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>'}
+      </td>
       <td>
         ${c.curriculum_file ? `<a href="${c.curriculum_file}" target="_blank" class="btn btn-outline-primary btn-sm"><i class='bi bi-file-earmark-pdf'></i> Apri</a>` : '<span class="text-muted">-</span>'}
       </td>
@@ -448,8 +574,9 @@ function renderTable(data) {
       </td>
       <td>
         <div class="btn-group" role="group">
-          <button class="btn btn-sm btn-primary" onclick="openEdit(${c.id})"><i class="bi bi-pencil"></i> Modifica</button>
+          <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
           <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
+          ${getArchiveButton(c)}
         </div>
       </td>
     `;
@@ -458,6 +585,8 @@ function renderTable(data) {
 }
 function applyFiltersAndSort() {
   let filtered = allCandidates;
+  
+  // Applica filtri da input di testo
   document.querySelectorAll('.filter-input').forEach(input => {
     const val = input.value.toLowerCase();
     const key = input.id.replace('filter_','');
@@ -465,6 +594,16 @@ function applyFiltersAndSort() {
       filtered = filtered.filter(c => (c[key]||'').toString().toLowerCase().includes(val));
     }
   });
+  
+  // Applica filtri da dropdown
+  document.querySelectorAll('.filter-select').forEach(select => {
+    const val = select.value;
+    const key = select.id.replace('filter_','');
+    if(val) {
+      filtered = filtered.filter(c => (c[key]||'').toString() === val);
+    }
+  });
+  
   const q = document.getElementById('searchInput').value.toLowerCase();
   if(q) {
     filtered = filtered.filter(c =>
@@ -482,14 +621,26 @@ function applyFiltersAndSort() {
   }
   renderTable(filtered);
 }
+
+// Event listeners per input di testo
 document.querySelectorAll('.filter-input').forEach(input => {
   input.addEventListener('input', applyFiltersAndSort);
 });
+
+// Event listeners per dropdown
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.filter-select').forEach(select => {
+    select.addEventListener('change', applyFiltersAndSort);
+  });
+});
+
 document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+
 const resetFiltersBtn = document.getElementById('resetFilters');
 if (resetFiltersBtn) {
   resetFiltersBtn.onclick = function() {
     document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+    document.querySelectorAll('.filter-select').forEach(select => select.value = '');
     document.getElementById('searchInput').value = '';
     applyFiltersAndSort();
   };
@@ -532,6 +683,9 @@ function openEdit(id) {
   document.getElementById('edit_id_number').value = c.id_number||'';
   document.getElementById('edit_id_expiry_date').value = c.id_expiry_date||'';
   document.getElementById('edit_id_country').value = c.id_country||'';
+  document.getElementById('edit_additional_document').value = c.additional_document||'';
+  document.getElementById('edit_codice_fiscale').value = c.codice_fiscale||'';
+  document.getElementById('edit_permesso_soggiorno').value = c.permesso_soggiorno||'';
   document.getElementById('edit_license_country').value = c.license_country||'';
   document.getElementById('edit_license_number').value = c.license_number||'';
   document.getElementById('edit_license_category').value = c.license_category||'';
@@ -541,8 +695,9 @@ function openEdit(id) {
   document.getElementById('edit_auto_moto_munito').value = c.auto_moto_munito||'';
   document.getElementById('edit_occupation').value = c.occupation||'';
   document.getElementById('edit_other_experience').value = c.other_experience||'';
-  document.getElementById('edit_availability').value = c.availability||'';
-  document.getElementById('edit_other_location').value = c.other_location||'';
+  document.getElementById('edit_availability_from').value = c.availability_from||'';
+  document.getElementById('edit_availability_till').value = c.availability_till||'';
+  document.getElementById('edit_city_availability').value = c.city_availability||'';
   document.getElementById('edit_language_1').value = c.language_1||'';
   document.getElementById('edit_proficiency_1').value = c.proficiency_1||'';
   document.getElementById('edit_language_2').value = c.language_2||'';
@@ -577,6 +732,9 @@ document.getElementById('editForm').onsubmit = async function(e) {
     id_number: document.getElementById('edit_id_number').value,
     id_expiry_date: document.getElementById('edit_id_expiry_date').value,
     id_country: document.getElementById('edit_id_country').value,
+    additional_document: document.getElementById('edit_additional_document').value,
+    codice_fiscale: document.getElementById('edit_codice_fiscale').value,
+    permesso_soggiorno: document.getElementById('edit_permesso_soggiorno').value,
     license_country: document.getElementById('edit_license_country').value,
     license_number: document.getElementById('edit_license_number').value,
     license_category: document.getElementById('edit_license_category').value,
@@ -586,8 +744,9 @@ document.getElementById('editForm').onsubmit = async function(e) {
     auto_moto_munito: document.getElementById('edit_auto_moto_munito').value,
     occupation: document.getElementById('edit_occupation').value,
     other_experience: document.getElementById('edit_other_experience').value,
-    availability: document.getElementById('edit_availability').value,
-    other_location: document.getElementById('edit_other_location').value,
+    availability_from: document.getElementById('edit_availability_from').value,
+    availability_till: document.getElementById('edit_availability_till').value,
+    city_availability: document.getElementById('edit_city_availability').value,
     language_1: document.getElementById('edit_language_1').value,
     proficiency_1: document.getElementById('edit_proficiency_1').value,
     language_2: document.getElementById('edit_language_2').value,
@@ -608,7 +767,14 @@ document.getElementById('editForm').onsubmit = async function(e) {
   bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
   loadCandidates();
 };
-loadCandidates();
+
+// Carica sia i candidati che le opzioni dei filtri all'avvio
+async function initializePage() {
+  await loadFilterOptions();
+  await loadCandidates();
+}
+
+initializePage();
 
 // Tooltip Bootstrap per i titoli delle colonne
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
@@ -777,5 +943,74 @@ if (removePhotoBtn) {
 // On modal close, stop webcam
 const editModalEl = document.getElementById('editModal');
 if (editModalEl) editModalEl.addEventListener('hidden.bs.modal', stopWebcam);
+
+// Funzioni per archiviazione
+function getArchiveButton(candidate) {
+  const isArchived = candidate.archived || false;
+  const currentPage = window.location.pathname.includes('/archiviati');
+  
+  if (currentPage) {
+    // Se siamo nella vista archiviati, mostra pulsante "Ripristina"
+    return `<button class="btn btn-sm btn-success" onclick="toggleArchive(${candidate.id}, false)" title="Ripristina candidato">
+              <i class="bi bi-arrow-counterclockwise"></i> Ripristina
+            </button>`;
+  } else {
+    // Se siamo nella vista attivi, mostra pulsante "Archivia"
+    return `<button class="btn btn-sm btn-warning" onclick="toggleArchive(${candidate.id}, true)" title="Archivia candidato">
+              <i class="bi bi-archive"></i> Archivia
+            </button>`;
+  }
+}
+
+async function toggleArchive(candidateId, archived) {
+  const action = archived ? 'archiviare' : 'ripristinare';
+  
+  if (!confirm(`Sei sicuro di voler ${action} questo candidato?`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/candidates/${candidateId}/archive`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ archived: archived })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Ricarica la lista candidati
+      loadCandidates();
+      
+      // Mostra messaggio di successo
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-success alert-dismissible fade show';
+      alertDiv.innerHTML = `
+        ${data.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      // Inserisci l'alert dopo l'header
+      const header = document.querySelector('h2');
+      if (header) {
+        header.insertAdjacentElement('afterend', alertDiv);
+        
+        // Rimuovi l'alert dopo 3 secondi
+        setTimeout(() => {
+          if (alertDiv.parentNode) {
+            alertDiv.remove();
+          }
+        }, 3000);
+      }
+    } else {
+      alert('Errore durante l operazione: ' + (data.error || 'Errore sconosciuto'));
+    }
+  } catch (error) {
+    console.error('Errore:', error);
+    alert('Errore di rete durante l operazione');
+  }
+}
 </script>
 {% endblock %}
