@@ -11,10 +11,10 @@
                     <h4>Punteggi - {{ candidate.first_name }} {{ candidate.last_name }}</h4>
                     <div>
                         <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Aggiungi Punteggio
+                            <i class="bi bi-plus"></i> Aggiungi Punteggio
                         </a>
                         <a href="{{ url_for('main.candidates_list') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Torna alla Lista
+                            <i class="bi bi-arrow-left"></i> Torna alla Lista
                         </a>
                     </div>
                 </div>
@@ -110,13 +110,13 @@
                                         <td>
                                             <a href="{{ url_for('main.edit_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
                                                class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
+                                                <i class="bi bi-pencil"></i>
                                             </a>
                                             <form method="POST" style="display: inline;" 
                                                   action="{{ url_for('main.delete_candidate_score', candidate_id=candidate.id, score_id=score.id) }}"
                                                   onsubmit="return confirm('Sei sicuro di voler eliminare questo punteggio?')">
                                                 <button type="submit" class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         </td>
@@ -127,7 +127,7 @@
                         </div>
                     {% else %}
                         <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Nessun punteggio assegnato a questo candidato.
+                            <i class="bi bi-info-circle"></i> Nessun punteggio assegnato a questo candidato.
                             <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-primary btn-sm ml-2">
                                 Aggiungi il primo punteggio
                             </a>

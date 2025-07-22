@@ -64,6 +64,7 @@ def candidate_to_dict(c):
         'language_3': c.language_3,
         'proficiency_3': c.proficiency_3,
         'archived': c.archived,
+        'created_at': c.created_at.isoformat() if c.created_at else None,
         'form_name': c.form.name if c.form else None,
         'form_category': c.form.category if c.form else None,
         'form_subcategory': c.form.subcategory if c.form else None,

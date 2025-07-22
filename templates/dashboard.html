@@ -1,35 +1,287 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
+<style>
+/* Sezione Filtri - Tema principale */
+.filters-section {
+  background: linear-gradient(135deg, var(--primary, #7db7e8) 0%, var(--secondary, #bfaee0) 100%);
+  border: none;
+  border-radius: var(--border-radius, 1rem);
+  box-shadow: 0 4px 20px rgba(125, 183, 232, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition, 0.3s) ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 180px; /* Altezza aumentata */
+}
+
+.filters-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.filters-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(125, 183, 232, 0.3);
+}
+
+/* Titolo della sezione filtri */
+.filters-title {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filters-title::before {
+  content: '🔍';
+  font-size: 1.2em;
+}
+
+/* Badge filtri attivi */
+.filter-status-badge {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--primary, #7db7e8) !important;
+  border: 2px solid white;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  font-size: 0.85rem;
+}
+
+.filter-status-badge.active {
+  background: var(--success, #b6e2d3) !important;
+  color: #1a5c3a !important;
+  animation: pulse 2s infinite;
+}
+
+/* Etichette dei filtri */
+.filter-label {
+  color: white !important;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+/* Select dei filtri */
+.filter-select {
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.filter-select:focus {
+  border-color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.3) !important;
+  background: white !important;
+}
+
+.filter-select:hover {
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+/* Bottoni filtri */
+.filter-btn {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  color: white !important;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: white !important;
+}
+
+.filter-btn.btn-secondary {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.filter-btn.btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-btn.btn-warning {
+  background: rgba(255, 214, 165, 0.3);
+  border-color: rgba(255, 214, 165, 0.5);
+}
+
+.filter-btn.btn-warning:hover {
+  background: rgba(255, 214, 165, 0.5);
+  border-color: rgba(255, 214, 165, 0.8);
+}
+
+/* Tema scuro */
+body[data-theme="dark"] .filters-section {
+  background: linear-gradient(135deg, var(--card-bg-dark, #2d3142) 0%, #3a3f5c 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="dark"] .filters-section::before {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="dark"] .filters-title {
+  color: var(--text-dark, #f6f7fb) !important;
+}
+
+body[data-theme="dark"] .filter-label {
+  color: var(--text-dark, #f6f7fb) !important;
+}
+
+body[data-theme="dark"] .filter-select {
+  background: var(--card-bg-dark, #2d3142) !important;
+  color: var(--text-dark, #f6f7fb) !important;
+  border-color: rgba(125, 183, 232, 0.3) !important;
+}
+
+body[data-theme="dark"] .filter-select:focus {
+  border-color: var(--primary, #7db7e8) !important;
+  box-shadow: 0 0 0 0.2rem rgba(125, 183, 232, 0.3) !important;
+}
+
+body[data-theme="dark"] .filter-btn {
+  background: rgba(125, 183, 232, 0.2);
+  border-color: var(--primary, #7db7e8);
+  color: var(--text-dark, #f6f7fb) !important;
+}
+
+body[data-theme="dark"] .filter-btn:hover {
+  background: rgba(125, 183, 232, 0.3);
+  color: var(--text-dark, #f6f7fb) !important;
+}
+
+body[data-theme="dark"] .filter-status-badge {
+  background: rgba(45, 49, 66, 0.9) !important;
+  color: var(--primary, #7db7e8) !important;
+  border-color: var(--primary, #7db7e8);
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+body[data-theme="dark"] .filter-btn.btn-warning {
+  background: rgba(255, 214, 165, 0.2);
+  border-color: rgba(255, 214, 165, 0.4);
+}
+
+body[data-theme="dark"] .filter-btn.btn-warning:hover {
+  background: rgba(255, 214, 165, 0.3);
+  border-color: rgba(255, 214, 165, 0.6);
+}
+
+/* Animazioni */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsività migliorata */
+@media (max-width: 768px) {
+  .filters-section {
+    padding: 1rem !important;
+    margin: 0 -0.5rem 1.5rem -0.5rem;
+    min-height: 200px;
+  }
+  
+  .filter-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+  
+  .filters-title {
+    font-size: 1rem;
+    text-align: center;
+  }
+  
+  .filter-status-badge {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: block !important;
+    text-align: center;
+    margin: 0.5rem auto 1rem auto;
+    width: fit-content;
+  }
+  
+  /* Su mobile i campi vanno in colonna */
+  .row.g-3.align-items-end > .col-md-4 {
+    margin-bottom: 0.5rem;
+  }
+}
+</style>
 <h2 class="mb-4">Dashboard</h2>
 
 <!-- Sezione Filtri -->
-<div class="card mb-4" style="background-color: #e3f2fd; border: 3px solid #1976d2;">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="card-title mb-0" style="color: #1976d2; font-weight: bold;">🔍 FILTRI DASHBOARD</h5>
-      <span id="filter-status" class="badge bg-primary" style="display: block; font-size: 14px;">Filtri attivi</span>
+<div class="filters-section mb-4" style="padding: 1.5rem; min-height: 180px;">
+  <!-- Badge posizionato in modo assoluto -->
+  <span id="filter-status" class="filter-status-badge" style="display: none;">Filtri attivi</span>
+  
+  <div>
+    <div class="mb-3">
+      <h5 class="filters-title mb-0">FILTRI DASHBOARD</h5>
     </div>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label for="filter-evento" class="form-label" style="font-weight: bold; color: #1976d2;">Evento</label>
-        <select class="form-select" id="filter-evento" style="border: 2px solid #4caf50; font-size: 16px;">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="filter-evento" class="form-label filter-label">Evento</label>
+        <select class="form-select filter-select" id="filter-evento">
           <option value="">Tutti gli eventi</option>
         </select>
       </div>
-      <div class="col-md-6">
-        <label for="filter-azienda" class="form-label" style="font-weight: bold; color: #1976d2;">Azienda</label>
-        <select class="form-select" id="filter-azienda" style="border: 2px solid #4caf50; font-size: 16px;">
+      <div class="col-md-4">
+        <label for="filter-azienda" class="form-label filter-label">Azienda</label>
+        <select class="form-select filter-select" id="filter-azienda">
           <option value="">Tutte le aziende</option>
         </select>
       </div>
-    </div>
-    <div class="row mt-3">
-      <div class="col-12">
-        <button type="button" class="btn btn-primary btn-lg" onclick="applyFilters()" style="font-size: 18px;">
-          <i class="fas fa-filter me-2"></i>Applica Filtri
-        </button>
-        <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="clearFilters()" style="font-size: 18px;">
-          <i class="fas fa-times me-2"></i>Rimuovi Filtri
+      <div class="col-md-4">
+        <button type="button" class="btn filter-btn btn-warning w-100" onclick="clearFilters()">
+          <i class="bi bi-eraser me-2"></i>Azzera Filtri
         </button>
       </div>
     </div>
@@ -156,23 +408,44 @@ async function loadFilters() {
       option.textContent = azienda;
       aziendaSelect.appendChild(option);
     });
+
+    // Aggiungi listeners per aggiornamento automatico
+    eventoSelect.addEventListener('change', function() {
+      updateFilterStatus();
+      fetchStats(true); // true = aggiornamento automatico
+    });
+
+    aziendaSelect.addEventListener('change', function() {
+      updateFilterStatus();
+      fetchStats(true); // true = aggiornamento automatico
+    });
+
   } catch (error) {
     console.error('Errore nel caricamento dei filtri:', error);
   }
 }
 
-// Applica i filtri
-function applyFilters() {
-  updateFilterStatus();
-  fetchStats();
-}
-
-// Rimuove tutti i filtri
+// Azzera tutti i filtri
 function clearFilters() {
+  // Feedback visivo sul bottone
+  const clearBtn = event.target.closest('button');
+  const originalText = clearBtn.innerHTML;
+  clearBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Azzerato!';
+  clearBtn.classList.add('btn-success');
+  clearBtn.classList.remove('btn-warning');
+  
+  // Pulisci i filtri
   document.getElementById('filter-evento').value = '';
   document.getElementById('filter-azienda').value = '';
   updateFilterStatus();
-  fetchStats();
+  fetchStats(true);
+  
+  // Ripristina il bottone dopo 1.5 secondi
+  setTimeout(() => {
+    clearBtn.innerHTML = originalText;
+    clearBtn.classList.remove('btn-success');
+    clearBtn.classList.add('btn-warning');
+  }, 1500);
 }
 
 // Aggiorna lo stato dei filtri
@@ -183,15 +456,26 @@ function updateFilterStatus() {
   
   if (evento || azienda) {
     statusBadge.style.display = 'inline-block';
-    statusBadge.className = 'badge bg-primary';
+    statusBadge.className = 'filter-status-badge active';
     statusBadge.textContent = 'Filtri attivi';
   } else {
     statusBadge.style.display = 'none';
+    statusBadge.className = 'filter-status-badge';
   }
 }
 
-async function fetchStats() {
-  // Loader visibile
+async function fetchStats(autoUpdate = false) {
+  console.log('Inizio fetchStats...', autoUpdate ? '(aggiornamento automatico)' : '');
+  
+  // Mostra feedback visivo se è un aggiornamento automatico
+  if (autoUpdate) {
+    // Aggiungi una classe di "loading" alla sezione filtri
+    const filtersSection = document.querySelector('.filters-section');
+    filtersSection.style.opacity = '0.8';
+    filtersSection.style.transform = 'scale(0.98)';
+  }
+  
+  // Loader visibile per la tabella
   document.getElementById('latest-loader').style.display = '';
   document.getElementById('latest-table').classList.remove('animate__fadeIn');
 
@@ -212,10 +496,13 @@ async function fetchStats() {
   if (azienda) params.append('azienda', azienda);
   const queryString = params.toString() ? `?${params.toString()}` : '';
 
-  const summary = await fetch(`/api/stats/summary${queryString}`).then(r=>r.json());
-  document.getElementById('stat-total').textContent = summary.total;
-  document.getElementById('stat-cv').textContent = summary.with_cv;
-  document.getElementById('stat-photo').textContent = summary.with_photo;
+  try {
+    console.log('Chiamata API summary...');
+    const summary = await fetch(`/api/stats/summary${queryString}`).then(r=>r.json());
+    console.log('Summary ricevuta:', summary);
+    document.getElementById('stat-total').textContent = summary.total;
+    document.getElementById('stat-cv').textContent = summary.with_cv;
+    document.getElementById('stat-photo').textContent = summary.with_photo;
 
   const roles = await fetch(`/api/stats/roles${queryString}`).then(r=>r.json());
   const ctxRoles = document.getElementById('chart-roles').getContext('2d');
@@ -335,12 +622,35 @@ async function fetchStats() {
       <td class="text-nowrap">${c.created_at}</td>
     </tr>
   `).join('');
-  // Loader nascosto e animazione
-  document.getElementById('latest-loader').style.display = 'none';
-  document.getElementById('latest-table').classList.add('animate__fadeIn');
+  
+  } catch (error) {
+    console.error('Errore nel caricamento dei dati:', error);
+    // Mostra un messaggio di errore
+    const tbody = document.getElementById('latest-candidates');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Errore nel caricamento dei dati</td></tr>';
+  } finally {
+    // Ripristina sempre lo stato visivo
+    document.getElementById('latest-loader').style.display = 'none';
+    document.getElementById('latest-table').classList.add('animate__fadeIn');
+    
+    // Ripristina lo stato della sezione filtri se era un aggiornamento automatico
+    if (autoUpdate) {
+      const filtersSection = document.querySelector('.filters-section');
+      filtersSection.style.opacity = '1';
+      filtersSection.style.transform = 'scale(1)';
+    }
+  }
 }
 // Carica filtri e dati all'avvio
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM caricato, inizializzo dashboard...');
+  
+  // Verifica che gli elementi esistano
+  const eventoSelect = document.getElementById('filter-evento');
+  const aziendaSelect = document.getElementById('filter-azienda');
+  console.log('Elemento filter-evento:', eventoSelect);
+  console.log('Elemento filter-azienda:', aziendaSelect);
+  
   loadFilters();
   fetchStats();
 });

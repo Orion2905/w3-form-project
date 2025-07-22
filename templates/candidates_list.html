@@ -1,5 +1,266 @@
 {% extends 'layout_sidebar.html' %}
 {% block title %}{% if archived %}Candidati Archiviati{% else %}Gestione Candidati{% endif %}{% endblock %}
+
+<style>
+.filter-preset.active {
+  background-color: #0d6efd !important;
+  color: white !important;
+  border-color: #0d6efd !important;
+}
+
+.macro-filter {
+  border: 2px solid #dee2e6;
+}
+
+.macro-filter:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.card-header {
+  font-weight: 600;
+}
+
+.filter-preset:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Stili personalizzati per gli spinner */
+#loadingSpinner {
+  animation: fadeIn 0.3s ease-in;
+}
+
+#filterSpinner {
+  z-index: 10;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.spinner-border {
+  animation: spinner-border .75s linear infinite;
+}
+
+/* Spinner tema scuro */
+[data-bs-theme="dark"] .spinner-border {
+  color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] #loadingSpinner p {
+  color: #adb5bd !important;
+}
+
+/* Stili personalizzati per i popover - tema chiaro */
+.popover {
+  max-width: 300px;
+  font-size: 0.875rem;
+}
+
+.popover-header {
+  font-weight: 600;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.popover-body {
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* Stili per filtri avanzati - tema chiaro */
+.collapse .card-body {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+/* Tema scuro - popover */
+[data-bs-theme="dark"] .popover {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] .popover-header {
+  background-color: #343a40 !important;
+  border-bottom-color: #495057 !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .popover-body {
+  color: #adb5bd !important;
+  background-color: #212529 !important;
+}
+
+[data-bs-theme="dark"] .popover .popover-arrow::before {
+  border-top-color: #212529 !important;
+}
+
+[data-bs-theme="dark"] .popover .popover-arrow::after {
+  border-top-color: #212529 !important;
+}
+
+/* Popover arrow per posizioni diverse nel tema scuro */
+[data-bs-theme="dark"] .bs-popover-top > .popover-arrow::before,
+[data-bs-theme="dark"] .bs-popover-top > .popover-arrow::after {
+  border-top-color: #212529 !important;
+}
+
+[data-bs-theme="dark"] .bs-popover-bottom > .popover-arrow::before,
+[data-bs-theme="dark"] .bs-popover-bottom > .popover-arrow::after {
+  border-bottom-color: #212529 !important;
+}
+
+[data-bs-theme="dark"] .bs-popover-start > .popover-arrow::before,
+[data-bs-theme="dark"] .bs-popover-start > .popover-arrow::after {
+  border-left-color: #212529 !important;
+}
+
+[data-bs-theme="dark"] .bs-popover-end > .popover-arrow::before,
+[data-bs-theme="dark"] .bs-popover-end > .popover-arrow::after {
+  border-right-color: #212529 !important;
+}
+
+/* Stili specifici per popover con classe tema */
+.filter-popover.theme-dark {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+}
+
+.filter-popover.theme-dark .popover-header {
+  background-color: #343a40 !important;
+  border-bottom-color: #495057 !important;
+  color: #fff !important;
+}
+
+.filter-popover.theme-dark .popover-body {
+  color: #adb5bd !important;
+  background-color: #212529 !important;
+}
+
+.filter-popover.theme-light {
+  background-color: #fff !important;
+  border-color: #dee2e6 !important;
+}
+
+.filter-popover.theme-light .popover-header {
+  background-color: #f8f9fa !important;
+  border-bottom-color: #dee2e6 !important;
+  color: #212529 !important;
+}
+
+/* Tema scuro - filtri avanzati */
+[data-bs-theme="dark"] .collapse .card-body {
+  background-color: #2c3034 !important;
+  border-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] .collapse .card-body .form-control,
+[data-bs-theme="dark"] .collapse .card-body .form-select {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #fff !important;
+}
+
+[data-bs-theme="dark"] .collapse .card-body .form-control:focus,
+[data-bs-theme="dark"] .collapse .card-body .form-select:focus {
+  background-color: #212529 !important;
+  border-color: #0d6efd !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .collapse .card-body .form-control::placeholder,
+[data-bs-theme="dark"] .collapse .card-body input.form-control::placeholder,
+[data-bs-theme="dark"] .collapse .card-body .filter-input::placeholder {
+  color: #adb5bd !important;
+  opacity: 1 !important;
+}
+
+[data-bs-theme="dark"] .collapse .card-body .text-muted {
+  color: #6c757d !important;
+}
+
+/* Macrofiltri - tema scuro */
+[data-bs-theme="dark"] .macro-filter {
+  background-color: #212529;
+  border-color: #495057;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] .macro-filter:focus {
+  background-color: #212529;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+/* Pulsanti filtri preset - tema scuro */
+[data-bs-theme="dark"] .filter-preset:not(.active) {
+  color: #fff;
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .filter-preset:not(.active):hover {
+  background-color: #495057;
+  border-color: #6c757d;
+}
+
+/* Campo di ricerca globale - tema scuro */
+[data-bs-theme="dark"] #searchInput {
+  background-color: #212529;
+  border-color: #495057;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] #searchInput:focus {
+  background-color: #212529;
+  border-color: #0d6efd;
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+[data-bs-theme="dark"] #searchInput::placeholder {
+  color: #adb5bd !important;
+}
+
+/* Regole aggiuntive per forzare i placeholder nei filtri avanzati */
+[data-bs-theme="dark"] .collapse input::placeholder,
+[data-bs-theme="dark"] .collapse .form-control::placeholder,
+[data-bs-theme="dark"] .collapse input.filter-input::placeholder {
+  color: #adb5bd !important;
+  opacity: 1 !important;
+}
+
+/* Regola ultra-specifica per sovrascrivare Bootstrap */
+[data-bs-theme="dark"] .collapse .card-body input[type="text"]::placeholder {
+  color: #adb5bd !important;
+  opacity: 1 !important;
+}
+
+/* Resoconto candidati - tema scuro */
+[data-bs-theme="dark"] #candidatesReport .card {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] #candidatesReport .text-muted {
+  color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] #candidatesReport .text-primary {
+  color: #4dabf7 !important;
+}
+
+[data-bs-theme="dark"] #candidatesReport .text-success {
+  color: #51cf66 !important;
+}
+
+[data-bs-theme="dark"] #candidatesReport .text-info {
+  color: #74c0fc !important;
+}
+</style>
+
 {% block main_content %}
 <div class="container-fluid my-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -35,6 +296,107 @@
       </div>
     </div>
   </div>
+  
+  <!-- Macrofiltri - sempre visibili e non influenzati da reset -->
+  <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-filter-circle"></i> Filtri Principali</h6>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Form</label>
+          <select class="form-select macro-filter" id="macro_filter_form_name">
+            <option value="">Tutti i Form</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Categoria</label>
+          <select class="form-select macro-filter" id="macro_filter_form_category">
+            <option value="">Tutte le Categorie</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Sottocategoria</label>
+          <select class="form-select macro-filter" id="macro_filter_form_subcategory">
+            <option value="">Tutte le Sottocategorie</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modelli di Filtraggio Predefiniti -->
+  <div class="card mb-3">
+    <div class="card-header bg-info text-white">
+      <h6 class="mb-0"><i class="bi bi-magic"></i> Modelli di Filtraggio</h6>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-primary btn-sm filter-preset" 
+                data-preset="recent"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Candidati Recenti"
+                data-bs-content="Mostra candidati che si sono registrati negli ultimi 7 giorni dalla data odierna">
+          <i class="bi bi-clock"></i> Candidati Recenti (Ultimi 7 giorni)
+        </button>
+        <button class="btn btn-outline-success btn-sm filter-preset" 
+                data-preset="high-score"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Punteggio Alto"
+                data-bs-content="Mostra candidati con punteggio totale superiore a 80 punti (eccellente)">
+          <i class="bi bi-star"></i> Punteggio Alto (80+)
+        </button>
+        <button class="btn btn-outline-warning btn-sm filter-preset" 
+                data-preset="no-score"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Non Valutati"
+                data-bs-content="Mostra candidati che non hanno ancora ricevuto alcun punteggio o valutazione">
+          <i class="bi bi-question-circle"></i> Non Valutati
+        </button>
+        <button class="btn btn-outline-info btn-sm filter-preset" 
+                data-preset="available-now"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Disponibili Ora"
+                data-bs-content="Mostra candidati la cui disponibilità include la data odierna (disponibilità da ≤ oggi ≤ disponibilità fino)">
+          <i class="bi bi-calendar-check"></i> Disponibili Ora
+        </button>
+        <button class="btn btn-outline-secondary btn-sm filter-preset" 
+                data-preset="experienced"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Candidati Esperti"
+                data-bs-content="Mostra candidati con 5 o più anni di esperienza di guida">
+          <i class="bi bi-award"></i> Esperti (5+ anni guida)
+        </button>
+        <button class="btn btn-outline-danger btn-sm filter-preset" 
+                data-preset="urgent"
+                data-bs-toggle="popover" 
+                data-bs-placement="top" 
+                data-bs-trigger="hover focus"
+                data-bs-title="Da Contattare Urgentemente"
+                data-bs-content="Mostra candidati recenti (ultimi 7 giorni) che non hanno ancora ricevuto alcuna valutazione">
+          <i class="bi bi-exclamation-triangle"></i> Da Contattare
+        </button>
+        <button class="btn btn-outline-dark btn-sm" id="clearAllFilters">
+          <i class="bi bi-x-circle"></i> Pulisci Tutto
+        </button>
+      </div>
+      <small class="text-muted d-block mt-2">
+        Usa questi modelli per applicare rapidamente filtri comuni. I filtri principali sopra rimangono sempre attivi.
+      </small>
+    </div>
+  </div>
+  
   <div class="mb-3">
     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
       <i class="bi bi-funnel"></i> Filtri avanzati
@@ -76,25 +438,6 @@
           <input type="text" class="form-control filter-input" id="filter_city_availability" placeholder="Città Disponibilità">
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <select class="form-select filter-select" id="filter_form_name">
-            <option value="">Tutti i Form</option>
-          </select>
-        </div>
-        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <select class="form-select filter-select" id="filter_form_category">
-            <option value="">Tutte le Categorie</option>
-          </select>
-        </div>
-        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <select class="form-select filter-select" id="filter_form_subcategory">
-            <option value="">Tutte le Sottocategorie</option>
-          </select>
-        </div>
-      </div>
-      
-      <!-- Terza riga -->
-      <div class="row g-2">
-        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <select class="form-select filter-select" id="filter_score_range">
             <option value="">Tutti i Punteggi</option>
             <option value="0-20">0-20 (Molto Basso)</option>
@@ -106,21 +449,87 @@
           </select>
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <button class="btn btn-outline-secondary w-100" id="resetFilters">
-            <i class="bi bi-arrow-clockwise"></i> Reset filtri
+          <!-- Spazio per altri filtri futuri -->
+        </div>
+      </div>
+      
+      <!-- Terza riga -->
+      <div class="row g-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <button class="btn btn-outline-secondary w-100" id="resetAdvancedFilters">
+            <i class="bi bi-arrow-clockwise"></i> Reset Filtri Avanzati
           </button>
         </div>
         <!-- Spazio per eventuali filtri futuri -->
-        <div class="col-xl-8 col-lg-6 col-md-4 col-sm-12">
-          <small class="text-muted">Usa i filtri per restringere la ricerca dei candidati</small>
+        <div class="col-xl-10 col-lg-9 col-md-8 col-sm-6">
+          <small class="text-muted">I filtri avanzati si applicano insieme ai filtri principali sopra</small>
         </div>
       </div>
     </div>
   </div>
-  <div class="mb-3">
+  <div class="mb-3 position-relative">
     <input type="text" class="form-control" id="searchInput" placeholder="Cerca su tutti i campi...">
+    <!-- Spinner piccolo per filtraggio -->
+    <div id="filterSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display: none;">
+      <div class="spinner-border spinner-border-sm text-primary" role="status">
+        <span class="visually-hidden">Filtraggio...</span>
+      </div>
+    </div>
   </div>
+  
+  <!-- Resoconto candidati filtrati -->
+  <div class="row mb-3" id="candidatesReport" style="display: none;">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-md-2 col-sm-4 col-6">
+              <div class="text-center">
+                <div class="h4 mb-1 text-primary fw-bold" id="stat-filtered-total">0</div>
+                <div class="small text-muted">Candidati trovati</div>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-4 col-6">
+              <div class="text-center">
+                <div class="h5 mb-1 text-success fw-bold" id="stat-filtered-cv">0</div>
+                <div class="small text-muted">Con CV</div>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-4 col-6">
+              <div class="text-center">
+                <div class="h5 mb-1 text-info fw-bold" id="stat-filtered-photo">0</div>
+                <div class="small text-muted">Con Foto</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-12">
+              <div class="text-center">
+                <div class="small text-muted mb-1">Genere più comune</div>
+                <span class="badge bg-secondary" id="stat-most-common-gender">-</span>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6 col-12">
+              <div class="text-center">
+                <div class="small text-muted mb-1">Filtri attivi</div>
+                <span class="badge bg-primary" id="stat-active-filters">Nessuno</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <div class="table-responsive">
+    <!-- Spinner di caricamento -->
+    <div id="loadingSpinner" class="text-center py-5" style="display: none;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Caricamento...</span>
+      </div>
+      <div class="mt-3">
+        <p class="text-muted mb-0">Caricamento candidati in corso...</p>
+      </div>
+    </div>
+    
     <table class="table table-striped table-hover align-middle" id="candidatesTable">
       <thead class="table-light">
         <tr>
@@ -171,6 +580,7 @@
             ('form_name', 'Form'),
             ('form_category', 'Categoria Form'),
             ('form_subcategory', 'Sottocategoria Form'),
+            ('created_at', 'Creato il'),
             ('total_score', 'Punteggio')
           ] %}
           {% for key, label in columns %}
@@ -457,6 +867,7 @@
 {% block scripts %}
 <script>
 let allCandidates = [];
+let filteredCandidates = [];
 let currentSort = { key: null, asc: true };
 
 // Carica le opzioni per i filtri dropdown
@@ -465,44 +876,175 @@ async function loadFilterOptions() {
     const resp = await fetch('/api/filter-options');
     const options = await resp.json();
     
-    // Popola il dropdown dei nomi form
-    const formNameSelect = document.getElementById('filter_form_name');
-    formNameSelect.innerHTML = '<option value="">Tutti i Form</option>';
+    // *** POPOLA I MACROFILTRI ***
+    
+    // Macrofiltro nomi form
+    const macroFormNameSelect = document.getElementById('macro_filter_form_name');
+    macroFormNameSelect.innerHTML = '<option value="">Tutti i Form</option>';
     options.form_names.forEach(name => {
       const option = document.createElement('option');
       option.value = name;
       option.textContent = name;
-      formNameSelect.appendChild(option);
+      macroFormNameSelect.appendChild(option);
     });
     
-    // Popola il dropdown delle categorie
-    const categorySelect = document.getElementById('filter_form_category');
-    categorySelect.innerHTML = '<option value="">Tutte le Categorie</option>';
+    // Macrofiltro categorie
+    const macroCategorySelect = document.getElementById('macro_filter_form_category');
+    macroCategorySelect.innerHTML = '<option value="">Tutte le Categorie</option>';
     options.categories.forEach(category => {
       const option = document.createElement('option');
       option.value = category;
       option.textContent = category;
-      categorySelect.appendChild(option);
+      macroCategorySelect.appendChild(option);
     });
     
-    // Popola il dropdown delle sottocategorie
-    const subcategorySelect = document.getElementById('filter_form_subcategory');
-    subcategorySelect.innerHTML = '<option value="">Tutte le Sottocategorie</option>';
+    // Macrofiltro sottocategorie
+    const macroSubcategorySelect = document.getElementById('macro_filter_form_subcategory');
+    macroSubcategorySelect.innerHTML = '<option value="">Tutte le Sottocategorie</option>';
     options.subcategories.forEach(subcategory => {
       const option = document.createElement('option');
       option.value = subcategory;
       option.textContent = subcategory;
-      subcategorySelect.appendChild(option);
+      macroSubcategorySelect.appendChild(option);
     });
+    
+    // *** POPOLA I FILTRI AVANZATI (se esistono ancora) ***
+    
+    // Mantieni eventuale backward compatibility per filtri avanzati legacy
+    const formNameSelect = document.getElementById('filter_form_name');
+    if (formNameSelect) {
+      formNameSelect.innerHTML = '<option value="">Tutti i Form</option>';
+      options.form_names.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        formNameSelect.appendChild(option);
+      });
+    }
+    
+    const categorySelect = document.getElementById('filter_form_category');
+    if (categorySelect) {
+      categorySelect.innerHTML = '<option value="">Tutte le Categorie</option>';
+      options.categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+    }
+    
+    const subcategorySelect = document.getElementById('filter_form_subcategory');
+    if (subcategorySelect) {
+      subcategorySelect.innerHTML = '<option value="">Tutte le Sottocategorie</option>';
+      options.subcategories.forEach(subcategory => {
+        const option = document.createElement('option');
+        option.value = subcategory;
+        option.textContent = subcategory;
+        subcategorySelect.appendChild(option);
+      });
+    }
     
   } catch (error) {
     console.error('Errore nel caricamento delle opzioni dei filtri:', error);
   }
 }
 
+// Funzioni per gestire lo spinner
+function showLoadingSpinner() {
+  document.getElementById('loadingSpinner').style.display = 'block';
+  document.getElementById('candidatesTable').style.display = 'none';
+}
+
+function hideLoadingSpinner() {
+  document.getElementById('loadingSpinner').style.display = 'none';
+  document.getElementById('candidatesTable').style.display = 'table';
+}
+
+function showFilterSpinner() {
+  document.getElementById('filterSpinner').style.display = 'block';
+}
+
+function hideFilterSpinner() {
+  document.getElementById('filterSpinner').style.display = 'none';
+}
+
+// Funzione per aggiornare il resoconto candidati
+function updateCandidatesReport(candidates) {
+  const reportDiv = document.getElementById('candidatesReport');
+  
+  if (!candidates || candidates.length === 0) {
+    reportDiv.style.display = 'none';
+    return;
+  }
+  
+  // Mostra il resoconto
+  reportDiv.style.display = 'block';
+  
+  // Calcola statistiche
+  const total = candidates.length;
+  const withCV = candidates.filter(c => c.curriculum_file).length;
+  const withPhoto = candidates.filter(c => c.profile_photo).length;
+  
+  // Trova il genere più comune
+  const genderCount = {};
+  candidates.forEach(c => {
+    if (c.gender) {
+      genderCount[c.gender] = (genderCount[c.gender] || 0) + 1;
+    }
+  });
+  
+  const mostCommonGender = Object.keys(genderCount).length > 0 
+    ? Object.keys(genderCount).reduce((a, b) => genderCount[a] > genderCount[b] ? a : b)
+    : 'Non specificato';
+  
+  // Conta filtri attivi
+  const activeFilters = [];
+  
+  // Controlla macrofiltri
+  document.querySelectorAll('.macro-filter').forEach(filter => {
+    if (filter.value && filter.value !== '') {
+      activeFilters.push(filter.previousElementSibling.textContent.trim());
+    }
+  });
+  
+  // Controlla filtri avanzati
+  document.querySelectorAll('.filter-input, .filter-select').forEach(filter => {
+    if (filter.value && filter.value !== '') {
+      const label = filter.closest('.row')?.querySelector('label')?.textContent?.trim() || 
+                   filter.closest('.col-md-4, .col-md-3, .col-md-6')?.querySelector('label')?.textContent?.trim();
+      if (label && !activeFilters.includes(label)) {
+        activeFilters.push(label);
+      }
+    }
+  });
+  
+  // Controlla ricerca globale
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput.value && searchInput.value.trim() !== '') {
+    activeFilters.push('Ricerca globale');
+  }
+  
+  // Aggiorna i valori nel DOM
+  document.getElementById('stat-filtered-total').textContent = total;
+  document.getElementById('stat-filtered-cv').textContent = withCV;
+  document.getElementById('stat-filtered-photo').textContent = withPhoto;
+  document.getElementById('stat-most-common-gender').textContent = mostCommonGender;
+  
+  const activeFiltersElement = document.getElementById('stat-active-filters');
+  if (activeFilters.length > 0) {
+    activeFiltersElement.textContent = activeFilters.length === 1 ? activeFilters[0] : `${activeFilters.length} filtri`;
+    activeFiltersElement.className = 'badge bg-primary';
+  } else {
+    activeFiltersElement.textContent = 'Nessuno';
+    activeFiltersElement.className = 'badge bg-secondary';
+  }
+}
+
 async function loadCandidates() {
   try {
     console.log('Caricamento candidati...');
+    showLoadingSpinner();
+    
     // Determina l'URL dell'API in base alla pagina corrente
     const apiUrl = window.location.pathname.includes('/archiviati') 
       ? '/api/candidates?archived=true' 
@@ -515,9 +1057,12 @@ async function loadCandidates() {
     }
     allCandidates = await resp.json();
     console.log('Candidati caricati:', allCandidates.length);
+    
+    hideLoadingSpinner();
     applyFiltersAndSort();
   } catch (error) {
     console.error('Errore nel caricamento dei candidati:', error);
+    hideLoadingSpinner();
     document.querySelector('#candidatesTable tbody').innerHTML = `
       <tr><td colspan="100%" class="text-center text-danger">
         Errore nel caricamento dei candidati: ${error.message}
@@ -589,9 +1134,12 @@ function renderTable(data) {
         ${c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>'}
       </td>
       <td>
+        ${c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT') : '<span class="text-muted">-</span>'}
+      </td>
+      <td>
         ${(c.scores_count && c.scores_count > 0) ? 
           `<div class="text-center">
-            <span class="badge bg-${(c.total_score || 0) >= 80 ? 'success' : (c.total_score || 0) >= 60 ? 'warning' : (c.total_score || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
+            <span class="badge bg-${(parseFloat(c.total_score) || 0) >= 80 ? 'success' : (parseFloat(c.total_score) || 0) >= 60 ? 'warning' : (parseFloat(c.total_score) || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
             <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
           </div>` : 
           '<span class="text-muted">Non valutato</span>'
@@ -624,18 +1172,110 @@ function renderTable(data) {
   });
 }
 function applyFiltersAndSort() {
-  let filtered = allCandidates;
+  showFilterSpinner();
   
-  console.log('Tutti i candidati:', allCandidates.length);
-  if(allCandidates.length > 0) {
-    console.log('Esempio dati candidato:', {
-      name: allCandidates[0].first_name + ' ' + allCandidates[0].last_name,
-      total_score: allCandidates[0].total_score,
-      scores_count: allCandidates[0].scores_count,
-      typeof_total_score: typeof allCandidates[0].total_score,
-      typeof_scores_count: typeof allCandidates[0].scores_count
-    });
+  // Aggiungi un piccolo delay per permettere al DOM di aggiornare lo spinner
+  setTimeout(() => {
+    let filtered = allCandidates;
+    
+    console.log('Tutti i candidati:', allCandidates.length);
+    if(allCandidates.length > 0) {
+      console.log('Esempio dati candidato completo:', allCandidates[0]);
+      console.log('Esempio dati candidato:', {
+        name: allCandidates[0].first_name + ' ' + allCandidates[0].last_name,
+        created_at: allCandidates[0].created_at,
+        total_score: allCandidates[0].total_score,
+        scores_count: allCandidates[0].scores_count,
+        scores_object: allCandidates[0].scores,
+        typeof_total_score: typeof allCandidates[0].total_score,
+        typeof_scores_count: typeof allCandidates[0].scores_count
+      });
+    }
+  
+  // *** MACROFILTRI - Applicati sempre per primi ***
+  
+  // Filtro per Form
+  const formFilter = document.getElementById('macro_filter_form_name').value;
+  if (formFilter) {
+    filtered = filtered.filter(c => (c.form_name || '') === formFilter);
+    console.log('Filtro form applicato:', formFilter, '- Risultati:', filtered.length);
   }
+  
+  // Filtro per Categoria
+  const categoryFilter = document.getElementById('macro_filter_form_category').value;
+  if (categoryFilter) {
+    filtered = filtered.filter(c => (c.form_category || '') === categoryFilter);
+    console.log('Filtro categoria applicato:', categoryFilter, '- Risultati:', filtered.length);
+  }
+  
+  // Filtro per Sottocategoria
+  const subcategoryFilter = document.getElementById('macro_filter_form_subcategory').value;
+  if (subcategoryFilter) {
+    filtered = filtered.filter(c => (c.form_subcategory || '') === subcategoryFilter);
+    console.log('Filtro sottocategoria applicato:', subcategoryFilter, '- Risultati:', filtered.length);
+  }
+  
+  // *** FILTRI PRESET SPECIALI ***
+  if (currentFilterPreset) {
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    switch(currentFilterPreset) {
+      case 'recent':
+        filtered = filtered.filter(c => {
+          const createdAt = new Date(c.created_at);
+          return createdAt >= weekAgo;
+        });
+        console.log('Filtro preset "recent" applicato - Risultati:', filtered.length);
+        break;
+        
+      case 'high-score':
+        filtered = filtered.filter(c => {
+          const score = parseFloat(c.total_score) || 0;
+          const hasValidScore = c.scores_count > 0 && !isNaN(score);
+          return hasValidScore && score >= 80;
+        });
+        console.log('Filtro preset "high-score" applicato - Risultati:', filtered.length);
+        break;
+        
+      case 'no-score':
+        filtered = filtered.filter(c => {
+          const hasValidScore = c.scores_count > 0;
+          return !hasValidScore;
+        });
+        console.log('Filtro preset "no-score" applicato - Risultati:', filtered.length);
+        break;
+        
+      case 'available-now':
+        filtered = filtered.filter(c => {
+          if (!c.availability_from || !c.availability_till) return false;
+          const availFrom = new Date(c.availability_from);
+          const availTill = new Date(c.availability_till);
+          return availFrom <= today && availTill >= today;
+        });
+        console.log('Filtro preset "available-now" applicato - Risultati:', filtered.length);
+        break;
+        
+      case 'experienced':
+        filtered = filtered.filter(c => {
+          const experience = parseInt(c.years_driving_experience) || 0;
+          return experience >= 5;
+        });
+        console.log('Filtro preset "experienced" applicato - Risultati:', filtered.length);
+        break;
+        
+      case 'urgent':
+        filtered = filtered.filter(c => {
+          const hasScore = (c.scores_count > 0);
+          const isRecent = new Date(c.created_at) >= weekAgo;
+          return !hasScore && isRecent;
+        });
+        console.log('Filtro preset "urgent" applicato - Risultati:', filtered.length);
+        break;
+    }
+  }
+  
+  // *** FILTRI AVANZATI ***
   
   // Applica filtri da input di testo
   document.querySelectorAll('.filter-input').forEach(input => {
@@ -719,8 +1359,8 @@ function applyFiltersAndSort() {
       
       // Gestione speciale per l'ordinamento numerico del punteggio
       if(currentSort.key === 'total_score') {
-        va = parseFloat(a[currentSort.key]) || 0;
-        vb = parseFloat(b[currentSort.key]) || 0;
+        va = parseFloat(a.total_score) || 0;
+        vb = parseFloat(b.total_score) || 0;
         return currentSort.asc ? va - vb : vb - va;
       }
       
@@ -730,17 +1370,38 @@ function applyFiltersAndSort() {
     });
   }
   renderTable(filtered);
+  
+  // Aggiorna la variabile globale dei candidati filtrati
+  filteredCandidates = filtered;
+  
+  // Aggiorna il resoconto candidati
+  updateCandidatesReport(filtered);
+  
+  // Aggiorna il conteggio nel modale di esportazione
+  updateFilteredCount();
+  
+  // Nascondi lo spinner di filtraggio
+  hideFilterSpinner();
+  }, 50); // Delay di 50ms per permettere al DOM di aggiornare lo spinner
 }
 
 // Event listeners per input di testo
 document.querySelectorAll('.filter-input').forEach(input => {
-  input.addEventListener('input', applyFiltersAndSort);
+  input.addEventListener('input', function() {
+    currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
+    document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+    applyFiltersAndSort();
+  });
 });
 
 // Event listeners per dropdown
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.filter-select').forEach(select => {
-    select.addEventListener('change', applyFiltersAndSort);
+    select.addEventListener('change', function() {
+      currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
+      document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+      applyFiltersAndSort();
+    });
   });
   
   // Listener specifico per il filtro punteggio
@@ -748,22 +1409,124 @@ document.addEventListener('DOMContentLoaded', function() {
   if (scoreFilter) {
     scoreFilter.addEventListener('change', function() {
       console.log('Filtro punteggio cambiato a:', this.value);
+      currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
+      document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
       applyFiltersAndSort();
     });
   }
 });
 
-document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+document.getElementById('searchInput').addEventListener('input', function() {
+  currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+  applyFiltersAndSort();
+});
 
-const resetFiltersBtn = document.getElementById('resetFilters');
-if (resetFiltersBtn) {
-  resetFiltersBtn.onclick = function() {
+// Reset solo filtri avanzati (non i macrofiltri)
+const resetAdvancedFiltersBtn = document.getElementById('resetAdvancedFilters');
+if (resetAdvancedFiltersBtn) {
+  // Reset solo filtri avanzati (non i macrofiltri)
+  resetAdvancedFiltersBtn.onclick = function() {
     document.querySelectorAll('.filter-input').forEach(input => input.value = '');
     document.querySelectorAll('.filter-select').forEach(select => select.value = '');
     document.getElementById('searchInput').value = '';
+    currentFilterPreset = null; // Reset del preset attivo
+    document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
     applyFiltersAndSort();
   };
 }
+
+// Reset completo di tutti i filtri (inclusi macrofiltri)
+const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+if (clearAllFiltersBtn) {
+  clearAllFiltersBtn.onclick = function() {
+    // Reset filtri avanzati
+    document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+    document.querySelectorAll('.filter-select').forEach(select => select.value = '');
+    document.getElementById('searchInput').value = '';
+    
+    // Reset macrofiltri
+    document.querySelectorAll('.macro-filter').forEach(select => select.value = '');
+    
+    // Reset preset
+    currentFilterPreset = null;
+    document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+    
+    applyFiltersAndSort();
+  };
+}
+
+// Gestione macrofiltri
+document.querySelectorAll('.macro-filter').forEach(filter => {
+  filter.addEventListener('change', function() {
+    console.log('Macrofiltro cambiato:', this.id, '=', this.value);
+    applyFiltersAndSort();
+  });
+});
+
+// Gestione modelli di filtraggio predefiniti
+document.querySelectorAll('.filter-preset').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const preset = this.getAttribute('data-preset');
+    
+    // Rimuovi classe active da tutti i bottoni preset
+    document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+    
+    // Aggiungi classe active al bottone cliccato
+    this.classList.add('active');
+    
+    applyFilterPreset(preset);
+  });
+});
+
+// Funzione per applicare modelli di filtraggio predefiniti
+function applyFilterPreset(preset) {
+  // Prima reset solo i filtri avanzati (non i macrofiltri)
+  document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+  document.querySelectorAll('.filter-select').forEach(select => select.value = '');
+  document.getElementById('searchInput').value = '';
+  
+  // Reset del preset attivo
+  currentFilterPreset = null;
+  
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  switch(preset) {
+    case 'recent':
+      // Candidati degli ultimi 7 giorni - implementato tramite filtro nella funzione applyFiltersAndSort
+      currentFilterPreset = 'recent';
+      break;
+      
+    case 'high-score':
+      currentFilterPreset = 'high-score';
+      break;
+      
+    case 'no-score':
+      currentFilterPreset = 'no-score';
+      break;
+      
+    case 'available-now':
+      // Candidati disponibili ora - implementato tramite filtro nella funzione applyFiltersAndSort
+      currentFilterPreset = 'available-now';
+      break;
+      
+    case 'experienced':
+      // Esperti con 5+ anni di guida - implementato tramite filtro nella funzione applyFiltersAndSort
+      currentFilterPreset = 'experienced';
+      break;
+      
+    case 'urgent':
+      // Da contattare (senza punteggio e recenti) - implementato tramite filtro nella funzione applyFiltersAndSort
+      currentFilterPreset = 'urgent';
+      break;
+  }
+  
+  applyFiltersAndSort();
+}
+
+// Variabile globale per tenere traccia del preset attivo
+let currentFilterPreset = null;
 document.querySelectorAll('.sort-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     const key = this.getAttribute('data-sort');
@@ -899,6 +1662,57 @@ initializePage();
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
 tooltipTriggerList.forEach(function (el) {
   new bootstrap.Tooltip(el);
+});
+
+// Inizializza i popover per i modelli di filtraggio
+const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+let popoverInstances = [];
+
+function initializePopovers() {
+  // Distruggi istanze esistenti
+  popoverInstances.forEach(instance => {
+    if (instance) instance.dispose();
+  });
+  popoverInstances = [];
+  
+  // Rileva il tema corrente
+  const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+  
+  // Crea nuove istanze con configurazione appropriata per il tema
+  popoverTriggerList.forEach(function (popoverTriggerEl) {
+    const popoverInstance = new bootstrap.Popover(popoverTriggerEl, {
+      html: true,
+      delay: { show: 300, hide: 100 },
+      customClass: `filter-popover theme-${currentTheme}`,
+      template: `<div class="popover" data-bs-theme="${currentTheme}" role="tooltip">
+                   <div class="popover-arrow"></div>
+                   <h3 class="popover-header"></h3>
+                   <div class="popover-body"></div>
+                 </div>`
+    });
+    popoverInstances.push(popoverInstance);
+  });
+}
+
+// Inizializza i popover al caricamento
+initializePopovers();
+
+// Gestione cambio tema per i popover
+const themeObserver = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'data-bs-theme') {
+      // Reinizializza i popover quando cambia il tema
+      setTimeout(() => {
+        initializePopovers();
+      }, 100); // Piccolo delay per assicurarsi che il tema sia completamente applicato
+    }
+  });
+});
+
+// Osserva i cambiamenti del tema sul documento
+themeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-bs-theme']
 });
 
 // Gestione upload/scatto foto profilo
@@ -1171,12 +1985,42 @@ function processExport() {
     return;
   }
   
+  // Ottieni il tipo di esportazione (tutti o filtrati)
+  const exportScope = document.querySelector('input[name="export_scope"]:checked').value;
+  console.log('Export scope:', exportScope);
+  
   // Crea il form per l'esportazione
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = `/candidati/export/${exportType}`;
   
   console.log('Form action:', form.action);
+  
+  // Aggiungi il tipo di esportazione
+  const exportTypeInput = document.createElement('input');
+  exportTypeInput.type = 'hidden';
+  exportTypeInput.name = 'export_type';
+  exportTypeInput.value = exportScope;
+  form.appendChild(exportTypeInput);
+  
+  // Se esportazione filtrata, aggiungi gli ID dei candidati visibili
+  if (exportScope === 'filtered') {
+    filteredCandidates.forEach(candidate => {
+      const candidateIdInput = document.createElement('input');
+      candidateIdInput.type = 'hidden';
+      candidateIdInput.name = 'candidate_ids';
+      candidateIdInput.value = candidate.id;
+      form.appendChild(candidateIdInput);
+    });
+    console.log('Added', filteredCandidates.length, 'candidate IDs for filtered export');
+  }
+  
+  // Aggiungi stato archiviato se necessario
+  const archivedInput = document.createElement('input');
+  archivedInput.type = 'hidden';
+  archivedInput.name = 'archived';
+  archivedInput.value = window.location.pathname.includes('/archiviati') ? 'true' : 'false';
+  form.appendChild(archivedInput);
   
   // Aggiungi i campi selezionati
   selectedFields.forEach(field => {
@@ -1196,6 +2040,15 @@ function processExport() {
   modal.hide();
 }
 
+// Aggiorna il conteggio dei candidati filtrati nel modale
+function updateFilteredCount() {
+  const countElement = document.getElementById('filtered_count');
+  if (countElement) {
+    const count = filteredCandidates.length;
+    countElement.textContent = `(${count} candidat${count !== 1 ? 'i' : 'o'} attualmente visualizzat${count !== 1 ? 'i' : 'o'})`;
+  }
+}
+
 function selectAllFields() {
   const checkboxes = document.querySelectorAll('#fieldSelectionModal input[type="checkbox"]');
   checkboxes.forEach(function(checkbox) {
@@ -1209,6 +2062,16 @@ function deselectAllFields() {
     checkbox.checked = false;
   });
 }
+
+// Event listener per aggiornare il conteggio quando si apre il modale
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('fieldSelectionModal');
+  if (modal) {
+    modal.addEventListener('show.bs.modal', function() {
+      updateFilteredCount();
+    });
+  }
+});
 </script>
 
 <!-- Modal per la selezione dei campi -->
@@ -1319,6 +2182,29 @@ function deselectAllFields() {
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="form_name" id="field_form_name">
               <label class="form-check-label" for="field_form_name">Nome Form</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="total_score" id="field_total_score">
+              <label class="form-check-label" for="field_total_score">Punteggio Totale</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Selezione tipo di esportazione -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6>Tipo di Esportazione</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="export_scope" id="export_all" value="all" checked>
+              <label class="form-check-label" for="export_all">
+                <strong>Tutti i candidati</strong> <small class="text-muted">(include anche candidati archiviati se nella vista archiviati)</small>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="export_scope" id="export_filtered" value="filtered">
+              <label class="form-check-label" for="export_filtered">
+                <strong>Solo candidati attualmente visualizzati</strong> <small class="text-muted" id="filtered_count">(include filtri attivi)</small>
+              </label>
             </div>
           </div>
         </div>

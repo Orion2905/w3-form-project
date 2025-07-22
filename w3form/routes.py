@@ -58,19 +58,31 @@ def logout():
 def dashboard():
     # Rimozione temporanea di login_required per test filtri
     candidates = Candidate.query.all()
-    return render_template('dashboard.html', candidates=candidates, sidebar=True)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': None}
+    ]
+    return render_template('dashboard.html', candidates=candidates, sidebar=True, breadcrumbs=breadcrumbs)
 
 @main.route('/candidato/aggiungi', methods=['GET', 'POST'])
 def add_candidate():
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': 'Aggiungi Candidato', 'url': None}
+    ]
     # TODO: implementare form e logica inserimento
-    return render_template('candidate_form.html')
+    return render_template('candidate_form.html', breadcrumbs=breadcrumbs)
 
 @main.route('/candidati')
 @login_required
 @role_required('intervistatore')
 def candidates_list():
     candidates = Candidate.query.all()
-    return render_template('candidates_list.html', candidates=candidates)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': None}
+    ]
+    return render_template('candidates_list.html', candidates=candidates, breadcrumbs=breadcrumbs)
 
 @main.route('/candidati/archiviati')
 @login_required
@@ -78,7 +90,12 @@ def candidates_list():
 def archived_candidates_list():
     """Vista per candidati archiviati"""
     candidates = Candidate.query.filter_by(archived=True).all()
-    return render_template('candidates_list.html', candidates=candidates, archived=True)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': 'Candidati Archiviati', 'url': None}
+    ]
+    return render_template('candidates_list.html', candidates=candidates, archived=True, breadcrumbs=breadcrumbs)
 
 @main.route('/candidati/modifica/<int:candidate_id>', methods=['GET', 'POST'])
 @login_required
@@ -181,7 +198,14 @@ def edit_candidate(candidate_id):
             flash('Errore durante l\'aggiornamento del candidato.', 'error')
             return redirect(url_for('main.candidate_profile', candidate_id=candidate.id))
             
-    return render_template('edit_candidate.html', candidate=candidate)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': 'Modifica', 'url': None}
+    ]
+    
+    return render_template('edit_candidate.html', candidate=candidate, breadcrumbs=breadcrumbs)
 
 @main.route('/esporta/pdf')
 @login_required
@@ -220,6 +244,13 @@ def create_dynamic_form():
             val = request.form.get(key, '').strip()
             if val:
                 dropdown_options[field] = [v.strip() for v in val.splitlines() if v.strip()]
+        
+        # Gestione Privacy Policy
+        privacy_policy_enabled = bool(request.form.get('privacy_policy_enabled'))
+        privacy_policy_url = request.form.get('privacy_policy_url', '').strip() or None
+        privacy_policy_text = request.form.get('privacy_policy_text', '').strip() or "Leggi l'informativa completa sulla privacy"
+        privacy_policy_new_tab = bool(request.form.get('privacy_policy_new_tab'))
+        
         form = DynamicForm(
             name=name,
             slug=slug,
@@ -229,7 +260,11 @@ def create_dynamic_form():
             dropdown_options=dropdown_options,
             is_active=is_active,
             active_from=datetime.strptime(active_from, '%Y-%m-%dT%H:%M') if active_from else None,
-            active_until=datetime.strptime(active_until, '%Y-%m-%dT%H:%M') if active_until else None
+            active_until=datetime.strptime(active_until, '%Y-%m-%dT%H:%M') if active_until else None,
+            privacy_policy_enabled=privacy_policy_enabled,
+            privacy_policy_url=privacy_policy_url,
+            privacy_policy_text=privacy_policy_text,
+            privacy_policy_new_tab=privacy_policy_new_tab
         )
         db.session.add(form)
         db.session.commit()
@@ -240,7 +275,11 @@ def create_dynamic_form():
 @main.route('/forms')
 def list_dynamic_forms():
     forms = DynamicForm.query.all()
-    return render_template('dynamic_form_list.html', forms=forms)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Gestione Form', 'url': None}
+    ]
+    return render_template('dynamic_form_list.html', forms=forms, breadcrumbs=breadcrumbs)
 
 @main.route('/form/<slug>', methods=['GET'])
 def public_dynamic_form(slug):
@@ -276,11 +315,35 @@ def edit_dynamic_form(form_id):
             if val:
                 dropdown_options[field] = [v.strip() for v in val.splitlines() if v.strip()]
         form.dropdown_options = dropdown_options
+        
+        # Gestione Privacy Policy
+        form.privacy_policy_enabled = bool(request.form.get('privacy_policy_enabled'))
+        form.privacy_policy_url = request.form.get('privacy_policy_url', '').strip() or None
+        form.privacy_policy_text = request.form.get('privacy_policy_text', '').strip() or "Leggi l'informativa completa sulla privacy"
+        form.privacy_policy_new_tab = bool(request.form.get('privacy_policy_new_tab'))
+        
         db.session.commit()
         flash('Form aggiornato con successo!', 'success')
         return redirect(url_for('main.list_dynamic_forms'))
     # Per la GET, mostra il form di modifica con i dati precompilati
-    return render_template('dynamic_form_create.html', form=form, dropdown_fields=dropdown_fields, dropdown_options=form.dropdown_options or {})
+    return render_template('dynamic_form_edit.html', form=form, dropdown_fields=dropdown_fields, dropdown_options=form.dropdown_options or {})
+
+@main.route('/api/form/<slug>/privacy-settings', methods=['GET'])
+def api_form_privacy_settings(slug):
+    """API endpoint per ottenere le impostazioni privacy di un form specifico"""
+    form = DynamicForm.query.filter_by(slug=slug).first_or_404()
+    
+    # Verifica che il form sia attivo
+    now = datetime.utcnow()
+    if not form.is_active or (form.active_from and now < form.active_from) or (form.active_until and now > form.active_until):
+        return jsonify({'error': 'Form non disponibile'}), 404
+    
+    return jsonify({
+        'enabled': form.privacy_policy_enabled,
+        'url': form.privacy_policy_url,
+        'text': form.privacy_policy_text or "Leggi l'informativa completa sulla privacy",
+        'openInNewTab': form.privacy_policy_new_tab
+    })
 
 @main.route('/api/candidates', methods=['GET'])
 @login_required
@@ -340,6 +403,7 @@ def api_get_candidates():
             'form_subcategory': c.form.subcategory if c.form else '',
             'curriculum_file': url_for('main.serve_curriculum', filename=c.curricula[0].filename.split('/')[-1] if c.curricula[0].filename.startswith('https://') else c.curricula[0].filename) if c.curricula else '',
             'profile_photo': url_for('main.serve_photo', filename=c.photos[0].filename.split('/')[-1] if c.photos[0].filename.startswith('https://') else c.photos[0].filename) if c.photos else '',
+            'created_at': c.created_at.isoformat() if c.created_at else None,
             'total_score': round(c.get_total_score(), 1),
             'average_score': round(c.get_average_score(), 1),
             'scores_count': len(c.scores) if c.scores else 0
@@ -611,12 +675,20 @@ def view_candidate_scores(candidate_id):
     # Raggruppa i punteggi per categoria
     score_summary = candidate.get_score_summary()
     
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': 'Punteggi', 'url': None}
+    ]
+    
     return render_template('candidate_scores.html', 
                          candidate=candidate, 
                          categories=categories,
                          score_summary=score_summary,
                          total_score=candidate.get_total_score(),
-                         average_score=candidate.get_average_score())
+                         average_score=candidate.get_average_score(),
+                         breadcrumbs=breadcrumbs)
 
 @main.route('/candidati/<int:candidate_id>/punteggi/aggiungi', methods=['GET', 'POST'])
 @login_required
@@ -651,9 +723,18 @@ def add_candidate_score(candidate_id):
         flash(f'Punteggio aggiunto con successo per {category}', 'success')
         return redirect(url_for('main.view_candidate_scores', candidate_id=candidate_id))
     
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': 'Punteggi', 'url': url_for('main.view_candidate_scores', candidate_id=candidate.id)},
+        {'name': 'Aggiungi Punteggio', 'url': None}
+    ]
+    
     return render_template('add_candidate_score.html', 
                          candidate=candidate, 
-                         categories=categories)
+                         categories=categories,
+                         breadcrumbs=breadcrumbs)
 
 @main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/modifica', methods=['GET', 'POST'])
 @login_required
@@ -680,10 +761,19 @@ def edit_candidate_score(candidate_id, score_id):
         flash(f'Punteggio modificato con successo per {score.category}', 'success')
         return redirect(url_for('main.view_candidate_scores', candidate_id=candidate_id))
     
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': 'Punteggi', 'url': url_for('main.view_candidate_scores', candidate_id=candidate.id)},
+        {'name': 'Modifica Punteggio', 'url': None}
+    ]
+    
     return render_template('edit_candidate_score.html', 
                          candidate=candidate, 
                          score=score,
-                         categories=categories)
+                         categories=categories,
+                         breadcrumbs=breadcrumbs)
 
 @main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/elimina', methods=['POST'])
 @login_required
@@ -708,7 +798,12 @@ def delete_candidate_score(candidate_id, score_id):
 def score_categories():
     """Gestione categorie di punteggio"""
     categories = ScoreCategory.query.all()
-    return render_template('score_categories.html', categories=categories)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Categorie Punteggio', 'url': None}
+    ]
+    
+    return render_template('score_categories.html', categories=categories, breadcrumbs=breadcrumbs)
 
 @main.route('/punteggi/categorie/aggiungi', methods=['GET', 'POST'])
 @login_required
@@ -740,7 +835,13 @@ def add_score_category():
         flash(f'Categoria "{name}" aggiunta con successo', 'success')
         return redirect(url_for('main.score_categories'))
     
-    return render_template('add_score_category.html')
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Categorie Punteggio', 'url': url_for('main.score_categories')},
+        {'name': 'Aggiungi Categoria', 'url': None}
+    ]
+    
+    return render_template('add_score_category.html', breadcrumbs=breadcrumbs)
 
 @main.route('/punteggi/categorie/<int:category_id>/modifica', methods=['GET', 'POST'])
 @login_required
@@ -761,7 +862,13 @@ def edit_score_category(category_id):
         flash(f'Categoria "{category.name}" modificata con successo', 'success')
         return redirect(url_for('main.score_categories'))
     
-    return render_template('edit_score_category.html', category=category)
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Categorie Punteggio', 'url': url_for('main.score_categories')},
+        {'name': f'Modifica {category.name}', 'url': None}
+    ]
+    
+    return render_template('edit_score_category.html', category=category, breadcrumbs=breadcrumbs)
 
 @main.route('/punteggi/categorie/<int:category_id>/elimina', methods=['POST'])
 @login_required
@@ -824,7 +931,14 @@ def candidate_profile(candidate_id):
         joinedload(Candidate.form),
         joinedload(Candidate.scores).joinedload(Score.evaluator)
     ).get_or_404(candidate_id)
-    return render_template('candidate_profile.html', candidate=candidate)
+    
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': None}
+    ]
+    
+    return render_template('candidate_profile.html', candidate=candidate, breadcrumbs=breadcrumbs)
 
 @main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
 @login_required
@@ -1070,6 +1184,7 @@ def export_candidates_csv():
     try:
         # Ottieni i campi selezionati dalla richiesta
         selected_fields = request.form.getlist('fields')
+        export_type = request.form.get('export_type', 'all')  # 'all' o 'filtered'
         
         if not selected_fields:
             flash('Nessun campo selezionato per l\'esportazione', 'error')
@@ -1094,10 +1209,23 @@ def export_candidates_csv():
             'archived': 'Archiviato',  # archived
             'created_at': 'Data di Creazione',  # created_at
             'form_name': 'Nome Form',  # tramite relazione form
+            'total_score': 'Punteggio Totale',
         }
         
-        # Ottieni tutti i candidati
-        candidates = Candidate.query.all()
+        # Ottieni candidati in base al tipo di esportazione
+        if export_type == 'filtered':
+            # Se è richiesta l'esportazione filtrata, ottieni gli ID dalla richiesta
+            candidate_ids = request.form.getlist('candidate_ids')
+            if candidate_ids:
+                # Converte gli ID da string a int
+                candidate_ids = [int(id_str) for id_str in candidate_ids if id_str.isdigit()]
+                candidates = Candidate.query.filter(Candidate.id.in_(candidate_ids)).all()
+            else:
+                candidates = []
+        else:
+            # Esportazione di tutti i candidati
+            archived = request.form.get('archived', 'false').lower() == 'true'
+            candidates = Candidate.query.filter_by(archived=archived).all()
         
         # Crea il file CSV
         output = StringIO()
@@ -1150,6 +1278,8 @@ def export_candidates_csv():
                     row.append(candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else '')
                 elif field == 'form_name':
                     row.append(candidate.form.name if candidate.form else '')
+                elif field == 'total_score':
+                    row.append(f"{candidate.get_total_score():.1f}")
                 else:
                     row.append('')
             
@@ -1159,9 +1289,10 @@ def export_candidates_csv():
         csv_content = output.getvalue()
         output.close()
         
-        # Genera il nome del file con timestamp
+        # Genera il nome del file con timestamp e tipo
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'candidati_export_{timestamp}.csv'
+        export_label = 'filtrati' if export_type == 'filtered' else 'completa'
+        filename = f'candidati_{export_label}_{timestamp}.csv'
         
         response = make_response(csv_content)
         response.headers['Content-Type'] = 'text/csv; charset=utf-8'
@@ -1182,6 +1313,7 @@ def export_candidates_pdf():
     try:
         # Ottieni i campi selezionati dalla richiesta
         selected_fields = request.form.getlist('fields')
+        export_type = request.form.get('export_type', 'all')  # 'all' o 'filtered'
         
         if not selected_fields:
             flash('Nessun campo selezionato per l\'esportazione', 'error')
@@ -1206,10 +1338,23 @@ def export_candidates_pdf():
             'archived': 'Archiviato',  # archived
             'created_at': 'Data di Creazione',  # created_at
             'form_name': 'Nome Form',  # tramite relazione form
+            'total_score': 'Punteggio Totale',
         }
         
-        # Ottieni tutti i candidati
-        candidates = Candidate.query.all()
+        # Ottieni candidati in base al tipo di esportazione
+        if export_type == 'filtered':
+            # Se è richiesta l'esportazione filtrata, ottieni gli ID dalla richiesta
+            candidate_ids = request.form.getlist('candidate_ids')
+            if candidate_ids:
+                # Converte gli ID da string a int
+                candidate_ids = [int(id_str) for id_str in candidate_ids if id_str.isdigit()]
+                candidates = Candidate.query.filter(Candidate.id.in_(candidate_ids)).all()
+            else:
+                candidates = []
+        else:
+            # Esportazione di tutti i candidati
+            archived = request.form.get('archived', 'false').lower() == 'true'
+            candidates = Candidate.query.filter_by(archived=archived).all()
         
         # Prepara i dati per il template
         candidates_data = []
@@ -1255,6 +1400,8 @@ def export_candidates_pdf():
                     candidate_data[field] = candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else ''
                 elif field == 'form_name':
                     candidate_data[field] = candidate.form.name if candidate.form else ''
+                elif field == 'total_score':
+                    candidate_data[field] = f"{candidate.get_total_score():.1f}"
                 else:
                     candidate_data[field] = ''
             

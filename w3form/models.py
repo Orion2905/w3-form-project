@@ -136,13 +136,13 @@ class User(db.Model, UserMixin):
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id', ondelete='CASCADE'), nullable=False)
-    filename = db.Column(db.String(128), nullable=False)
+    filename = db.Column(db.String(512), nullable=False)  # Aumentato per supportare URL lunghi di Azure Blob Storage
     candidate = db.relationship('Candidate', back_populates='photos')
 
 class Curriculum(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id', ondelete='CASCADE'), nullable=False)
-    filename = db.Column(db.String(128), nullable=False)
+    filename = db.Column(db.String(512), nullable=False)  # Aumentato per supportare URL lunghi di Azure Blob Storage
     candidate = db.relationship('Candidate', back_populates='curricula')
 
 class DynamicForm(db.Model):
@@ -157,6 +157,13 @@ class DynamicForm(db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     active_from = db.Column(db.DateTime, nullable=True)
     active_until = db.Column(db.DateTime, nullable=True)
+    
+    # Configurazione Privacy Policy
+    privacy_policy_enabled = db.Column(db.Boolean, default=True, nullable=False)  # Se mostrare il link
+    privacy_policy_url = db.Column(db.String(512), nullable=True)  # URL della privacy policy
+    privacy_policy_text = db.Column(db.String(256), nullable=True, default="Leggi l'informativa completa sulla privacy")  # Testo del link
+    privacy_policy_new_tab = db.Column(db.Boolean, default=True, nullable=False)  # Se aprire in nuova tab
+    
     candidates = db.relationship('Candidate', back_populates='form', cascade="all, delete-orphan")
 
 class Score(db.Model):

@@ -10,7 +10,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4>Gestione Categorie Punteggi</h4>
                     <a href="{{ url_for('main.add_score_category') }}" class="btn btn-success">
-                        <i class="fas fa-plus"></i> Aggiungi Categoria
+                        <i class="bi bi-plus"></i> Aggiungi Categoria
                     </a>
                 </div>
                 
@@ -47,13 +47,13 @@
                                         <td>
                                             <a href="{{ url_for('main.edit_score_category', category_id=category.id) }}" 
                                                class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
+                                                <i class="bi bi-pencil"></i>
                                             </a>
                                             <form method="POST" style="display: inline;" 
                                                   action="{{ url_for('main.delete_score_category', category_id=category.id) }}"
                                                   onsubmit="return confirm('Sei sicuro di voler eliminare questa categoria?')">
                                                 <button type="submit" class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
                                         </td>
@@ -64,7 +64,7 @@
                         </div>
                     {% else %}
                         <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Nessuna categoria di punteggio configurata.
+                            <i class="bi bi-info-circle"></i> Nessuna categoria di punteggio configurata.
                             <a href="{{ url_for('main.add_score_category') }}" class="btn btn-primary btn-sm ml-2">
                                 Aggiungi la prima categoria
                             </a>

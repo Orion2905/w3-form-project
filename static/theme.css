@@ -329,6 +329,61 @@ body[data-theme="dark"] .sidebar .nav-link:hover, body[data-theme="dark"] .sideb
   background: var(--secondary);
   color: #fff;
 }
+
+/* Breadcrumbs */
+.breadcrumb {
+  background: transparent;
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.breadcrumb-item {
+  color: #6c757d;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+  color: #6c757d;
+  font-weight: bold;
+}
+
+.breadcrumb-item.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.breadcrumb-item a {
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Breadcrumbs tema scuro */
+body[data-theme="dark"] .breadcrumb-item {
+  color: #adb5bd;
+}
+
+body[data-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+  color: #adb5bd;
+}
+
+body[data-theme="dark"] .breadcrumb-item.active {
+  color: var(--secondary);
+}
+
+body[data-theme="dark"] .breadcrumb-item a {
+  color: #adb5bd;
+}
+
+body[data-theme="dark"] .breadcrumb-item a:hover {
+  color: var(--secondary);
+}
 @media (max-width: 900px) {
   header.header-app {
     width: 100vw !important;

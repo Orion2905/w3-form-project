@@ -144,7 +144,13 @@
                 <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
               </div>
               <div id="photo_upload_area">
-                <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                <div id="upload_instructions_area" class="alert alert-info">
+                  <p><strong>Prima di caricare la foto, leggi le istruzioni!</strong></p>
+                  <button type="button" class="btn btn-primary btn-sm" id="showInstructionsUploadBtn">Visualizza Istruzioni Foto</button>
+                </div>
+                <div id="upload_ready_area" style="display:none;">
+                  <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                </div>
               </div>
               <div id="photo_camera_area" style="display:none;">
                 <div id="camera_instructions_area" class="alert alert-info">
@@ -213,12 +219,12 @@
               <input type="text" class="form-control" id="additional_document" name="additional_document" placeholder="Es: Tessera sanitaria, Carta regionale servizi, ecc.">
             </div>
             <div class="mb-3">
-              <label for="codice_fiscale" class="form-label">Codice Fiscale</label>
-              <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z">
+              <label for="codice_fiscale" class="form-label required-field">Codice Fiscale</label>
+              <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z" required>
             </div>
             <div class="mb-3">
-              <label for="permesso_soggiorno" class="form-label">Numero Permesso di Soggiorno</label>
-              <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789">
+              <label for="permesso_soggiorno" class="form-label required-field">Numero Permesso di Soggiorno</label>
+              <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789" required>
             </div>
           </div>
           <div class="col-md-6">
@@ -286,8 +292,8 @@
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="availability_till" class="form-label">Disponibilità Fino A</label>
-                  <input type="date" class="form-control" id="availability_till" name="availability_till">
+                  <label for="availability_till" class="form-label required-field">Disponibilità Fino A</label>
+                  <input type="date" class="form-control" id="availability_till" name="availability_till" required>
                 </div>
               </div>
             </div>
@@ -311,12 +317,12 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="language_2" class="form-label">Lingua 2</label>
-              <input type="text" class="form-control" id="language_2" name="language_2">
+              <label for="language_2" class="form-label required-field">Lingua 2</label>
+              <input type="text" class="form-control" id="language_2" name="language_2" required>
             </div>
             <div class="mb-3">
-              <label for="proficiency_2" class="form-label">Livello 2</label>
-              <select class="form-select" id="proficiency_2" name="proficiency_2">
+              <label for="proficiency_2" class="form-label required-field">Livello 2</label>
+              <select class="form-select" id="proficiency_2" name="proficiency_2" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.proficiency_2 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
                 <option value="{{ opt }}">{{ opt }}</option>
@@ -324,12 +330,12 @@
               </select>
             </div>
             <div class="mb-3">
-              <label for="language_3" class="form-label">Lingua 3</label>
-              <input type="text" class="form-control" id="language_3" name="language_3">
+              <label for="language_3" class="form-label required-field">Lingua 3</label>
+              <input type="text" class="form-control" id="language_3" name="language_3" required>
             </div>
             <div class="mb-3">
-              <label for="proficiency_3" class="form-label">Livello 3</label>
-              <select class="form-select" id="proficiency_3" name="proficiency_3">
+              <label for="proficiency_3" class="form-label required-field">Livello 3</label>
+              <select class="form-select" id="proficiency_3" name="proficiency_3" required>
                 <option value="">Seleziona</option>
                 {% for opt in dropdown_options.proficiency_3 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
                 <option value="{{ opt }}">{{ opt }}</option>
@@ -349,6 +355,8 @@
                   <strong>ACCONSENTE</strong> ai sensi e per gli effetti degli artt. 13 e 23 del D. Lgs. n. 196/2003, con la sottoscrizione del presente modulo, al trattamento dei dati personali secondo le modalità e nei limiti di cui all'informativa allegata. <span class="text-danger">*</span>
                 </label>
               </div>
+              <!-- Link Privacy (inserito dinamicamente da JavaScript) -->
+              <div id="privacy-link-container" class="mt-2"></div>
             </div>
           </div>
         </div>
@@ -382,7 +390,7 @@
       </div>
       <div class="modal-body">
         <div class="text-center mb-3">
-          <p class="lead">Leggi attentamente le istruzioni per scattare una foto perfetta</p>
+          <p class="lead">Leggi attentamente le istruzioni per una foto di qualità professionale</p>
         </div>
         
         <!-- PDF Iframe -->
@@ -396,11 +404,11 @@
         
         <div class="alert alert-warning">
           <i class="bi bi-exclamation-triangle"></i>
-          <strong>Importante:</strong> Assicurati di seguire tutte le indicazioni del documento per ottenere una foto di qualità professionale.
+          <strong>Importante:</strong> Assicurati di seguire tutte le indicazioni del documento per ottenere una foto di qualità professionale, sia che tu la stia scattando che caricando.
         </div>
         
         <div class="text-center">
-          <h5 class="mb-3">Hai capito come fare la foto?</h5>
+          <h5 class="mb-3">Hai letto e compreso le istruzioni?</h5>
           <div class="btn-group" role="group">
             <button type="button" class="btn btn-success btn-lg" id="confirmInstructionsBtn">
               <i class="bi bi-check-circle"></i> Sì, ho capito
@@ -418,6 +426,17 @@
 // CONFIGURAZIONE TEST - Imposta a true per disabilitare la validazione obbligatoria
 const DISABLE_REQUIRED_VALIDATION = true; // Cambia a true per i test
 
+// CONFIGURAZIONE PRIVACY LINK - Ora caricata dinamicamente dall'API
+let PRIVACY_LINK_CONFIG = {
+  enabled: false,
+  url: '',
+  text: 'Leggi l\'informativa completa sulla privacy',
+  openInNewTab: true
+};
+
+// Ottieni slug del form dalla URL o dai dati del template
+const FORM_SLUG = '{{ form.slug }}';
+
 // Gestione step form
 const steps = document.querySelectorAll('.form-step');
 const indicators = document.querySelectorAll('.step-indicator .step');
@@ -429,11 +448,12 @@ const requiredFields = [
   'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
   'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo',
   'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-  'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
-  'license_category', 'license_issue_date', 'license_expiry_date', 
-  'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
-  'occupation', 'other_experience', 'availability_from', 'other_location', 
-  'language_1', 'proficiency_1', 'gdpr_consent'
+  'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale', 'permesso_soggiorno',
+  'license_country', 'license_number', 'license_category', 'license_issue_date', 
+  'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
+  'occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+  'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
+  'gdpr_consent'
 ];
 
 // Mappatura dei nomi dei campi in italiano
@@ -478,6 +498,10 @@ const fieldLabels = {
   'other_location': 'City/Cities of Availability',
   'language_1': 'Lingua 1',
   'proficiency_1': 'Livello 1',
+  'language_2': 'Lingua 2',
+  'proficiency_2': 'Livello 2',
+  'language_3': 'Lingua 3',
+  'proficiency_3': 'Livello 3',
   'gdpr_consent': 'Consenso al trattamento dei dati personali'
 };
 
@@ -500,8 +524,8 @@ function validateField(fieldId) {
         // Se è in modalità camera, deve aver confermato le istruzioni e scattato la foto
         isValid = instructionsConfirmed && capturedPhotoBlob;
       } else {
-        // Se è in modalità upload, deve aver selezionato un file
-        isValid = field.files && field.files.length > 0;
+        // Se è in modalità upload, deve aver confermato le istruzioni e selezionato un file
+        isValid = instructionsConfirmed && field.files && field.files.length > 0;
       }
     } else {
       isValid = field.files && field.files.length > 0;
@@ -530,11 +554,12 @@ function validateCurrentStep() {
         'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
         'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
     1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-        'id_number', 'id_expiry_date', 'id_country', 'license_country', 'license_number', 
-        'license_category', 'license_issue_date', 'license_expiry_date', 
-        'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
-    2: ['occupation', 'other_experience', 'availability_from', 'other_location', 
-        'language_1', 'proficiency_1', 'gdpr_consent']
+        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale', 'permesso_soggiorno',
+        'license_country', 'license_number', 'license_category', 'license_issue_date', 
+        'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
+    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+        'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
+        'gdpr_consent']
   };
   
   const currentStepFields = stepFields[currentStep] || [];
@@ -611,6 +636,8 @@ const photoModeUpload = document.getElementById('photo_mode_upload');
 const photoModeCamera = document.getElementById('photo_mode_camera');
 const photoUploadArea = document.getElementById('photo_upload_area');
 const photoCameraArea = document.getElementById('photo_camera_area');
+const uploadInstructionsArea = document.getElementById('upload_instructions_area');
+const uploadReadyArea = document.getElementById('upload_ready_area');
 const cameraInstructionsArea = document.getElementById('camera_instructions_area');
 const cameraReadyArea = document.getElementById('camera_ready_area');
 const profilePhotoFile = document.getElementById('profile_photo');
@@ -618,6 +645,7 @@ const profilePhotoVideo = document.getElementById('profile_photo_video');
 const profilePhotoCanvas = document.getElementById('profile_photo_canvas');
 const profilePhotoPreview = document.getElementById('profile_photo_preview');
 const showInstructionsBtn = document.getElementById('showInstructionsBtn');
+const showInstructionsUploadBtn = document.getElementById('showInstructionsUploadBtn');
 const confirmInstructionsBtn = document.getElementById('confirmInstructionsBtn');
 let webcamStream = null;
 let capturedPhotoBlob = null;
@@ -627,7 +655,8 @@ photoModeUpload.addEventListener('change', function() {
   if(this.checked) {
     photoUploadArea.style.display = 'block';
     photoCameraArea.style.display = 'none';
-    profilePhotoFile.value = '';
+    uploadInstructionsArea.style.display = 'block';
+    uploadReadyArea.style.display = 'none';
     profilePhotoPreview.style.display = 'none';
     capturedPhotoBlob = null;
     instructionsConfirmed = false;
@@ -644,7 +673,6 @@ photoModeCamera.addEventListener('change', function() {
     cameraInstructionsArea.style.display = 'block';
     cameraReadyArea.style.display = 'none';
     profilePhotoPreview.style.display = 'none';
-    profilePhotoFile.value = '';
     capturedPhotoBlob = null;
     instructionsConfirmed = false;
     stopWebcam();
@@ -657,6 +685,12 @@ showInstructionsBtn.addEventListener('click', function() {
   modal.show();
 });
 
+// Gestione modal istruzioni per upload
+showInstructionsUploadBtn.addEventListener('click', function() {
+  const modal = new bootstrap.Modal(document.getElementById('photoInstructionsModal'));
+  modal.show();
+});
+
 confirmInstructionsBtn.addEventListener('click', function() {
   instructionsConfirmed = true;
   
@@ -664,12 +698,19 @@ confirmInstructionsBtn.addEventListener('click', function() {
   const modal = bootstrap.Modal.getInstance(document.getElementById('photoInstructionsModal'));
   modal.hide();
   
-  // Nascondi le istruzioni e mostra la webcam
-  cameraInstructionsArea.style.display = 'none';
-  cameraReadyArea.style.display = 'block';
-  
-  // Avvia la webcam
-  startWebcam();
+  // Controlla quale modalità è attiva
+  if (photoModeCamera.checked) {
+    // Modalità camera: nascondi le istruzioni e mostra la webcam
+    cameraInstructionsArea.style.display = 'none';
+    cameraReadyArea.style.display = 'block';
+    
+    // Avvia la webcam
+    startWebcam();
+  } else if (photoModeUpload.checked) {
+    // Modalità upload: nascondi le istruzioni e mostra il campo file
+    uploadInstructionsArea.style.display = 'none';
+    uploadReadyArea.style.display = 'block';
+  }
   
   // Rivalidare il campo foto quando le istruzioni sono confermate
   setTimeout(() => validateField('profile_photo'), 100);
@@ -778,10 +819,81 @@ form.onsubmit = async function(e) {
   stopWebcam();
 };
 
+// Funzione per inizializzare il link alla privacy
+function initPrivacyLink() {
+  const container = document.getElementById('privacy-link-container');
+  
+  if (PRIVACY_LINK_CONFIG.enabled && PRIVACY_LINK_CONFIG.url && container) {
+    const linkElement = document.createElement('a');
+    linkElement.href = PRIVACY_LINK_CONFIG.url;
+    linkElement.textContent = PRIVACY_LINK_CONFIG.text;
+    linkElement.className = 'text-primary text-decoration-underline';
+    
+    if (PRIVACY_LINK_CONFIG.openInNewTab) {
+      linkElement.target = '_blank';
+      linkElement.rel = 'noopener noreferrer';
+    }
+    
+    // Aggiungi icona se apre in nuova tab
+    if (PRIVACY_LINK_CONFIG.openInNewTab) {
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-box-arrow-up-right ms-1';
+      icon.style.fontSize = '0.8em';
+      linkElement.appendChild(icon);
+    }
+    
+    // Crea il wrapper per il link
+    const wrapper = document.createElement('div');
+    wrapper.className = 'text-center';
+    wrapper.appendChild(linkElement);
+    
+    container.appendChild(wrapper);
+    
+    console.log('✅ Link privacy inizializzato:', PRIVACY_LINK_CONFIG.url);
+  } else if (!PRIVACY_LINK_CONFIG.enabled) {
+    console.log('ℹ️ Link privacy disabilitato dalla configurazione del form');
+  }
+}
+
+// Funzione per caricare le impostazioni privacy dall'API
+async function loadPrivacySettings() {
+  try {
+    console.log('🔄 Caricamento impostazioni privacy per form:', FORM_SLUG);
+    
+    const response = await fetch(`/api/form/${FORM_SLUG}/privacy-settings`);
+    
+    if (!response.ok) {
+      console.warn('⚠️ Impossibile caricare le impostazioni privacy:', response.status);
+      return;
+    }
+    
+    const settings = await response.json();
+    
+    // Aggiorna la configurazione globale
+    PRIVACY_LINK_CONFIG = {
+      enabled: settings.enabled || false,
+      url: settings.url || '',
+      text: settings.text || 'Leggi l\'informativa completa sulla privacy',
+      openInNewTab: settings.openInNewTab || true
+    };
+    
+    console.log('✅ Impostazioni privacy caricate:', PRIVACY_LINK_CONFIG);
+    
+    // Inizializza il link con le nuove impostazioni
+    initPrivacyLink();
+    
+  } catch (error) {
+    console.error('❌ Errore nel caricamento impostazioni privacy:', error);
+  }
+}
+
 // Validazione iniziale
 document.addEventListener('DOMContentLoaded', function() {
   // Nascondi il sommario all'inizio
   document.getElementById('missingFieldsSummary').classList.remove('show');
+  
+  // Carica le impostazioni privacy dall'API e inizializza il link
+  loadPrivacySettings();
   
   // Log per modalità test
   if (DISABLE_REQUIRED_VALIDATION) {
@@ -850,7 +962,7 @@ function fillTestData() {
     'id_country': 'Italia',
     'additional_document': 'Tessera sanitaria',
     'codice_fiscale': 'RSSMRA90E15H501Z',
-    'permesso_soggiorno': '',
+    'permesso_soggiorno': 'PS123456789',
     'license_country': 'Italia',
     'license_number': 'MI1234567',
     'license_category': 'B',
