@@ -2,7 +2,45 @@
 
 {% block title %}Modifica Categoria Punteggio{% endblock %}
 
-{% block main_content %}
+<style>
+/* Correzioni per mobile - evita sovrapposizione con navbar fissa */
+@media (max-width: 900px) {
+  .container-fluid {
+    padding-top: 1rem !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Su mobile rimuovi offset e usa tutta la larghezza */
+  .col-md-8.offset-md-2 {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+  
+  /* Form più compatto su mobile */
+  .form-group {
+    margin-bottom: 1rem !important;
+  }
+  
+  .form-control, .form-select {
+    font-size: 1rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  /* Bottoni full width su mobile */
+  .btn {
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .d-flex.gap-2 {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+}
+</style>
+
+{% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-8 offset-md-2">

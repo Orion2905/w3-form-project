@@ -446,6 +446,29 @@ body[data-theme="dark"] .breadcrumb-item a:hover {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
     max-width: 100% !important;
+    padding-top: 1rem !important; /* Evita sovrapposizione con navbar fissa */
+    margin-top: 0 !important;
+  }
+  
+  /* Assicura che il contenuto non venga tagliato dalla navbar fissa */
+  main {
+    padding-top: 1rem !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Migliora la gestione dei breadcrumb su mobile */
+  .breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 1rem !important;
+    padding: 0.5rem 0 !important;
+    background: transparent !important;
+  }
+  
+  .breadcrumb-item {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   /* Card su mobile */

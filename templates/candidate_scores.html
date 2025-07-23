@@ -2,7 +2,65 @@
 
 {% block title %}Punteggi - {{ candidate.first_name }} {{ candidate.last_name }}{% endblock %}
 
-{% block main_content %}
+<style>
+/* Correzioni per mobile - evita sovrapposizione con navbar fissa */
+@media (max-width: 900px) {
+  .container-fluid {
+    padding-top: 1rem !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Su mobile i bottoni vanno in colonna per evitare overflow */
+  .card-header {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    text-align: center !important;
+  }
+  
+  .card-header h4 {
+    margin-bottom: 0 !important;
+  }
+  
+  .card-header div {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .card-header .btn {
+    width: 100% !important;
+  }
+  
+  /* Gestione tabella responsive */
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+  
+  .table th, .table td {
+    padding: 0.5rem 0.25rem !important;
+    white-space: nowrap;
+  }
+  
+  /* Nascondi alcune colonne meno importanti su schermi molto piccoli */
+  @media (max-width: 576px) {
+    .table th:nth-child(3), 
+    .table td:nth-child(3),
+    .table th:nth-child(5), 
+    .table td:nth-child(5) {
+      display: none;
+    }
+  }
+  
+  /* Bottoni azioni più compatti */
+  .btn-sm {
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+</style>
+
+{% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
