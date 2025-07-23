@@ -199,6 +199,19 @@ body[data-theme="dark"] .filter-btn.btn-warning:hover {
   border-color: rgba(255, 214, 165, 0.6);
 }
 
+/* Supporto colori statistiche nel tema scuro */
+body[data-theme="dark"] .text-primary {
+  color: #4dabf7 !important;
+}
+
+body[data-theme="dark"] .text-success {
+  color: #51cf66 !important;
+}
+
+body[data-theme="dark"] .text-warning {
+  color: #ffd43b !important;
+}
+
 /* Animazioni */
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
@@ -291,20 +304,20 @@ body[data-theme="dark"] .filter-btn.btn-warning:hover {
 <div class="row g-4 mb-4">
   <div class="col-12 col-md-4">
     <div class="card text-center p-3">
-      <div class="fs-2 fw-bold" id="stat-total">-</div>
-      <div class="text-muted">Candidati totali</div>
+      <div class="fs-2 fw-bold text-primary" id="stat-total">-</div>
+      <div class="text-muted">Candidati trovati</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
     <div class="card text-center p-3">
-      <div class="fs-2 fw-bold" id="stat-cv">-</div>
-      <div class="text-muted">Con Curriculum</div>
+      <div class="fs-2 fw-bold text-success" id="stat-available">-</div>
+      <div class="text-muted">Candidati disponibili</div>
     </div>
   </div>
   <div class="col-6 col-md-4">
     <div class="card text-center p-3">
-      <div class="fs-2 fw-bold" id="stat-photo">-</div>
-      <div class="text-muted">Con Foto</div>
+      <div class="fs-2 fw-bold text-warning" id="stat-archived">-</div>
+      <div class="text-muted">Candidati archiviati</div>
     </div>
   </div>
 </div>
@@ -313,6 +326,26 @@ body[data-theme="dark"] .filter-btn.btn-warning:hover {
     <div class="card p-3">
       <h5 class="mb-3">Distribuzione per genere</h5>
       <canvas id="chart-gender" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Lingue parlate</h5>
+      <canvas id="chart-languages" height="180"></canvas>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Tipologie di patente</h5>
+      <canvas id="chart-license" height="180"></canvas>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h5 class="mb-3">Occupazione</h5>
+      <canvas id="chart-roles" height="180"></canvas>
     </div>
   </div>
   <div class="col-12 col-lg-4">
@@ -329,19 +362,7 @@ body[data-theme="dark"] .filter-btn.btn-warning:hover {
   </div>
 </div>
 <div class="row g-4 mb-4">
-  <div class="col-6 col-lg-3">
-    <div class="card p-3">
-      <h5 class="mb-3">Occupazione</h5>
-      <canvas id="chart-roles" height="120" style="max-width:180px;"></canvas>
-    </div>
-  </div>
-  <div class="col-6 col-lg-3 order-lg-1">
-    <div class="card p-3">
-      <h5 class="mb-3">Auto/Moto</h5>
-      <canvas id="chart-auto" height="120" style="max-width:180px;"></canvas>
-    </div>
-  </div>
-  <div class="col-12 col-lg-6 order-lg-2">
+  <div class="col-12 col-lg-6">
     <div class="card p-3 h-100 d-flex flex-column justify-content-between">
       <h5 class="mb-3">Ultimi candidati inseriti</h5>
       <div class="table-responsive position-relative">
@@ -366,18 +387,20 @@ body[data-theme="dark"] .filter-btn.btn-warning:hover {
       </div>
     </div>
   </div>
+  <div class="col-12 col-lg-6">
+    <div class="card p-3 h-100 d-flex flex-column justify-content-between">
+      <h5 class="mb-3">Top 10 Città</h5>
+      <div class="flex-grow-1 d-flex align-items-center">
+        <canvas id="chart-cities" height="180" class="w-100"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="row g-4 mb-4">
-  <div class="col-12 col-lg-6">
+  <div class="col-12">
     <div class="card p-3">
       <h5 class="mb-3">Candidati per mese</h5>
       <canvas id="chart-monthly" height="180"></canvas>
-    </div>
-  </div>
-  <div class="col-12 col-lg-6">
-    <div class="card p-3">
-      <h5 class="mb-3">Top 10 Città</h5>
-      <canvas id="chart-cities" height="180"></canvas>
     </div>
   </div>
 </div>
@@ -501,8 +524,8 @@ async function fetchStats(autoUpdate = false) {
     const summary = await fetch(`/api/stats/summary${queryString}`).then(r=>r.json());
     console.log('Summary ricevuta:', summary);
     document.getElementById('stat-total').textContent = summary.total;
-    document.getElementById('stat-cv').textContent = summary.with_cv;
-    document.getElementById('stat-photo').textContent = summary.with_photo;
+    document.getElementById('stat-available').textContent = summary.available;
+    document.getElementById('stat-archived').textContent = summary.archived;
 
   const roles = await fetch(`/api/stats/roles${queryString}`).then(r=>r.json());
   const ctxRoles = document.getElementById('chart-roles').getContext('2d');
@@ -527,6 +550,34 @@ async function fetchStats(autoUpdate = false) {
       datasets: [{
         data: Object.values(gender),
         backgroundColor: ['#7db7e8','#bfaee0','#ffd6a5','#b6e2d3','#ffb3b3'],
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const languages = await fetch(`/api/stats/languages${queryString}`).then(r=>r.json());
+  const ctxLanguages = document.getElementById('chart-languages').getContext('2d');
+  window.charts.languages = new Chart(ctxLanguages, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(languages),
+      datasets: [{
+        data: Object.values(languages),
+        backgroundColor: ['#7db7e8','#bfaee0','#ffd6a5','#b6e2d3','#ffb3b3','#d4a5a5','#a5d4d4','#d4d4a5','#a5a5d4','#d4a5d4'],
+      }]
+    },
+    options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
+  });
+
+  const license = await fetch(`/api/stats/license_category${queryString}`).then(r=>r.json());
+  const ctxLicense = document.getElementById('chart-license').getContext('2d');
+  window.charts.license = new Chart(ctxLicense, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(license),
+      datasets: [{
+        data: Object.values(license),
+        backgroundColor: ['#b6e2d3','#7db7e8','#ffd6a5','#bfaee0','#ffb3b3','#d4a5a5'],
       }]
     },
     options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
@@ -558,20 +609,6 @@ async function fetchStats(autoUpdate = false) {
       }]
     },
     options: {responsive:true, plugins:{legend:{labels:{color:getComputedStyle(document.body).color}}}}
-  });
-
-  const auto = await fetch(`/api/stats/auto_moto_munito${queryString}`).then(r=>r.json());
-  const ctxAuto = document.getElementById('chart-auto').getContext('2d');
-  window.charts.auto = new Chart(ctxAuto, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(auto),
-      datasets: [{
-        data: Object.values(auto),
-        backgroundColor: ['#b6e2d3','#ffb3b3','#bfaee0'],
-      }]
-    },
-    options: {responsive:true, cutout:'75%', plugins:{legend:{display:false}}}
   });
 
   const monthly = await fetch(`/api/stats/monthly${queryString}`).then(r=>r.json());

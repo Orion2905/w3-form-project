@@ -434,10 +434,58 @@ def api_get_filter_options():
         if subcategory and subcategory not in subcategories:
             subcategories.append(subcategory)
     
+    # Ottieni valori unici per i campi candidati
+    def get_unique_values(field_name):
+        """Ottiene valori unici non nulli per un campo"""
+        values = db.session.query(getattr(Candidate, field_name))\
+            .filter(getattr(Candidate, field_name).isnot(None))\
+            .filter(getattr(Candidate, field_name) != '')\
+            .distinct().all()
+        return sorted([v[0] for v in values if v[0]])
+    
+    def get_boolean_values(field_name):
+        """Ottiene i valori booleani per un campo, convertendoli in stringhe leggibili"""
+        values = db.session.query(getattr(Candidate, field_name))\
+            .filter(getattr(Candidate, field_name).isnot(None))\
+            .distinct().all()
+        
+        result = []
+        for v in values:
+            if v[0] is True:
+                result.append('Sì')
+            elif v[0] is False:
+                result.append('No')
+        
+        return sorted(list(set(result)))
+    
+    # Campi per cui vogliamo dropdown con valori dinamici
+    dropdown_fields = {
+        'gender': get_unique_values('gender'),
+        'marital_status': get_unique_values('marital_status'),
+        'nationality': get_unique_values('nationality'),
+        'country_of_residence': get_unique_values('country_of_residence'),
+        'id_document': get_unique_values('id_document'),
+        'id_country': get_unique_values('id_country'),
+        'license_country': get_unique_values('license_country'),
+        'license_category': get_unique_values('license_category'),
+        'auto_moto_munito': get_boolean_values('auto_moto_munito'),
+        'occupation': get_unique_values('occupation'),
+        'city_availability': get_unique_values('city_availability'),
+        'language_1': get_unique_values('language_1'),
+        'language_2': get_unique_values('language_2'),
+        'language_3': get_unique_values('language_3'),
+        'proficiency_1': get_unique_values('proficiency_1'),
+        'proficiency_2': get_unique_values('proficiency_2'),
+        'proficiency_3': get_unique_values('proficiency_3'),
+        'tshirt_size': get_unique_values('tshirt_size'),
+        'come_sei_arrivato': get_unique_values('come_sei_arrivato')
+    }
+    
     return jsonify({
         'form_names': sorted(form_names),
         'categories': sorted(categories),
-        'subcategories': sorted(subcategories)
+        'subcategories': sorted(subcategories),
+        'dropdown_fields': dropdown_fields
     })
 
 @main.route('/api/candidates/<int:candidate_id>', methods=['PUT'])
@@ -1458,3 +1506,359 @@ def export_candidates_pdf():
 def test_filtri():
     """Route di test per verificare i filtri"""
     return render_template('test_filtri.html')
+
+# API per le statistiche della dashboard
+@main.route('/api/stats/summary', methods=['GET'])
+def stats_summary():
+    """API per le statistiche principali della dashboard"""
+    try:
+        # Applica i filtri se presenti
+        query = Candidate.query
+        
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        
+        # Calcola statistiche
+        total = len(candidates)
+        
+        # Calcola candidati disponibili (non archiviati e con disponibilità valida)
+        from datetime import date
+        today = date.today()
+        
+        available_count = 0
+        archived_count = 0
+        
+        for c in candidates:
+            # Conta archiviati
+            if c.archived:
+                archived_count += 1
+                continue
+            
+            # Determina se è disponibile
+            is_available = True
+            
+            # Se non ha date di disponibilità, considera disponibile
+            if not c.availability_from and not c.availability_till:
+                is_available = True
+            # Se ha solo availability_from, controlla che sia passata o oggi
+            elif c.availability_from and not c.availability_till:
+                is_available = c.availability_from <= today
+            # Se ha solo availability_till, controlla che sia futura o oggi
+            elif not c.availability_from and c.availability_till:
+                is_available = c.availability_till >= today
+            # Se ha entrambe le date, controlla che oggi sia nel range
+            elif c.availability_from and c.availability_till:
+                is_available = c.availability_from <= today <= c.availability_till
+            
+            if is_available:
+                available_count += 1
+        
+        return jsonify({
+            'total': total,
+            'available': available_count,
+            'archived': archived_count
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Errore API stats summary: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/stats/eventi', methods=['GET'])
+def stats_eventi():
+    """API per la lista degli eventi (categorie) per i filtri"""
+    try:
+        eventi = db.session.query(DynamicForm.category).distinct().filter(
+            DynamicForm.category.isnot(None)
+        ).all()
+        return jsonify([evento[0] for evento in eventi if evento[0]])
+    except Exception as e:
+        current_app.logger.error(f"Errore API stats eventi: {str(e)}")
+        return jsonify([])
+
+@main.route('/api/stats/aziende', methods=['GET'])
+def stats_aziende():
+    """API per la lista delle aziende (sottocategorie) per i filtri"""
+    try:
+        aziende = db.session.query(DynamicForm.subcategory).distinct().filter(
+            DynamicForm.subcategory.isnot(None)
+        ).all()
+        return jsonify([azienda[0] for azienda in aziende if azienda[0]])
+    except Exception as e:
+        current_app.logger.error(f"Errore API stats aziende: {str(e)}")
+        return jsonify([])
+
+# API placeholder per i grafici della dashboard
+@main.route('/api/stats/roles', methods=['GET'])
+def stats_roles():
+    """API per statistiche ruoli/occupazioni"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        roles = {}
+        for c in candidates:
+            role = c.occupation or 'Non specificato'
+            roles[role] = roles.get(role, 0) + 1
+        
+        return jsonify(roles)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/gender', methods=['GET'])
+def stats_gender():
+    """API per statistiche genere"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        gender = {}
+        for c in candidates:
+            g = c.gender or 'Non specificato'
+            gender[g] = gender.get(g, 0) + 1
+        
+        return jsonify(gender)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/marital_status', methods=['GET'])
+def stats_marital_status():
+    """API per statistiche stato civile"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        marital = {}
+        for c in candidates:
+            status = c.marital_status or 'Non specificato'
+            marital[status] = marital.get(status, 0) + 1
+        
+        return jsonify(marital)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/tshirt_size', methods=['GET'])
+def stats_tshirt_size():
+    """API per statistiche taglia t-shirt"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        sizes = {}
+        for c in candidates:
+            size = c.tshirt_size or 'Non specificato'
+            sizes[size] = sizes.get(size, 0) + 1
+        
+        return jsonify(sizes)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/auto_moto_munito', methods=['GET'])
+def stats_auto_moto():
+    """API per statistiche auto/moto"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        auto = {'Sì': 0, 'No': 0, 'Non specificato': 0}
+        for c in candidates:
+            if c.auto_moto_munito is True:
+                auto['Sì'] += 1
+            elif c.auto_moto_munito is False:
+                auto['No'] += 1
+            else:
+                auto['Non specificato'] += 1
+        
+        return jsonify(auto)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/monthly', methods=['GET'])
+def stats_monthly():
+    """API per statistiche mensili"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        monthly = {}
+        for c in candidates:
+            if c.created_at:
+                month_key = c.created_at.strftime('%Y-%m')
+                monthly[month_key] = monthly.get(month_key, 0) + 1
+        
+        return jsonify(monthly)
+    except Exception as e:
+        return jsonify({})
+
+@main.route('/api/stats/cities', methods=['GET'])
+def stats_cities():
+    """API per statistiche città"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.all()
+        cities = {}
+        for c in candidates:
+            city = c.city or 'Non specificato'
+            cities[city] = cities.get(city, 0) + 1
+        
+        # Restituisci solo le top 10 città
+        sorted_cities = dict(sorted(cities.items(), key=lambda x: x[1], reverse=True)[:10])
+        return jsonify(sorted_cities)
+    except Exception as e:
+        return jsonify({'Non specificato': 0})
+
+@main.route('/api/stats/latest', methods=['GET'])
+def stats_latest():
+    """API per ultimi candidati inseriti"""
+    try:
+        query = Candidate.query
+        evento = request.args.get('evento')
+        azienda = request.args.get('azienda')
+        
+        if evento:
+            query = query.filter(Candidate.form.has(DynamicForm.category == evento))
+        if azienda:
+            query = query.filter(Candidate.form.has(DynamicForm.subcategory == azienda))
+        
+        candidates = query.order_by(Candidate.created_at.desc()).limit(5).all()
+        
+        result = []
+        for c in candidates:
+            result.append({
+                'first_name': c.first_name,
+                'last_name': c.last_name,
+                'email': c.email,
+                'role': c.occupation,
+                'city': c.city,
+                'gender': c.gender,
+                'created_at': c.created_at.strftime('%d/%m/%Y') if c.created_at else ''
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify([])
+
+@main.route('/api/stats/license_category', methods=['GET'])
+@login_required
+def stats_license_category():
+    """API per le statistiche delle tipologie di patente"""
+    try:
+        evento_id = request.args.get('evento')
+        azienda_id = request.args.get('azienda')
+        
+        query = Candidate.query
+        
+        if evento_id:
+            query = query.filter(Candidate.event_id == evento_id)
+        if azienda_id:
+            query = query.filter(Candidate.company_id == azienda_id)
+        
+        candidates = query.all()
+        
+        # Conta le categorie di patente
+        license_counts = {}
+        for candidate in candidates:
+            if candidate.license_category:
+                category = candidate.license_category.strip()
+                if category:
+                    license_counts[category] = license_counts.get(category, 0) + 1
+        
+        # Se non ci sono dati, restituisci un messaggio appropriato
+        if not license_counts:
+            license_counts = {'Nessun dato disponibile': 1}
+        
+        return jsonify(license_counts)
+    except Exception as e:
+        print(f"Errore in stats_license_category: {e}")
+        return jsonify({'Errore': 1})
+
+@main.route('/api/stats/languages', methods=['GET'])
+@login_required
+def stats_languages():
+    """API per le statistiche delle lingue parlate"""
+    try:
+        evento_id = request.args.get('evento')
+        azienda_id = request.args.get('azienda')
+        
+        query = Candidate.query
+        
+        if evento_id:
+            query = query.filter(Candidate.event_id == evento_id)
+        if azienda_id:
+            query = query.filter(Candidate.company_id == azienda_id)
+        
+        candidates = query.all()
+        
+        # Conta tutte le lingue (da language_1, language_2, language_3)
+        language_counts = {}
+        for candidate in candidates:
+            languages = [candidate.language_1, candidate.language_2, candidate.language_3]
+            for lang in languages:
+                if lang and lang.strip():
+                    lang_clean = lang.strip()
+                    language_counts[lang_clean] = language_counts.get(lang_clean, 0) + 1
+        
+        # Se non ci sono dati, restituisci un messaggio appropriato
+        if not language_counts:
+            language_counts = {'Nessun dato disponibile': 1}
+        
+        return jsonify(language_counts)
+    except Exception as e:
+        print(f"Errore in stats_languages: {e}")
+        return jsonify({'Errore': 1})

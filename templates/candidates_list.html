@@ -49,6 +49,117 @@
   color: #0d6efd !important;
 }
 
+/* Stili per il filtro punteggi con checkbox multiple */
+#scoreFilterDropdown {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Z-index alto per sovrapporre altri elementi */
+.dropdown {
+  position: relative;
+}
+
+#scoreFilterMenu {
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1050 !important; /* Z-index alto per sovrastare altri elementi */
+  position: absolute !important;
+}
+
+#scoreFilterMenu .form-check {
+  margin-bottom: 0.25rem;
+}
+
+#scoreFilterMenu .form-check:last-of-type {
+  margin-bottom: 0;
+}
+
+#scoreFilterMenu .dropdown-divider {
+  margin: 0.5rem 0;
+}
+
+/* Evita che il dropdown si chiuda quando si clicca sui checkbox */
+#scoreFilterMenu {
+  padding: 0.5rem;
+}
+
+#scoreFilterMenu .form-check-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Stili comuni per tutti i dropdown filtri avanzati */
+.advanced-filter-dropdown {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.advanced-filter-menu {
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1050 !important;
+  position: absolute !important;
+  padding: 0.5rem;
+}
+
+.advanced-filter-menu .form-check {
+  margin-bottom: 0.2rem;
+}
+
+.advanced-filter-menu .form-check:last-of-type {
+  margin-bottom: 0;
+}
+
+.advanced-filter-menu .form-check-label {
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.8rem;
+}
+
+.advanced-filter-menu .dropdown-divider {
+  margin: 0.3rem 0;
+}
+
+/* Tema scuro per il dropdown punteggi */
+[data-bs-theme="dark"] #scoreFilterDropdown {
+  background-color: #212529;
+  border-color: #495057;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] #scoreFilterMenu {
+  background-color: #212529;
+  border-color: #495057;
+  z-index: 1050 !important; /* Assicura z-index alto anche nel tema scuro */
+}
+
+[data-bs-theme="dark"] #scoreFilterMenu .form-check-label {
+  color: #fff;
+}
+
+/* Tema scuro per i dropdown filtri avanzati */
+[data-bs-theme="dark"] .advanced-filter-dropdown {
+  background-color: #212529;
+  border-color: #495057;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] .advanced-filter-menu {
+  background-color: #212529;
+  border-color: #495057;
+  z-index: 1050 !important;
+}
+
+[data-bs-theme="dark"] .advanced-filter-menu .form-check-label {
+  color: #fff;
+}
+
 [data-bs-theme="dark"] #loadingSpinner p {
   color: #adb5bd !important;
 }
@@ -256,8 +367,84 @@
   color: #51cf66 !important;
 }
 
+[data-bs-theme="dark"] #candidatesReport .text-warning {
+  color: #ffd43b !important;
+}
+
 [data-bs-theme="dark"] #candidatesReport .text-info {
   color: #74c0fc !important;
+}
+
+/* Scrollbar orizzontale floating che segue l'utente */
+.floating-scrollbar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 1200px;
+  height: 20px;
+  background-color: rgba(248, 249, 250, 0.95);
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Inizialmente nascosta */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.floating-scrollbar.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.floating-scrollbar::-webkit-scrollbar {
+  height: 16px;
+}
+
+.floating-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 241, 241, 0.8);
+  border-radius: 8px;
+}
+
+.floating-scrollbar::-webkit-scrollbar-thumb {
+  background: #6c757d;
+  border-radius: 8px;
+  border: 2px solid rgba(241, 241, 241, 0.8);
+}
+
+.floating-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #495057;
+}
+
+/* Tema scuro per la scrollbar floating */
+[data-bs-theme="dark"] .floating-scrollbar {
+  background-color: rgba(33, 37, 41, 0.95);
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .floating-scrollbar::-webkit-scrollbar-track {
+  background: rgba(52, 58, 64, 0.8);
+}
+
+[data-bs-theme="dark"] .floating-scrollbar::-webkit-scrollbar-thumb {
+  background: #6c757d;
+  border-color: rgba(52, 58, 64, 0.8);
+}
+
+[data-bs-theme="dark"] .floating-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
+}
+
+#floatingScrollbarInner {
+  height: 1px;
+  background: transparent;
+  pointer-events: none;
 }
 </style>
 
@@ -378,7 +565,7 @@
                 data-bs-content="Mostra candidati con 5 o più anni di esperienza di guida">
           <i class="bi bi-award"></i> Esperti (5+ anni guida)
         </button>
-        <button class="btn btn-outline-danger btn-sm filter-preset" 
+        <!-- <button class="btn btn-outline-danger btn-sm filter-preset" 
                 data-preset="urgent"
                 data-bs-toggle="popover" 
                 data-bs-placement="top" 
@@ -386,7 +573,7 @@
                 data-bs-title="Da Contattare Urgentemente"
                 data-bs-content="Mostra candidati recenti (ultimi 7 giorni) che non hanno ancora ricevuto alcuna valutazione">
           <i class="bi bi-exclamation-triangle"></i> Da Contattare
-        </button>
+        </button> -->
         <button class="btn btn-outline-dark btn-sm" id="clearAllFilters">
           <i class="bi bi-x-circle"></i> Pulisci Tutto
         </button>
@@ -419,41 +606,171 @@
           <input type="text" class="form-control filter-input" id="filter_phone_number" placeholder="Telefono">
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <input type="text" class="form-control filter-input" id="filter_come_sei_arrivato" placeholder="Come sei arrivato">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_come_sei_arrivato_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_come_sei_arrivato_label">Come sei arrivato</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_come_sei_arrivato_dropdown" id="filter_come_sei_arrivato_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <input type="text" class="form-control filter-input" id="filter_gender" placeholder="Genere">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_gender_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_gender_label">Genere</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_gender_dropdown" id="filter_gender_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
         </div>
       </div>
       
       <!-- Seconda riga -->
       <div class="row g-2 mb-2">
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <input type="text" class="form-control filter-input" id="filter_marital_status" placeholder="Stato civile">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_marital_status_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_marital_status_label">Stato civile</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_marital_status_dropdown" id="filter_marital_status_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <input type="text" class="form-control filter-input" id="filter_codice_fiscale" placeholder="Codice Fiscale">
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <input type="text" class="form-control filter-input" id="filter_city_availability" placeholder="Città Disponibilità">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_city_availability_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_city_availability_label">Città Disponibilità</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_city_availability_dropdown" id="filter_city_availability_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <select class="form-select filter-select" id="filter_score_range">
-            <option value="">Tutti i Punteggi</option>
-            <option value="0-20">0-20 (Molto Basso)</option>
-            <option value="20-40">20-40 (Basso)</option>
-            <option value="40-60">40-60 (Medio)</option>
-            <option value="60-80">60-80 (Buono)</option>
-            <option value="80-100">80-100 (Eccellente)</option>
-            <option value="no-score">Nessun Punteggio</option>
-          </select>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="scoreFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport" data-bs-reference="parent">
+              <span id="scoreFilterLabel">Tutti i Punteggi</span>
+            </button>
+            <ul class="dropdown-menu w-100 p-2" aria-labelledby="scoreFilterDropdown" id="scoreFilterMenu">
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="0-20" id="score_0_20">
+                  <label class="form-check-label" for="score_0_20">0-20 (Molto Basso)</label>
+                </div>
+              </li>
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="20-40" id="score_20_40">
+                  <label class="form-check-label" for="score_20_40">20-40 (Basso)</label>
+                </div>
+              </li>
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="40-60" id="score_40_60">
+                  <label class="form-check-label" for="score_40_60">40-60 (Medio)</label>
+                </div>
+              </li>
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="60-80" id="score_60_80">
+                  <label class="form-check-label" for="score_60_80">60-80 (Buono)</label>
+                </div>
+              </li>
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="80-100" id="score_80_100">
+                  <label class="form-check-label" for="score_80_100">80-100 (Eccellente)</label>
+                </div>
+              </li>
+              <li>
+                <div class="form-check">
+                  <input class="form-check-input score-checkbox" type="checkbox" value="no-score" id="score_no_score">
+                  <label class="form-check-label" for="score_no_score">Nessun Punteggio</label>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectAllScores()">Tutti</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="clearAllScores()">Nessuno</button>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-          <!-- Spazio per altri filtri futuri -->
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_nationality_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_nationality_label">Nazionalità</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_nationality_dropdown" id="filter_nationality_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
         </div>
       </div>
       
       <!-- Terza riga -->
+      <div class="row g-2 mb-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_occupation_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_occupation_label">Occupazione</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_occupation_dropdown" id="filter_occupation_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_auto_moto_munito_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_auto_moto_munito_label">Auto/Moto munito</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_auto_moto_munito_dropdown" id="filter_auto_moto_munito_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_license_category_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_license_category_label">Categoria Patente</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_license_category_dropdown" id="filter_license_category_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_tshirt_size_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_tshirt_size_label">Taglia T-shirt</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_tshirt_size_dropdown" id="filter_tshirt_size_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_language_1_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_language_1_label">Lingua 1</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_language_1_dropdown" id="filter_language_1_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quarta riga -->
       <div class="row g-2">
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <button class="btn btn-outline-secondary w-100" id="resetAdvancedFilters">
@@ -483,34 +800,22 @@
       <div class="card border-0 shadow-sm">
         <div class="card-body py-3">
           <div class="row g-3">
-            <div class="col-md-2 col-sm-4 col-6">
+            <div class="col-md-4 col-sm-4 col-12">
               <div class="text-center">
                 <div class="h4 mb-1 text-primary fw-bold" id="stat-filtered-total">0</div>
                 <div class="small text-muted">Candidati trovati</div>
               </div>
             </div>
-            <div class="col-md-2 col-sm-4 col-6">
+            <div class="col-md-4 col-sm-4 col-12">
               <div class="text-center">
-                <div class="h5 mb-1 text-success fw-bold" id="stat-filtered-cv">0</div>
-                <div class="small text-muted">Con CV</div>
+                <div class="h4 mb-1 text-success fw-bold" id="stat-available-candidates">0</div>
+                <div class="small text-muted">Candidati disponibili</div>
               </div>
             </div>
-            <div class="col-md-2 col-sm-4 col-6">
+            <div class="col-md-4 col-sm-4 col-12">
               <div class="text-center">
-                <div class="h5 mb-1 text-info fw-bold" id="stat-filtered-photo">0</div>
-                <div class="small text-muted">Con Foto</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-sm-6 col-12">
-              <div class="text-center">
-                <div class="small text-muted mb-1">Genere più comune</div>
-                <span class="badge bg-secondary" id="stat-most-common-gender">-</span>
-              </div>
-            </div>
-            <div class="col-md-3 col-sm-6 col-12">
-              <div class="text-center">
-                <div class="small text-muted mb-1">Filtri attivi</div>
-                <span class="badge bg-primary" id="stat-active-filters">Nessuno</span>
+                <div class="h4 mb-1 text-warning fw-bold" id="stat-archived-candidates">0</div>
+                <div class="small text-muted">Candidati archiviati</div>
               </div>
             </div>
           </div>
@@ -519,7 +824,7 @@
     </div>
   </div>
   
-  <div class="table-responsive">
+  <div class="table-responsive" id="tableContainer">
     <!-- Spinner di caricamento -->
     <div id="loadingSpinner" class="text-center py-5" style="display: none;">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
@@ -606,6 +911,12 @@
     </table>
   </div>
 </div>
+
+<!-- Scrollbar orizzontale floating -->
+<div id="floatingScrollbar" class="floating-scrollbar">
+  <div id="floatingScrollbarInner"></div>
+</div>
+
 <!-- Modale immagine -->
 <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -944,6 +1255,93 @@ async function loadFilterOptions() {
       });
     }
     
+    // *** POPOLA I NUOVI DROPDOWN FILTRI AVANZATI ***
+    
+    if (options.dropdown_fields) {
+      console.log('Dropdown fields ricevuti:', options.dropdown_fields);
+      
+      // Lista dei campi con i relativi label e placeholder
+      const dropdownConfigs = {
+        'come_sei_arrivato': { label: 'Come sei arrivato', placeholder: 'Seleziona canale' },
+        'gender': { label: 'Genere', placeholder: 'Seleziona genere' },
+        'marital_status': { label: 'Stato civile', placeholder: 'Seleziona stato civile' },
+        'city_availability': { label: 'Città Disponibilità', placeholder: 'Seleziona città' },
+        'nationality': { label: 'Nazionalità', placeholder: 'Seleziona nazionalità' },
+        'occupation': { label: 'Occupazione', placeholder: 'Seleziona occupazione' },
+        'auto_moto_munito': { label: 'Auto/Moto munito', placeholder: 'Seleziona opzione' },
+        'license_category': { label: 'Categoria Patente', placeholder: 'Seleziona categoria' },
+        'tshirt_size': { label: 'Taglia T-shirt', placeholder: 'Seleziona taglia' },
+        'language_1': { label: 'Lingua 1', placeholder: 'Seleziona lingua' },
+        'country_of_residence': { label: 'Paese Residenza', placeholder: 'Seleziona paese' },
+        'id_document': { label: 'Tipo Documento', placeholder: 'Seleziona documento' },
+        'id_country': { label: 'Paese Documento', placeholder: 'Seleziona paese' },
+        'license_country': { label: 'Paese Patente', placeholder: 'Seleziona paese' }
+      };
+      
+      // Popola ogni dropdown
+      Object.keys(dropdownConfigs).forEach(fieldName => {
+        console.log(`Popolando dropdown per ${fieldName}...`);
+        const menuElement = document.getElementById(`filter_${fieldName}_menu`);
+        const labelElement = document.getElementById(`filter_${fieldName}_label`);
+        
+        console.log(`Menu element per ${fieldName}:`, menuElement);
+        console.log(`Label element per ${fieldName}:`, labelElement);
+        console.log(`Valori per ${fieldName}:`, options.dropdown_fields[fieldName]);
+        
+        if (menuElement && options.dropdown_fields[fieldName]) {
+          const config = dropdownConfigs[fieldName];
+          const values = options.dropdown_fields[fieldName];
+          
+          console.log(`Popolando ${fieldName} con ${values.length} valori:`, values);
+          
+          // Reset del menu
+          menuElement.innerHTML = '';
+          
+          // Aggiorna il label del bottone
+          if (labelElement) {
+            labelElement.textContent = config.label;
+          }
+          
+          // Aggiungi le opzioni
+          values.forEach(value => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <div class="form-check">
+                <input class="form-check-input advanced-filter-checkbox" type="checkbox" value="${value}" id="filter_${fieldName}_${value.replace(/[^a-zA-Z0-9]/g, '_')}" data-field="${fieldName}">
+                <label class="form-check-label" for="filter_${fieldName}_${value.replace(/[^a-zA-Z0-9]/g, '_')}">${value}</label>
+              </div>
+            `;
+            menuElement.appendChild(li);
+          });
+          
+          // Aggiungi i pulsanti di controllo
+          const dividerLi = document.createElement('li');
+          dividerLi.innerHTML = '<hr class="dropdown-divider">';
+          menuElement.appendChild(dividerLi);
+          
+          const controlsLi = document.createElement('li');
+          controlsLi.innerHTML = `
+            <div class="d-flex gap-1">
+              <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="selectAllInFilter('${fieldName}')">Tutti</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="clearAllInFilter('${fieldName}')">Nessuno</button>
+            </div>
+          `;
+          menuElement.appendChild(controlsLi);
+          
+          console.log(`Dropdown ${fieldName} popolato con successo`);
+        } else {
+          console.warn(`Elemento mancante per ${fieldName}: menu=${!!menuElement}, dati=${!!options.dropdown_fields[fieldName]}`);
+        }
+      });
+      
+      // Aggiungi i listener per i filtri dropdown avanzati DOPO aver popolato tutti i dropdown
+      console.log('Aggiungendo listener per i filtri dropdown avanzati...');
+      addAdvancedFilterListeners();
+      
+    } else {
+      console.warn('options.dropdown_fields non trovato nella risposta API');
+    }
+    
   } catch (error) {
     console.error('Errore nel caricamento delle opzioni dei filtri:', error);
   }
@@ -969,10 +1367,10 @@ function hideFilterSpinner() {
 }
 
 // Funzione per aggiornare il resoconto candidati
-function updateCandidatesReport(candidates) {
+function updateCandidatesReport(filteredCandidates) {
   const reportDiv = document.getElementById('candidatesReport');
   
-  if (!candidates || candidates.length === 0) {
+  if (!filteredCandidates || filteredCandidates.length === 0) {
     reportDiv.style.display = 'none';
     return;
   }
@@ -980,63 +1378,34 @@ function updateCandidatesReport(candidates) {
   // Mostra il resoconto
   reportDiv.style.display = 'block';
   
-  // Calcola statistiche
-  const total = candidates.length;
-  const withCV = candidates.filter(c => c.curriculum_file).length;
-  const withPhoto = candidates.filter(c => c.profile_photo).length;
+  // Calcola statistiche dei candidati filtrati
+  const filteredTotal = filteredCandidates.length;
   
-  // Trova il genere più comune
-  const genderCount = {};
-  candidates.forEach(c => {
-    if (c.gender) {
-      genderCount[c.gender] = (genderCount[c.gender] || 0) + 1;
+  // Aggiorna solo il numero di candidati trovati con i filtrati
+  document.getElementById('stat-filtered-total').textContent = filteredTotal;
+  
+  // Per le altre statistiche (disponibili e archiviati), prendi i dati globali dall'API
+  loadGlobalStats();
+}
+
+// Funzione per caricare le statistiche globali dall'API
+async function loadGlobalStats() {
+  try {
+    const response = await fetch('/api/stats/summary');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  });
-  
-  const mostCommonGender = Object.keys(genderCount).length > 0 
-    ? Object.keys(genderCount).reduce((a, b) => genderCount[a] > genderCount[b] ? a : b)
-    : 'Non specificato';
-  
-  // Conta filtri attivi
-  const activeFilters = [];
-  
-  // Controlla macrofiltri
-  document.querySelectorAll('.macro-filter').forEach(filter => {
-    if (filter.value && filter.value !== '') {
-      activeFilters.push(filter.previousElementSibling.textContent.trim());
-    }
-  });
-  
-  // Controlla filtri avanzati
-  document.querySelectorAll('.filter-input, .filter-select').forEach(filter => {
-    if (filter.value && filter.value !== '') {
-      const label = filter.closest('.row')?.querySelector('label')?.textContent?.trim() || 
-                   filter.closest('.col-md-4, .col-md-3, .col-md-6')?.querySelector('label')?.textContent?.trim();
-      if (label && !activeFilters.includes(label)) {
-        activeFilters.push(label);
-      }
-    }
-  });
-  
-  // Controlla ricerca globale
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput.value && searchInput.value.trim() !== '') {
-    activeFilters.push('Ricerca globale');
-  }
-  
-  // Aggiorna i valori nel DOM
-  document.getElementById('stat-filtered-total').textContent = total;
-  document.getElementById('stat-filtered-cv').textContent = withCV;
-  document.getElementById('stat-filtered-photo').textContent = withPhoto;
-  document.getElementById('stat-most-common-gender').textContent = mostCommonGender;
-  
-  const activeFiltersElement = document.getElementById('stat-active-filters');
-  if (activeFilters.length > 0) {
-    activeFiltersElement.textContent = activeFilters.length === 1 ? activeFilters[0] : `${activeFilters.length} filtri`;
-    activeFiltersElement.className = 'badge bg-primary';
-  } else {
-    activeFiltersElement.textContent = 'Nessuno';
-    activeFiltersElement.className = 'badge bg-secondary';
+    const stats = await response.json();
+    
+    // Aggiorna le statistiche globali
+    document.getElementById('stat-available-candidates').textContent = stats.available;
+    document.getElementById('stat-archived-candidates').textContent = stats.archived;
+    
+  } catch (error) {
+    console.error('Errore nel caricamento delle statistiche globali:', error);
+    // In caso di errore, mostra 0 invece di lasciare valori indefiniti
+    document.getElementById('stat-available-candidates').textContent = '-';
+    document.getElementById('stat-archived-candidates').textContent = '-';
   }
 }
 
@@ -1170,6 +1539,9 @@ function renderTable(data) {
     `;
     tbody.appendChild(tr);
   });
+  
+  // Aggiorna la scrollbar dopo aver renderizzato la tabella
+  updateScrollbarAfterTableChange();
 }
 function applyFiltersAndSort() {
   showFilterSpinner();
@@ -1286,62 +1658,100 @@ function applyFiltersAndSort() {
     }
   });
   
-  // Applica filtri da dropdown (escluso il filtro punteggio)
+  // Applica filtri da dropdown (escluso il filtro punteggio che è gestito separatamente)
   document.querySelectorAll('.filter-select').forEach(select => {
     const val = select.value;
     const key = select.id.replace('filter_','');
     
-    // Gestisci il filtro per punteggio separatamente
-    if(key === 'score_range') {
-      if(val) {
-        console.log('Filtrando per punteggio:', val);
-        console.log('Candidati prima del filtro:', filtered.length);
-        
-        filtered = filtered.filter(c => {
-          const score = parseFloat(c.total_score);
-          const scoresCount = parseInt(c.scores_count) || 0;
-          
-          // Se total_score è NaN, significa che il candidato non ha punteggi
-          const hasValidScore = !isNaN(score) && scoresCount > 0;
-          const scoreValue = hasValidScore ? score : 0;
-          
-          console.log(`Candidato ${c.first_name} ${c.last_name}: score=${scoreValue}, scoresCount=${scoresCount}, hasValidScore=${hasValidScore}`);
-          
-          let result = false;
-          switch(val) {
-            case '0-20':
-              result = hasValidScore && scoreValue >= 0 && scoreValue <= 20;
-              break;
-            case '20-40':
-              result = hasValidScore && scoreValue > 20 && scoreValue <= 40;
-              break;
-            case '40-60':
-              result = hasValidScore && scoreValue > 40 && scoreValue <= 60;
-              break;
-            case '60-80':
-              result = hasValidScore && scoreValue > 60 && scoreValue <= 80;
-              break;
-            case '80-100':
-              result = hasValidScore && scoreValue > 80 && scoreValue <= 100;
-              break;
-            case 'no-score':
-              result = !hasValidScore || scoresCount === 0;
-              break;
-            default:
-              result = true;
-          }
-          
-          if(result) {
-            console.log(`✓ Candidato ${c.first_name} ${c.last_name} passa il filtro`);
-          }
-          
-          return result;
-        });
-        console.log('Candidati dopo filtro punteggio:', filtered.length);
-      }
-    } else if(val) {
-      // Altri filtri dropdown standard
+    // Skip il filtro punteggio che ora è gestito dai checkbox
+    if(key !== 'score_range' && val) {
       filtered = filtered.filter(c => (c[key]||'').toString() === val);
+    }
+  });
+  
+  // *** FILTRO PUNTEGGI CON CHECKBOX MULTIPLE ***
+  const selectedScoreRanges = [];
+  document.querySelectorAll('.score-checkbox:checked').forEach(checkbox => {
+    selectedScoreRanges.push(checkbox.value);
+  });
+  
+  if(selectedScoreRanges.length > 0) {
+    console.log('Filtrando per punteggi:', selectedScoreRanges);
+    console.log('Candidati prima del filtro punteggi:', filtered.length);
+    
+    filtered = filtered.filter(c => {
+      const score = parseFloat(c.total_score);
+      const scoresCount = parseInt(c.scores_count) || 0;
+      
+      // Se total_score è NaN, significa che il candidato non ha punteggi
+      const hasValidScore = !isNaN(score) && scoresCount > 0;
+      const scoreValue = hasValidScore ? score : 0;
+      
+      // Controlla se il candidato rientra in almeno uno dei range selezionati
+      let matchesAnyRange = false;
+      
+      for(const range of selectedScoreRanges) {
+        let result = false;
+        switch(range) {
+          case '0-20':
+            result = hasValidScore && scoreValue >= 0 && scoreValue <= 20;
+            break;
+          case '20-40':
+            result = hasValidScore && scoreValue > 20 && scoreValue <= 40;
+            break;
+          case '40-60':
+            result = hasValidScore && scoreValue > 40 && scoreValue <= 60;
+            break;
+          case '60-80':
+            result = hasValidScore && scoreValue > 60 && scoreValue <= 80;
+            break;
+          case '80-100':
+            result = hasValidScore && scoreValue > 80 && scoreValue <= 100;
+            break;
+          case 'no-score':
+            result = !hasValidScore || scoresCount === 0;
+            break;
+        }
+        
+        if(result) {
+          matchesAnyRange = true;
+          break;
+        }
+      }
+      
+      return matchesAnyRange;
+    });
+    console.log('Candidati dopo filtro punteggi:', filtered.length);
+  }
+  
+  // *** FILTRI DROPDOWN AVANZATI ***
+  
+  // Lista dei campi con dropdown multipli
+  const advancedDropdownFields = [
+    'come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 
+    'nationality', 'occupation', 'auto_moto_munito', 'license_category', 
+    'tshirt_size', 'language_1', 'country_of_residence', 'id_document',
+    'id_country', 'license_country'
+  ];
+  
+  // Applica ogni filtro dropdown
+  advancedDropdownFields.forEach(fieldName => {
+    const selectedValues = [];
+    document.querySelectorAll(`.advanced-filter-checkbox[data-field="${fieldName}"]:checked`).forEach(checkbox => {
+      selectedValues.push(checkbox.value);
+    });
+    
+    if (selectedValues.length > 0) {
+      console.log(`Filtrando per ${fieldName}:`, selectedValues);
+      console.log(`Candidati prima del filtro ${fieldName}:`, filtered.length);
+      
+      filtered = filtered.filter(c => {
+        const candidateValue = (c[fieldName] || '').toString();
+        // Controlla se il valore del candidato è in uno dei valori selezionati
+        return selectedValues.includes(candidateValue);
+      });
+      
+      console.log(`Candidati dopo filtro ${fieldName}:`, filtered.length);
     }
   });
   
@@ -1404,17 +1814,76 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Listener specifico per il filtro punteggio
-  const scoreFilter = document.getElementById('filter_score_range');
-  if (scoreFilter) {
-    scoreFilter.addEventListener('change', function() {
-      console.log('Filtro punteggio cambiato a:', this.value);
+  // Event listeners per i checkbox del filtro punteggi
+  document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      console.log('Filtro punteggio cambiato:', this.value, 'checked:', this.checked);
       currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
       document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+      updateScoreFilterLabel();
       applyFiltersAndSort();
     });
-  }
+  });
+  
+  // Impedisci che il dropdown si chiuda quando si clicca sui checkbox
+  document.getElementById('scoreFilterMenu').addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  
+  // Event listeners per i checkbox dei filtri dropdown avanzati
+  // Nota: questi vengono aggiunti dinamicamente dopo il caricamento delle opzioni
+  // La funzione addAdvancedFilterListeners() è definita globalmente
+  
+  // Chiamata per aggiungere i listener dopo il caricamento delle opzioni
+  // Questa verrà chiamata da initializePage()
 });
+
+// *** FUNZIONE PER AGGIUNGERE LISTENER AI FILTRI AVANZATI ***
+// Definita globalmente per essere accessibile da loadFilterOptions()
+function addAdvancedFilterListeners() {
+  console.log('=== addAdvancedFilterListeners() chiamata ===');
+  const checkboxes = document.querySelectorAll('.advanced-filter-checkbox');
+  console.log(`Trovati ${checkboxes.length} checkbox advanced-filter-checkbox`);
+  
+  checkboxes.forEach((checkbox, index) => {
+    console.log(`Checkbox ${index + 1}:`, {
+      id: checkbox.id,
+      value: checkbox.value,
+      dataField: checkbox.getAttribute('data-field'),
+      checked: checkbox.checked
+    });
+    
+    // Rimuovi listener esistenti per evitare duplicati
+    checkbox.removeEventListener('change', handleAdvancedFilterChange);
+    
+    // Aggiungi nuovo listener
+    checkbox.addEventListener('change', handleAdvancedFilterChange);
+  });
+  
+  // Impedisci che i dropdown si chiudano quando si clicca sui checkbox
+  const menus = document.querySelectorAll('.advanced-filter-menu');
+  console.log(`Trovati ${menus.length} menu advanced-filter-menu`);
+  
+  menus.forEach((menu, index) => {
+    console.log(`Menu ${index + 1}:`, menu.id);
+    menu.addEventListener('click', function(e) {
+      console.log('Click su menu intercepted:', menu.id);
+      e.stopPropagation();
+    });
+  });
+}
+
+// Handler per i cambiamenti nei filtri avanzati
+function handleAdvancedFilterChange() {
+  const fieldName = this.getAttribute('data-field');
+  console.log(`=== Filtro ${fieldName} cambiato ===`);
+  console.log('Valore:', this.value, 'Checked:', this.checked);
+  
+  currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+  updateAdvancedFilterLabel(fieldName);
+  applyFiltersAndSort();
+}
 
 document.getElementById('searchInput').addEventListener('input', function() {
   currentFilterPreset = null; // Reset preset quando l'utente modifica manualmente
@@ -1430,6 +1899,19 @@ if (resetAdvancedFiltersBtn) {
     document.querySelectorAll('.filter-input').forEach(input => input.value = '');
     document.querySelectorAll('.filter-select').forEach(select => select.value = '');
     document.getElementById('searchInput').value = '';
+    // Reset checkbox punteggi
+    document.querySelectorAll('.score-checkbox').forEach(checkbox => checkbox.checked = false);
+    updateScoreFilterLabel();
+    
+    // Reset checkbox filtri dropdown avanzati
+    document.querySelectorAll('.advanced-filter-checkbox').forEach(checkbox => checkbox.checked = false);
+    // Aggiorna i label dei dropdown avanzati
+    ['come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 'nationality', 
+     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1',
+     'country_of_residence', 'id_document', 'id_country', 'license_country'].forEach(fieldName => {
+      updateAdvancedFilterLabel(fieldName);
+    });
+    
     currentFilterPreset = null; // Reset del preset attivo
     document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
     applyFiltersAndSort();
@@ -1444,6 +1926,19 @@ if (clearAllFiltersBtn) {
     document.querySelectorAll('.filter-input').forEach(input => input.value = '');
     document.querySelectorAll('.filter-select').forEach(select => select.value = '');
     document.getElementById('searchInput').value = '';
+    
+    // Reset checkbox punteggi
+    document.querySelectorAll('.score-checkbox').forEach(checkbox => checkbox.checked = false);
+    updateScoreFilterLabel();
+    
+    // Reset checkbox filtri dropdown avanzati
+    document.querySelectorAll('.advanced-filter-checkbox').forEach(checkbox => checkbox.checked = false);
+    // Aggiorna i label dei dropdown avanzati
+    ['come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 'nationality', 
+     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1',
+     'country_of_residence', 'id_document', 'id_country', 'license_country'].forEach(fieldName => {
+      updateAdvancedFilterLabel(fieldName);
+    });
     
     // Reset macrofiltri
     document.querySelectorAll('.macro-filter').forEach(select => select.value = '');
@@ -1486,6 +1981,10 @@ function applyFilterPreset(preset) {
   document.querySelectorAll('.filter-select').forEach(select => select.value = '');
   document.getElementById('searchInput').value = '';
   
+  // Reset checkbox punteggi
+  document.querySelectorAll('.score-checkbox').forEach(checkbox => checkbox.checked = false);
+  updateScoreFilterLabel();
+  
   // Reset del preset attivo
   currentFilterPreset = null;
   
@@ -1522,6 +2021,107 @@ function applyFilterPreset(preset) {
       break;
   }
   
+  applyFiltersAndSort();
+}
+
+// *** FUNZIONI DI UTILITÀ PER IL FILTRO PUNTEGGI ***
+
+// Aggiorna il testo del bottone dropdown in base alle selezioni
+function updateScoreFilterLabel() {
+  const selectedCheckboxes = document.querySelectorAll('.score-checkbox:checked');
+  const label = document.getElementById('scoreFilterLabel');
+  
+  if (selectedCheckboxes.length === 0) {
+    label.textContent = 'Tutti i Punteggi';
+  } else if (selectedCheckboxes.length === 1) {
+    const checkbox = selectedCheckboxes[0];
+    const labelText = document.querySelector(`label[for="${checkbox.id}"]`).textContent;
+    label.textContent = labelText;
+  } else {
+    label.textContent = `${selectedCheckboxes.length} filtri selezionati`;
+  }
+}
+
+// Seleziona tutti i filtri punteggio
+function selectAllScores() {
+  document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  updateScoreFilterLabel();
+  currentFilterPreset = null;
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+  applyFiltersAndSort();
+}
+
+// Deseleziona tutti i filtri punteggio
+function clearAllScores() {
+  document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  updateScoreFilterLabel();
+  currentFilterPreset = null;
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+  applyFiltersAndSort();
+}
+
+// *** FUNZIONI DI UTILITÀ PER I FILTRI DROPDOWN AVANZATI ***
+
+// Aggiorna il label del filtro dropdown in base alle selezioni
+function updateAdvancedFilterLabel(fieldName) {
+  const selectedCheckboxes = document.querySelectorAll(`.advanced-filter-checkbox[data-field="${fieldName}"]:checked`);
+  const label = document.getElementById(`filter_${fieldName}_label`);
+  
+  // Trova la configurazione per ottenere il label di base
+  const baseLabels = {
+    'come_sei_arrivato': 'Come sei arrivato',
+    'gender': 'Genere',
+    'marital_status': 'Stato civile',
+    'city_availability': 'Città Disponibilità',
+    'nationality': 'Nazionalità',
+    'occupation': 'Occupazione',
+    'auto_moto_munito': 'Auto/Moto munito',
+    'license_category': 'Categoria Patente',
+    'tshirt_size': 'Taglia T-shirt',
+    'language_1': 'Lingua 1',
+    'country_of_residence': 'Paese Residenza',
+    'id_document': 'Tipo Documento',
+    'id_country': 'Paese Documento',
+    'license_country': 'Paese Patente'
+  };
+  
+  const baseLabel = baseLabels[fieldName] || fieldName;
+  
+  if (!label) return;
+  
+  if (selectedCheckboxes.length === 0) {
+    label.textContent = baseLabel;
+  } else if (selectedCheckboxes.length === 1) {
+    const checkbox = selectedCheckboxes[0];
+    label.textContent = checkbox.value;
+  } else {
+    label.textContent = `${baseLabel} (${selectedCheckboxes.length})`;
+  }
+}
+
+// Seleziona tutti i valori in un filtro specifico
+function selectAllInFilter(fieldName) {
+  document.querySelectorAll(`.advanced-filter-checkbox[data-field="${fieldName}"]`).forEach(checkbox => {
+    checkbox.checked = true;
+  });
+  updateAdvancedFilterLabel(fieldName);
+  currentFilterPreset = null;
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
+  applyFiltersAndSort();
+}
+
+// Deseleziona tutti i valori in un filtro specifico
+function clearAllInFilter(fieldName) {
+  document.querySelectorAll(`.advanced-filter-checkbox[data-field="${fieldName}"]`).forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  updateAdvancedFilterLabel(fieldName);
+  currentFilterPreset = null;
+  document.querySelectorAll('.filter-preset').forEach(b => b.classList.remove('active'));
   applyFiltersAndSort();
 }
 
@@ -1654,9 +2254,177 @@ document.getElementById('editForm').onsubmit = async function(e) {
 async function initializePage() {
   await loadFilterOptions();
   await loadCandidates();
+  // Inizializza il label del filtro punteggi
+  updateScoreFilterLabel();
+  // Carica le statistiche globali all'avvio
+  await loadGlobalStats();
+  // Inizializza la scrollbar floating
+  window.scrollbarFloatingData = initializeFloatingScrollbar();
 }
 
 initializePage();
+
+// *** GESTIONE SCROLLBAR ORIZZONTALE FLOATING ***
+
+// Funzione per inizializzare la scrollbar floating
+function initializeFloatingScrollbar() {
+  const floatingScrollbar = document.getElementById('floatingScrollbar');
+  const floatingScrollbarInner = document.getElementById('floatingScrollbarInner');
+  const tableContainer = document.getElementById('tableContainer');
+  const table = document.getElementById('candidatesTable');
+  
+  console.log('=== Inizializzazione Scrollbar Floating ===');
+  console.log('floatingScrollbar:', floatingScrollbar);
+  console.log('floatingScrollbarInner:', floatingScrollbarInner);
+  console.log('tableContainer:', tableContainer);
+  console.log('table:', table);
+  
+  if (!floatingScrollbar || !floatingScrollbarInner || !tableContainer || !table) {
+    console.warn('Elementi scrollbar floating non trovati');
+    return;
+  }
+  
+  // Funzione per aggiornare la larghezza e visibilità della scrollbar floating
+  function updateFloatingScrollbar() {
+    console.log('=== Aggiornamento Scrollbar Floating ===');
+    console.log('table.scrollWidth:', table.scrollWidth);
+    console.log('tableContainer.clientWidth:', tableContainer.clientWidth);
+    
+    // Imposta sempre la larghezza dell'inner element
+    floatingScrollbarInner.style.width = table.scrollWidth + 'px';
+    
+    // Controlla se la tabella ha overflow
+    const hasHorizontalScroll = table.scrollWidth > tableContainer.clientWidth;
+    console.log('Ha scroll orizzontale:', hasHorizontalScroll);
+    
+    // Controlla se l'utente è nella zona della tabella
+    const tableRect = tableContainer.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const isTableInView = tableRect.top < viewportHeight && tableRect.bottom > 0;
+    
+    console.log('Tabella visibile:', isTableInView);
+    console.log('Posizione tabella:', {
+      top: tableRect.top,
+      bottom: tableRect.bottom,
+      viewportHeight: viewportHeight
+    });
+    
+    // Mostra la scrollbar solo se ha senso
+    if (hasHorizontalScroll && isTableInView) {
+      floatingScrollbar.classList.add('visible');
+      console.log('✅ Scrollbar floating mostrata');
+    } else {
+      floatingScrollbar.classList.remove('visible');
+      console.log('❌ Scrollbar floating nascosta');
+    }
+  }
+  
+  // Sincronizza lo scroll dalla scrollbar floating alla tabella
+  floatingScrollbar.addEventListener('scroll', function() {
+    if (!isScrollingSyncing) {
+      isScrollingSyncing = true;
+      tableContainer.scrollLeft = floatingScrollbar.scrollLeft;
+      setTimeout(() => { isScrollingSyncing = false; }, 10);
+    }
+  });
+  
+  // Sincronizza lo scroll dalla tabella alla scrollbar floating
+  tableContainer.addEventListener('scroll', function() {
+    if (!isScrollingSyncing) {
+      isScrollingSyncing = true;
+      floatingScrollbar.scrollLeft = tableContainer.scrollLeft;
+      setTimeout(() => { isScrollingSyncing = false; }, 10);
+    }
+  });
+  
+  // Observer per monitorare i cambiamenti nella dimensione della tabella
+  const resizeObserver = new ResizeObserver(updateFloatingScrollbar);
+  resizeObserver.observe(table);
+  resizeObserver.observe(tableContainer);
+  
+  // Aggiorna quando cambia il contenuto della tabella
+  const mutationObserver = new MutationObserver(updateFloatingScrollbar);
+  mutationObserver.observe(table, { 
+    childList: true, 
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style']
+  });
+  
+  // Aggiorna al scroll della finestra (per controllare se la tabella è visibile)
+  window.addEventListener('scroll', updateFloatingScrollbar);
+  
+  // Aggiorna al ridimensionamento della finestra
+  window.addEventListener('resize', updateFloatingScrollbar);
+  
+  // Aggiorna inizialmente
+  setTimeout(updateFloatingScrollbar, 100);
+  setTimeout(updateFloatingScrollbar, 500);
+  setTimeout(updateFloatingScrollbar, 1000);
+  
+  return { updateFloatingScrollbar, resizeObserver, mutationObserver };
+}
+
+// Variabile per evitare loop infiniti durante la sincronizzazione
+let isScrollingSyncing = false;
+
+// Funzione di debug per forzare l'aggiornamento della scrollbar
+window.forceUpdateScrollbar = function() {
+  console.log('=== FORCE UPDATE SCROLLBAR FLOATING ===');
+  const updateFunction = window.scrollbarFloatingData?.updateFloatingScrollbar;
+  if (updateFunction) {
+    updateFunction();
+  } else {
+    console.warn('scrollbarFloatingData non disponibile');
+  }
+};
+
+// Funzione di debug per verificare la visibilità della scrollbar floating
+window.checkScrollbarVisibility = function() {
+  const floatingScrollbar = document.getElementById('floatingScrollbar');
+  const floatingScrollbarInner = document.getElementById('floatingScrollbarInner');
+  
+  console.log('=== VERIFICA VISIBILITÀ SCROLLBAR FLOATING ===');
+  console.log('Elemento floatingScrollbar:', floatingScrollbar);
+  console.log('Computed style:', window.getComputedStyle(floatingScrollbar));
+  console.log('Classes:', floatingScrollbar.className);
+  console.log('Visible class presente:', floatingScrollbar.classList.contains('visible'));
+  console.log('Display:', window.getComputedStyle(floatingScrollbar).display);
+  console.log('Visibility:', window.getComputedStyle(floatingScrollbar).visibility);
+  console.log('Opacity:', window.getComputedStyle(floatingScrollbar).opacity);
+  console.log('Dimensioni:', {
+    offsetWidth: floatingScrollbar.offsetWidth,
+    offsetHeight: floatingScrollbar.offsetHeight,
+    clientWidth: floatingScrollbar.clientWidth,
+    clientHeight: floatingScrollbar.clientHeight,
+    scrollWidth: floatingScrollbar.scrollWidth
+  });
+  console.log('Posizione:', floatingScrollbar.getBoundingClientRect());
+  console.log('Inner width:', floatingScrollbarInner.style.width);
+};
+
+// Funzione per aggiornare la scrollbar quando cambia il contenuto della tabella
+function updateScrollbarAfterTableChange() {
+  console.log('=== updateScrollbarAfterTableChange chiamata ===');
+  // Aspetta che il DOM si aggiorni completamente
+  setTimeout(() => {
+    const updateFunction = window.scrollbarFloatingData?.updateFloatingScrollbar;
+    if (updateFunction) {
+      console.log('Chiamando updateFloatingScrollbar...');
+      updateFunction();
+    } else {
+      console.warn('updateFloatingScrollbar non disponibile');
+    }
+  }, 50);
+  
+  // Prova nuovamente dopo un po' più di tempo
+  setTimeout(() => {
+    const updateFunction = window.scrollbarFloatingData?.updateFloatingScrollbar;
+    if (updateFunction) {
+      updateFunction();
+    }
+  }, 200);
+}
 
 // Tooltip Bootstrap per i titoli delle colonne
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
