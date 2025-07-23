@@ -396,9 +396,10 @@ body[data-theme="dark"] .breadcrumb-item a:hover {
     border-radius: 0;
   }
   .sidebar {
-    width: 80vw !important;
+    /* Su mobile, la sidebar è nascosta di default */
+    width: 0 !important;
     min-width: 0 !important;
-    max-width: 80vw !important;
+    max-width: 0 !important;
     height: calc(100vh - 56px) !important;
     position: fixed;
     top: 56px;
@@ -408,9 +409,21 @@ body[data-theme="dark"] .breadcrumb-item a:hover {
     box-shadow: 4px 0 24px rgba(0,0,0,0.18);
     background: var(--sidebar-bg-light);
     transition: width 0.3s cubic-bezier(.4,2,.6,1), min-width 0.3s cubic-bezier(.4,2,.6,1), max-width 0.3s cubic-bezier(.4,2,.6,1), background var(--transition), color var(--transition), height 0.3s cubic-bezier(.4,2,.6,1);
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: none !important;
+    display: block;
+  }
+  
+  /* Quando l'utente clicca per aprire la sidebar su mobile */
+  .sidebar:not(.sidebar-collapsed) {
+    width: 80vw !important;
+    min-width: 0 !important;
+    max-width: 80vw !important;
     overflow-y: auto;
     overflow-x: hidden;
-    display: block;
+    padding: initial !important;
+    border: initial !important;
   }
   .sidebar.sidebar-collapsed {
     width: 0 !important;

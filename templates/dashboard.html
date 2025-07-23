@@ -235,10 +235,20 @@ body[data-theme="dark"] .text-warning {
 
 /* Responsività migliorata */
 @media (max-width: 768px) {
+  /* Rimuovi overflow orizzontale su mobile */
+  body {
+    overflow-x: hidden !important;
+  }
+  
+  .container-fluid {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
   .filters-section {
     padding: 1rem !important;
     margin: 0 -0.5rem 1.5rem -0.5rem;
-    min-height: 200px;
+    min-height: 480px !important; /* Aumentato da 200px */
   }
   
   .filter-btn {
@@ -250,21 +260,93 @@ body[data-theme="dark"] .text-warning {
   .filters-title {
     font-size: 1rem;
     text-align: center;
+    margin-bottom: 1rem !important; /* Aggiunto margine */
   }
   
   .filter-status-badge {
     position: relative;
     top: auto;
     right: auto;
-    display: block !important;
+    display: none !important; /* Mantieni nascosto di default */
     text-align: center;
     margin: 0.5rem auto 1rem auto;
     width: fit-content;
   }
   
-  /* Su mobile i campi vanno in colonna */
+  /* Solo quando attivo, mostralo */
+  .filter-status-badge.active {
+    display: block !important;
+  }
+  
+  /* Su mobile i campi vanno in colonna con più spazio */
   .row.g-3.align-items-end > .col-md-4 {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem; /* Aumentato da 0.5rem */
+  }
+  
+  /* Aggiungi più spazio tra label e select */
+  .filter-label {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  /* Assicurati che il bottone abbia spazio sufficiente */
+  .row.g-3.align-items-end > .col-md-4:last-child {
+    margin-top: 1rem;
+  }
+  
+  /* Gestione tabella responsive */
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.5rem;
+  }
+  
+  /* Ridimensiona le colonne della tabella per mobile */
+  #latest-table th, #latest-table td {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.3rem;
+  }
+  
+  #latest-table th:nth-child(2), 
+  #latest-table td:nth-child(2) {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Nascondi alcune colonne meno importanti su schermi molto piccoli */
+  @media (max-width: 576px) {
+    /* Aumenta ancora di più l'altezza su schermi molto piccoli */
+    .filters-section {
+      min-height: 450px !important;
+      padding: 1.25rem !important;
+    }
+    
+    /* Più spazio tra gli elementi */
+    .row.g-3.align-items-end > .col-md-4 {
+      margin-bottom: 1.5rem;
+    }
+    
+    .filters-title {
+      margin-bottom: 1.5rem !important;
+    }
+    
+    #latest-table th:nth-child(5), 
+    #latest-table td:nth-child(5),
+    #latest-table th:nth-child(4), 
+    #latest-table td:nth-child(4) {
+      display: none;
+    }
+  }
+  
+  /* Cards statistiche più compatte */
+  .card.p-3 {
+    padding: 1rem !important;
+  }
+  
+  .fs-2 {
+    font-size: 1.5rem !important;
   }
 }
 </style>

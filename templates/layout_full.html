@@ -69,9 +69,23 @@
     const sidebarToggleDesktop = document.getElementById('sidebarToggleDesktop');
     function toggleSidebar() {
       if(sidebar) {
-        sidebar.classList.toggle('sidebar-collapsed');
-        // Aggiungi classe al body per gestire il layout
-        document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
+        // Su mobile (<=900px), la logica è invertita: di default è chiusa
+        if (window.innerWidth <= 900) {
+          // Su mobile: se non ha la classe collapsed, è aperta, quindi la chiudiamo
+          if (!sidebar.classList.contains('sidebar-collapsed')) {
+            sidebar.classList.add('sidebar-collapsed');
+          } else {
+            sidebar.classList.remove('sidebar-collapsed');
+          }
+        } else {
+          // Su desktop: logica normale
+          sidebar.classList.toggle('sidebar-collapsed');
+        }
+        
+        // Aggiungi classe al body per gestire il layout (solo desktop)
+        if (window.innerWidth > 900) {
+          document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
+        }
         
         document.querySelectorAll('.sidebar-text').forEach(el => {
           el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
@@ -80,13 +94,21 @@
     }
     if(sidebarToggleMobile) sidebarToggleMobile.onclick = toggleSidebar;
     if(sidebarToggleDesktop) sidebarToggleDesktop.onclick = toggleSidebar;
-    // Inizializza stato testo sidebar
+    
+    // Inizializza stato sidebar: su mobile deve essere chiusa di default
     if(sidebar) {
+      if (window.innerWidth <= 900) {
+        // Su mobile: assicurati che sia chiusa di default
+        sidebar.classList.add('sidebar-collapsed');
+      }
+      
       document.querySelectorAll('.sidebar-text').forEach(el => {
         el.style.display = sidebar.classList.contains('sidebar-collapsed') ? 'none' : 'inline';
       });
-      // Inizializza classe body se sidebar è già collassata
-      document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
+      // Inizializza classe body se sidebar è già collassata (solo desktop)
+      if (window.innerWidth > 900) {
+        document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
+      }
     }
     </script>
     {% block scripts %}{% endblock %}
