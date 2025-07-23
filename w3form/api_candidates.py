@@ -134,18 +134,82 @@ def add_candidate_api():
 @api.route('/<int:id>', methods=['PUT'])
 def update_candidate_api(id):
     c = Candidate.query.get_or_404(id)
-    data = request.json
+    
+    # Gestisce sia JSON che FormData
+    if request.content_type and 'application/json' in request.content_type:
+        data = request.json
+        print(f"DEBUG: Dati JSON ricevuti: {data}")
+    else:
+        data = request.form.to_dict()
+        print(f"DEBUG: Dati FormData ricevuti: {data}")
+        
+        # Gestione upload foto se presente
+        if 'profile_photo' in request.files:
+            photo_file = request.files['profile_photo']
+            if photo_file.filename:
+                try:
+                    filename = secure_filename(photo_file.filename)
+                    url = upload_to_azure(photo_file, filename)
+                    
+                    # Rimuovi foto esistente se presente
+                    existing_photo = Photo.query.filter_by(candidate_id=id).first()
+                    if existing_photo:
+                        db.session.delete(existing_photo)
+                    
+                    # Aggiungi nuova foto
+                    photo = Photo(candidate_id=id, filename=url)
+                    db.session.add(photo)
+                    print(f"DEBUG: Foto caricata: {url}")
+                except Exception as e:
+                    print(f"DEBUG: Errore caricamento foto: {e}")
+    
     try:
+        print(f"DEBUG: Aggiornamento candidato {id}")
+        
+        # Lista dei campi con le loro conversioni di tipo
+        field_conversions = {
+            'height_cm': lambda x: int(x) if x and x.strip() else None,
+            'weight_kg': lambda x: int(x) if x and x.strip() else None,
+            'shoe_size_eu': lambda x: int(x) if x and x.strip() else None,
+            'years_driving_experience': lambda x: int(x) if x and x.strip() else None,
+        }
+        
+        # Aggiorna i campi
         for field in candidate_to_dict(c).keys():
-            if field in data:
-                if 'date' in field and data[field]:
-                    setattr(c, field, datetime.fromisoformat(data[field]))
-                else:
-                    setattr(c, field, data[field])
+            if field in data and field != 'id':  # Non aggiornare l'ID
+                value = data[field]
+                
+                # Gestione valori vuoti
+                if value == '' or value is None:
+                    setattr(c, field, None)
+                    continue
+                
+                # Conversioni specifiche per tipo
+                if field in field_conversions:
+                    try:
+                        value = field_conversions[field](value)
+                    except (ValueError, TypeError):
+                        value = None
+                elif 'date' in field and value:
+                    try:
+                        if isinstance(value, str):
+                            # Gestisce formato YYYY-MM-DD
+                            setattr(c, field, datetime.strptime(value, '%Y-%m-%d').date())
+                            continue
+                    except ValueError:
+                        print(f"DEBUG: Errore conversione data per {field}: {value}")
+                        continue
+                
+                setattr(c, field, value)
+                print(f"DEBUG: Aggiornato {field} = {value}")
+        
         db.session.commit()
+        print(f"DEBUG: Candidato {id} aggiornato con successo")
         return jsonify({'success': True, 'candidate': candidate_to_dict(c)})
+        
     except Exception as e:
         db.session.rollback()
+        print(f"DEBUG: Errore aggiornamento candidato: {e}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 # Elimina candidato

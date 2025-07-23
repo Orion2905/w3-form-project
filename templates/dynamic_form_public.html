@@ -31,6 +31,180 @@
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+
+/* Stili per le sezioni del form */
+.form-section {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.section-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 1rem 1.25rem;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.section-title i {
+  color: #6c757d;
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.section-body {
+  padding: 1.25rem;
+}
+
+/* Icone specifiche per tipo di sezione */
+.section-title .bi-geo-alt {
+  color: #0d6efd !important;
+}
+
+.section-title .bi-person {
+  color: #6f42c1 !important;
+}
+
+.section-title .bi-heart {
+  color: #e91e63 !important;
+}
+
+.section-title .bi-rulers {
+  color: #ff9800 !important;
+}
+
+.section-title .bi-camera {
+  color: #00bcd4 !important;
+}
+
+.section-title .bi-person-badge {
+  color: #6f42c1 !important;
+}
+
+.section-title .bi-file-earmark-text {
+  color: #fd7e14 !important;
+}
+
+.section-title .bi-credit-card {
+  color: #198754 !important;
+}
+
+.section-title .bi-car-front {
+  color: #dc3545 !important;
+}
+
+.section-title .bi-file-arrow-up {
+  color: #20c997 !important;
+}
+
+.section-title .bi-briefcase {
+  color: #795548 !important;
+}
+
+.section-title .bi-calendar-check {
+  color: #4caf50 !important;
+}
+
+.section-title .bi-translate {
+  color: #9c27b0 !important;
+}
+
+.section-title .bi-shield-check {
+  color: #607d8b !important;
+}
+
+/* Tema scuro per le sezioni */
+[data-bs-theme="dark"] .form-section {
+  background-color: #343a40;
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .section-header {
+  background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+  border-bottom-color: #495057;
+}
+
+[data-bs-theme="dark"] .section-title {
+  color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .section-title i {
+  color: #adb5bd;
+}
+
+/* Tema scuro per icone - mantieni i colori originali per distinguere le sezioni */
+[data-bs-theme="dark"] .section-title .bi-geo-alt {
+  color: #6ea8fe !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-person {
+  color: #a370f7 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-heart {
+  color: #f48fb1 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-rulers {
+  color: #ffb74d !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-camera {
+  color: #4dd0e1 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-person-badge {
+  color: #a370f7 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-file-earmark-text {
+  color: #fd9843 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-credit-card {
+  color: #75b798 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-car-front {
+  color: #f1948a !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-file-arrow-up {
+  color: #73e2a7 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-briefcase {
+  color: #a1887f !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-calendar-check {
+  color: #81c784 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-translate {
+  color: #ba68c8 !important;
+}
+
+[data-bs-theme="dark"] .section-title .bi-shield-check {
+  color: #90a4ae !important;
+}
 </style>
 
 <div class="d-flex justify-content-center">
@@ -55,217 +229,387 @@
       
       <!-- Step 1: Dati anagrafici -->
       <div class="form-step active" id="step-1">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="first_name" class="form-label required-field">Nome</label>
-              <input type="text" class="form-control" id="first_name" name="first_name" required>
-            </div>
-            <div class="mb-3">
-              <label for="last_name" class="form-label required-field">Cognome</label>
-              <input type="text" class="form-control" id="last_name" name="last_name" required>
-            </div>
-            <div class="mb-3">
-              <label for="gender" class="form-label required-field">Genere</label>
-              <select class="form-select" id="gender" name="gender" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.gender or ['M','F','Altro'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
-              <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
-            </div>
-            <div class="mb-3">
-              <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
-              <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
-            </div>
-            <div class="mb-3">
-              <label for="nationality" class="form-label required-field">Nazionalità</label>
-              <input type="text" class="form-control" id="nationality" name="nationality" required>
-            </div>
-            <div class="mb-3">
-              <label for="marital_status" class="form-label required-field">Stato Civile</label>
-              <select class="form-select" id="marital_status" name="marital_status" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.marital_status or ['Celibe/Nubile','Sposato/a','Divorziato/a','Vedovo/a'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="come_sei_arrivato" class="form-label required-field">Come sei arrivato a noi</label>
-              <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social Media','Sito Web','Altro'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
+        
+        <!-- Sezione Dati Personali -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-person"></i>
+              Informazioni Personali
+            </h5>
           </div>
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="height_cm" class="form-label required-field">Altezza (cm)</label>
-              <input type="number" class="form-control" id="height_cm" name="height_cm" required>
-            </div>
-            <div class="mb-3">
-              <label for="weight_kg" class="form-label required-field">Peso (kg)</label>
-              <input type="number" class="form-control" id="weight_kg" name="weight_kg" required>
-            </div>
-            <div class="mb-3">
-              <label for="tshirt_size" class="form-label required-field">Taglia T-shirt</label>
-              <select class="form-select" id="tshirt_size" name="tshirt_size" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.tshirt_size or ['S','M','L','XL','XXL'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="shoe_size_eu" class="form-label required-field">Numero Scarpe (EU)</label>
-              <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu" required>
-            </div>
-            <div class="mb-3">
-              <label for="phone_number" class="form-label required-field">Numero di Telefono</label>
-              <input type="text" class="form-control" id="phone_number" name="phone_number" required>
-            </div>
-            <div class="mb-3">
-              <label for="email" class="form-label required-field">Indirizzo Email</label>
-              <input type="email" class="form-control" id="email" name="email" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label required-field">Immagine Profilo</label>
-              <div class="btn-group mb-2" role="group">
-                <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_upload" autocomplete="off" checked>
-                <label class="btn btn-outline-primary" for="photo_mode_upload">Carica file</label>
-                <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_camera" autocomplete="off">
-                <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
-              </div>
-              <div id="photo_upload_area">
-                <div id="upload_instructions_area" class="alert alert-info">
-                  <p><strong>Prima di caricare la foto, leggi le istruzioni!</strong></p>
-                  <button type="button" class="btn btn-primary btn-sm" id="showInstructionsUploadBtn">Visualizza Istruzioni Foto</button>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="first_name" class="form-label required-field">Nome</label>
+                  <input type="text" class="form-control" id="first_name" name="first_name" required>
                 </div>
-                <div id="upload_ready_area" style="display:none;">
-                  <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                <div class="mb-3">
+                  <label for="last_name" class="form-label required-field">Cognome</label>
+                  <input type="text" class="form-control" id="last_name" name="last_name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="gender" class="form-label required-field">Genere</label>
+                  <select class="form-select" id="gender" name="gender" required>
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.gender or ['M','F','Altro'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
-              <div id="photo_camera_area" style="display:none;">
-                <div id="camera_instructions_area" class="alert alert-info">
-                  <p><strong>Prima di scattare la foto, leggi le istruzioni!</strong></p>
-                  <button type="button" class="btn btn-primary btn-sm" id="showInstructionsBtn">Visualizza Istruzioni Foto</button>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
+                  <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
                 </div>
-                <div id="camera_ready_area" style="display:none;">
-                  <video id="profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
-                  <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
-                  <canvas id="profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+                <div class="mb-3">
+                  <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
+                  <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
                 </div>
-              </div>
-              <div class="mt-2">
-                <img id="profile_photo_preview" src="" alt="Anteprima foto" class="rounded shadow" style="max-width:100px; max-height:100px; display:none;">
+                <div class="mb-3">
+                  <label for="nationality" class="form-label required-field">Nazionalità</label>
+                  <input type="text" class="form-control" id="nationality" name="nationality" required>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Sezione Stato Civile e Contatti -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-heart"></i>
+              Stato Civile e Contatti
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="marital_status" class="form-label required-field">Stato Civile</label>
+                  <select class="form-select" id="marital_status" name="marital_status" required>
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.marital_status or ['Celibe/Nubile','Sposato/a','Divorziato/a','Vedovo/a'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="phone_number" class="form-label required-field">Numero di Telefono</label>
+                  <input type="text" class="form-control" id="phone_number" name="phone_number" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="email" class="form-label required-field">Indirizzo Email</label>
+                  <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-3">
+                  <label for="come_sei_arrivato" class="form-label required-field">Come sei arrivato a noi</label>
+                  <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social Media','Sito Web','Altro'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Caratteristiche Fisiche -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-rulers"></i>
+              Caratteristiche Fisiche
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="height_cm" class="form-label required-field">Altezza (cm)</label>
+                  <input type="number" class="form-control" id="height_cm" name="height_cm" min="120" max="220" required>
+                </div>
+                <div class="mb-3">
+                  <label for="weight_kg" class="form-label required-field">Peso (kg)</label>
+                  <input type="number" class="form-control" id="weight_kg" name="weight_kg" min="40" max="200" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="tshirt_size" class="form-label required-field">Taglia T-shirt</label>
+                  <select class="form-select" id="tshirt_size" name="tshirt_size" required>
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.tshirt_size or ['S','M','L','XL','XXL'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="shoe_size_eu" class="form-label required-field">Numero Scarpe (EU)</label>
+                  <input type="text" class="form-control" id="shoe_size_eu" name="shoe_size_eu" placeholder="Es: 42, 38.5" required>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Foto Profilo -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-camera"></i>
+              Foto Profilo
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label class="form-label required-field">Immagine Profilo</label>
+                  <div class="btn-group mb-2" role="group">
+                    <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_upload" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="photo_mode_upload">Carica file</label>
+                    <input type="radio" class="btn-check" name="photo_mode" id="photo_mode_camera" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="photo_mode_camera">Scatta foto</label>
+                  </div>
+                  <div id="photo_upload_area">
+                    <div id="upload_instructions_area" class="alert alert-info">
+                      <p><strong>Prima di caricare la foto, leggi le istruzioni!</strong></p>
+                      <button type="button" class="btn btn-primary btn-sm" id="showInstructionsUploadBtn">Visualizza Istruzioni Foto</button>
+                    </div>
+                    <div id="upload_ready_area" style="display:none;">
+                      <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                    </div>
+                  </div>
+                  <div id="photo_camera_area" style="display:none;">
+                    <div id="camera_instructions_area" class="alert alert-info">
+                      <p><strong>Prima di scattare la foto, leggi le istruzioni!</strong></p>
+                      <button type="button" class="btn btn-primary btn-sm" id="showInstructionsBtn">Visualizza Istruzioni Foto</button>
+                    </div>
+                    <div id="camera_ready_area" style="display:none;">
+                      <video id="profile_photo_video" width="200" height="150" autoplay style="border-radius:8px;"></video>
+                      <button type="button" class="btn btn-secondary btn-sm mt-2" id="takePhotoBtn">Scatta</button>
+                      <canvas id="profile_photo_canvas" width="200" height="150" style="display:none;"></canvas>
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <img id="profile_photo_preview" src="" alt="Anteprima foto" class="rounded shadow" style="max-width:100px; max-height:100px; display:none;">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="d-flex justify-content-end">
           <button type="button" class="btn btn-primary" id="next1">Avanti &rarr;</button>
         </div>
       </div>
       <!-- Step 2: Documenti e patente -->
       <div class="form-step" id="step-2">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="address" class="form-label required-field">Indirizzo</label>
-              <input type="text" class="form-control" id="address" name="address" required>
-            </div>
-            <div class="mb-3">
-              <label for="city" class="form-label required-field">Città</label>
-              <input type="text" class="form-control" id="city" name="city" required>
-            </div>
-            <div class="mb-3">
-              <label for="postal_code" class="form-label required-field">Codice Postale</label>
-              <input type="text" class="form-control" id="postal_code" name="postal_code" required>
-            </div>
-            <div class="mb-3">
-              <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
-              <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
-            </div>
-            <div class="mb-3">
-              <label for="id_document" class="form-label required-field">Tipo Documento</label>
-              <select class="form-select" id="id_document" name="id_document" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.id_document or ['Carta identità','Passaporto','Permesso di soggiorno','Codice Fiscale'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="id_number" class="form-label required-field">Numero Documento</label>
-              <input type="text" class="form-control" id="id_number" name="id_number" required>
-            </div>
-            <div class="mb-3">
-              <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
-              <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
-            </div>
-            <div class="mb-3">
-              <label for="id_country" class="form-label required-field">Paese Documento</label>
-              <input type="text" class="form-control" id="id_country" name="id_country" required>
-            </div>
-            <div class="mb-3">
-              <label for="additional_document" class="form-label">Additional Document</label>
-              <input type="text" class="form-control" id="additional_document" name="additional_document" placeholder="Es: Tessera sanitaria, Carta regionale servizi, ecc.">
-            </div>
-            <div class="mb-3">
-              <label for="codice_fiscale" class="form-label required-field">Codice Fiscale</label>
-              <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z" required>
-            </div>
-            <div class="mb-3">
-              <label for="permesso_soggiorno" class="form-label required-field">Numero Permesso di Soggiorno</label>
-              <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789" required>
-            </div>
+        
+        <!-- Sezione Residenza -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-geo-alt"></i>
+              Informazioni di Residenza
+            </h5>
           </div>
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="license_country" class="form-label required-field">Paese Patente</label>
-              <input type="text" class="form-control" id="license_country" name="license_country" required>
-            </div>
-            <div class="mb-3">
-              <label for="license_number" class="form-label required-field">Numero Patente</label>
-              <input type="text" class="form-control" id="license_number" name="license_number" required>
-            </div>
-            <div class="mb-3">
-              <label for="license_category" class="form-label required-field">Drive License</label>
-              <input type="text" class="form-control" id="license_category" name="license_category" required>
-            </div>
-            <div class="mb-3">
-              <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
-              <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
-            </div>
-            <div class="mb-3">
-              <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
-              <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
-            </div>
-            <div class="mb-3">
-              <label for="years_driving_experience" class="form-label required-field">Anni di Esperienza di Guida</label>
-              <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience" required>
-            </div>
-            <div class="mb-3">
-              <label for="auto_moto_munito" class="form-label required-field">Auto/Moto Munito</label>
-              <select class="form-select" id="auto_moto_munito" name="auto_moto_munito" required>
-                <option value="">Seleziona</option>
-                <option value="1">Sì</option>
-                <option value="0">No</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="curriculum_file" class="form-label required-field">Curriculum (PDF/DOCX)</label>
-              <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx" required>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="address" class="form-label required-field">Indirizzo</label>
+                  <input type="text" class="form-control" id="address" name="address" required>
+                </div>
+                <div class="mb-3">
+                  <label for="city" class="form-label required-field">Città</label>
+                  <input type="text" class="form-control" id="city" name="city" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="postal_code" class="form-label required-field">Codice Postale</label>
+                  <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                </div>
+                <div class="mb-3">
+                  <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
+                  <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Sezione Documento d'Identità -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-person-badge"></i>
+              Documento d'Identità
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="id_document" class="form-label required-field">Tipo Documento</label>
+                  <select class="form-select" id="id_document" name="id_document" required>
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.id_document or ['Carta identità','Passaporto','Permesso di soggiorno','Codice Fiscale'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="id_number" class="form-label required-field">Numero Documento</label>
+                  <input type="text" class="form-control" id="id_number" name="id_number" required>
+                </div>
+                <div class="mb-3">
+                  <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
+                  <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="id_country" class="form-label required-field">Paese Documento</label>
+                  <input type="text" class="form-control" id="id_country" name="id_country" required>
+                </div>
+                <div class="mb-3">
+                  <label for="additional_document" class="form-label">Documento Aggiuntivo</label>
+                  <input type="text" class="form-control" id="additional_document" name="additional_document" placeholder="Es: Tessera sanitaria, Carta regionale servizi, ecc.">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Documenti Fiscali -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-file-earmark-text"></i>
+              Documenti Fiscali e Legali
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="codice_fiscale" class="form-label required-field">Codice Fiscale</label>
+                  <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="permesso_soggiorno" class="form-label">Numero Permesso di Soggiorno</label>
+                  <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Patente di Guida -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-credit-card"></i>
+              Patente di Guida
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="license_country" class="form-label required-field">Paese Patente</label>
+                  <input type="text" class="form-control" id="license_country" name="license_country" required>
+                </div>
+                <div class="mb-3">
+                  <label for="license_number" class="form-label required-field">Numero Patente</label>
+                  <input type="text" class="form-control" id="license_number" name="license_number" required>
+                </div>
+                <div class="mb-3">
+                  <label for="license_category" class="form-label required-field">Categoria Patente</label>
+                  <input type="text" class="form-control" id="license_category" name="license_category" placeholder="Es: B, C, D, BE" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
+                  <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
+                </div>
+                <div class="mb-3">
+                  <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
+                  <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Esperienza di Guida e Documenti -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-car-front"></i>
+              Esperienza di Guida
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="years_driving_experience" class="form-label required-field">Anni di Esperienza di Guida</label>
+                  <input type="number" class="form-control" id="years_driving_experience" name="years_driving_experience" min="0" max="70" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="auto_moto_munito" class="form-label required-field">Auto/Moto Munito</label>
+                  <select class="form-select" id="auto_moto_munito" name="auto_moto_munito" required>
+                    <option value="">Seleziona</option>
+                    <option value="1">Sì</option>
+                    <option value="0">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Upload Documenti -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-file-arrow-up"></i>
+              Upload Curriculum
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label for="curriculum_file" class="form-label required-field">Curriculum (PDF/DOCX)</label>
+                  <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx" required>
+                  <div class="form-text">
+                    <i class="bi bi-info-circle"></i> 
+                    Carica il tuo curriculum in formato PDF o DOCX (massimo 10MB)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="d-flex justify-content-between">
           <button type="button" class="btn btn-secondary" id="prev2">&larr; Indietro</button>
           <button type="button" class="btn btn-primary" id="next2">Avanti &rarr;</button>
@@ -273,16 +617,42 @@
       </div>
       <!-- Step 3: Esperienze e lingue -->
       <div class="form-step" id="step-3">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="occupation" class="form-label required-field">Occupazione</label>
-              <input type="text" class="form-control" id="occupation" name="occupation" required>
+        
+        <!-- Sezione Esperienza Lavorativa -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-briefcase"></i>
+              Esperienza Lavorativa
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="occupation" class="form-label required-field">Occupazione</label>
+                  <input type="text" class="form-control" id="occupation" name="occupation" placeholder="Es: Ingegnere, Studente, Manager" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="other_experience" class="form-label required-field">Altre Esperienze</label>
+                  <textarea class="form-control" id="other_experience" name="other_experience" rows="4" placeholder="Descrivi brevemente le tue esperienze lavorative, competenze e qualifiche rilevanti..." required></textarea>
+                </div>
+              </div>
             </div>
-            <div class="mb-3">
-              <label for="other_experience" class="form-label required-field">Altre Esperienze</label>
-              <textarea class="form-control" id="other_experience" name="other_experience" required></textarea>
-            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Disponibilità -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-calendar-check"></i>
+              Disponibilità Lavorativa
+            </h5>
+          </div>
+          <div class="section-body">
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
@@ -296,67 +666,103 @@
                   <input type="date" class="form-control" id="availability_till" name="availability_till" required>
                 </div>
               </div>
-            </div>
-            <div class="mb-3">
-              <label for="other_location" class="form-label required-field">City/Cities of Availability</label>
-              <input type="text" class="form-control" id="other_location" name="other_location" required placeholder="Es: Milano, Roma, Torino o disponibile per trasferte">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label for="other_location" class="form-label required-field">Città di Disponibilità</label>
+                  <input type="text" class="form-control" id="other_location" name="other_location" required placeholder="Es: Milano, Roma, Torino o disponibile per trasferte">
+                  <div class="form-text">
+                    <i class="bi bi-info-circle"></i> 
+                    Indica le città dove sei disponibile a lavorare o se sei disponibile per trasferte
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="mb-3">
-              <label for="language_1" class="form-label required-field">Lingua 1</label>
-              <input type="text" class="form-control" id="language_1" name="language_1" required>
-            </div>
-            <div class="mb-3">
-              <label for="proficiency_1" class="form-label required-field">Livello 1</label>
-              <select class="form-select" id="proficiency_1" name="proficiency_1" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.proficiency_1 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="language_2" class="form-label required-field">Lingua 2</label>
-              <input type="text" class="form-control" id="language_2" name="language_2" required>
-            </div>
-            <div class="mb-3">
-              <label for="proficiency_2" class="form-label required-field">Livello 2</label>
-              <select class="form-select" id="proficiency_2" name="proficiency_2" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.proficiency_2 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="language_3" class="form-label required-field">Lingua 3</label>
-              <input type="text" class="form-control" id="language_3" name="language_3" required>
-            </div>
-            <div class="mb-3">
-              <label for="proficiency_3" class="form-label required-field">Livello 3</label>
-              <select class="form-select" id="proficiency_3" name="proficiency_3" required>
-                <option value="">Seleziona</option>
-                {% for opt in dropdown_options.proficiency_3 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
+        </div>
+
+        <!-- Sezione Competenze Linguistiche -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-translate"></i>
+              Competenze Linguistiche
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="language_1" class="form-label required-field">Prima Lingua</label>
+                  <input type="text" class="form-control" id="language_1" name="language_1" placeholder="Es: Italiano" required>
+                </div>
+                <div class="mb-3">
+                  <label for="proficiency_1" class="form-label required-field">Livello Prima Lingua</label>
+                  <select class="form-select" id="proficiency_1" name="proficiency_1" required>
+                    <option value="">Seleziona livello</option>
+                    {% for opt in dropdown_options.proficiency_1 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="language_2" class="form-label required-field">Seconda Lingua</label>
+                  <input type="text" class="form-control" id="language_2" name="language_2" placeholder="Es: Inglese" required>
+                </div>
+                <div class="mb-3">
+                  <label for="proficiency_2" class="form-label required-field">Livello Seconda Lingua</label>
+                  <select class="form-select" id="proficiency_2" name="proficiency_2" required>
+                    <option value="">Seleziona livello</option>
+                    {% for opt in dropdown_options.proficiency_2 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="language_3" class="form-label required-field">Terza Lingua</label>
+                  <input type="text" class="form-control" id="language_3" name="language_3" placeholder="Es: Francese, Spagnolo" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="proficiency_3" class="form-label required-field">Livello Terza Lingua</label>
+                  <select class="form-select" id="proficiency_3" name="proficiency_3" required>
+                    <option value="">Seleziona livello</option>
+                    {% for opt in dropdown_options.proficiency_3 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         
-        <!-- Consenso GDPR -->
-        <div class="row">
-          <div class="col-12">
-            <div class="mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="gdpr_consent" name="gdpr_consent" required>
-                <label class="form-check-label required-field" for="gdpr_consent">
-                  <strong>ACCONSENTE</strong> ai sensi e per gli effetti degli artt. 13 e 23 del D. Lgs. n. 196/2003, con la sottoscrizione del presente modulo, al trattamento dei dati personali secondo le modalità e nei limiti di cui all'informativa allegata. <span class="text-danger">*</span>
-                </label>
+        <!-- Sezione Consenso Privacy -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-shield-check"></i>
+              Consenso al Trattamento Dati
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <div class="form-check p-3 border rounded bg-light">
+                    <input class="form-check-input" type="checkbox" id="gdpr_consent" name="gdpr_consent" required>
+                    <label class="form-check-label required-field" for="gdpr_consent">
+                      <strong>ACCONSENTE</strong> ai sensi e per gli effetti degli artt. 13 e 23 del D. Lgs. n. 196/2003, con la sottoscrizione del presente modulo, al trattamento dei dati personali secondo le modalità e nei limiti di cui all'informativa allegata. <span class="text-danger">*</span>
+                    </label>
+                  </div>
+                  <!-- Link Privacy (inserito dinamicamente da JavaScript) -->
+                  <div id="privacy-link-container" class="mt-2"></div>
+                </div>
               </div>
-              <!-- Link Privacy (inserito dinamicamente da JavaScript) -->
-              <div id="privacy-link-container" class="mt-2"></div>
             </div>
           </div>
         </div>
@@ -448,7 +854,7 @@ const requiredFields = [
   'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
   'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo',
   'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-  'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale', 'permesso_soggiorno',
+  'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
   'license_country', 'license_number', 'license_category', 'license_issue_date', 
   'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
   'occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
@@ -554,7 +960,7 @@ function validateCurrentStep() {
         'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
         'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
     1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale', 'permesso_soggiorno',
+        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
         'license_country', 'license_number', 'license_category', 'license_issue_date', 
         'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
     2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 

@@ -768,9 +768,37 @@
             </ul>
           </div>
         </div>
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_language_2_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_language_2_label">Lingua 2</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_language_2_dropdown" id="filter_language_2_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
       </div>
       
       <!-- Quarta riga -->
+      <div class="row g-2 mb-2">
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100 advanced-filter-dropdown" type="button" id="filter_language_3_dropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+              <span id="filter_language_3_label">Lingua 3</span>
+            </button>
+            <ul class="dropdown-menu w-100 advanced-filter-menu p-2" aria-labelledby="filter_language_3_dropdown" id="filter_language_3_menu">
+              <!-- Popolato dinamicamente -->
+            </ul>
+          </div>
+        </div>
+        <!-- Spazio per eventuali filtri futuri -->
+        <div class="col-xl-10 col-lg-9 col-md-8 col-sm-6">
+          <!-- Spazio riservato per futuri filtri -->
+        </div>
+      </div>
+      
+      <!-- Quinta riga -->
       <div class="row g-2">
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
           <button class="btn btn-outline-secondary w-100" id="resetAdvancedFilters">
@@ -1272,6 +1300,8 @@ async function loadFilterOptions() {
         'license_category': { label: 'Categoria Patente', placeholder: 'Seleziona categoria' },
         'tshirt_size': { label: 'Taglia T-shirt', placeholder: 'Seleziona taglia' },
         'language_1': { label: 'Lingua 1', placeholder: 'Seleziona lingua' },
+        'language_2': { label: 'Lingua 2', placeholder: 'Seleziona lingua' },
+        'language_3': { label: 'Lingua 3', placeholder: 'Seleziona lingua' },
         'country_of_residence': { label: 'Paese Residenza', placeholder: 'Seleziona paese' },
         'id_document': { label: 'Tipo Documento', placeholder: 'Seleziona documento' },
         'id_country': { label: 'Paese Documento', placeholder: 'Seleziona paese' },
@@ -1730,7 +1760,7 @@ function applyFiltersAndSort() {
   const advancedDropdownFields = [
     'come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 
     'nationality', 'occupation', 'auto_moto_munito', 'license_category', 
-    'tshirt_size', 'language_1', 'country_of_residence', 'id_document',
+    'tshirt_size', 'language_1', 'language_2', 'language_3', 'country_of_residence', 'id_document',
     'id_country', 'license_country'
   ];
   
@@ -1907,7 +1937,7 @@ if (resetAdvancedFiltersBtn) {
     document.querySelectorAll('.advanced-filter-checkbox').forEach(checkbox => checkbox.checked = false);
     // Aggiorna i label dei dropdown avanzati
     ['come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 'nationality', 
-     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1',
+     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1', 'language_2', 'language_3',
      'country_of_residence', 'id_document', 'id_country', 'license_country'].forEach(fieldName => {
       updateAdvancedFilterLabel(fieldName);
     });
@@ -1935,7 +1965,7 @@ if (clearAllFiltersBtn) {
     document.querySelectorAll('.advanced-filter-checkbox').forEach(checkbox => checkbox.checked = false);
     // Aggiorna i label dei dropdown avanzati
     ['come_sei_arrivato', 'gender', 'marital_status', 'city_availability', 'nationality', 
-     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1',
+     'occupation', 'auto_moto_munito', 'license_category', 'tshirt_size', 'language_1', 'language_2', 'language_3',
      'country_of_residence', 'id_document', 'id_country', 'license_country'].forEach(fieldName => {
       updateAdvancedFilterLabel(fieldName);
     });
@@ -2083,6 +2113,8 @@ function updateAdvancedFilterLabel(fieldName) {
     'license_category': 'Categoria Patente',
     'tshirt_size': 'Taglia T-shirt',
     'language_1': 'Lingua 1',
+    'language_2': 'Lingua 2',
+    'language_3': 'Lingua 3',
     'country_of_residence': 'Paese Residenza',
     'id_document': 'Tipo Documento',
     'id_country': 'Paese Documento',
@@ -2236,16 +2268,31 @@ document.getElementById('editForm').onsubmit = async function(e) {
     language_3: document.getElementById('edit_language_3').value,
     proficiency_3: document.getElementById('edit_proficiency_3').value
   };
-  // Handle photo upload
-  const formData = new FormData();
-  for (const k in payload) formData.append(k, payload[k]);
+  
+  // Verifica se c'è una foto da caricare
   if (capturedPhotoBlob) {
+    // Se c'è una foto, usa FormData (richiede modifica dell'API per gestire form-data)
+    const formData = new FormData();
+    for (const k in payload) {
+      formData.append(k, payload[k]);
+    }
     formData.append('profile_photo', capturedPhotoBlob, 'profile.jpg');
+    
+    await fetch(`/api/candidates/${id}`, {
+      method: 'PUT',
+      body: formData
+    });
+  } else {
+    // Altrimenti usa JSON (più affidabile)
+    await fetch(`/api/candidates/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
   }
-  await fetch(`/api/candidates/${id}`, {
-    method: 'PUT',
-    body: formData
-  });
+  
   bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
   loadCandidates();
 };
