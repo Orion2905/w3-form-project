@@ -55,8 +55,8 @@ def logout():
     return redirect(url_for('main.login'))
 
 @main.route('/')
+@login_required
 def dashboard():
-    # Rimozione temporanea di login_required per test filtri
     candidates = Candidate.query.all()
     breadcrumbs = [
         {'name': 'Dashboard', 'url': None}
@@ -201,7 +201,7 @@ def edit_candidate(candidate_id):
     breadcrumbs = [
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
         {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
-        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_profile', candidate_id=candidate.id)},
         {'name': 'Modifica', 'url': None}
     ]
     
@@ -726,7 +726,7 @@ def view_candidate_scores(candidate_id):
     breadcrumbs = [
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
         {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
-        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_profile', candidate_id=candidate.id)},
         {'name': 'Punteggi', 'url': None}
     ]
     
@@ -774,7 +774,7 @@ def add_candidate_score(candidate_id):
     breadcrumbs = [
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
         {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
-        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_profile', candidate_id=candidate.id)},
         {'name': 'Punteggi', 'url': url_for('main.view_candidate_scores', candidate_id=candidate.id)},
         {'name': 'Aggiungi Punteggio', 'url': None}
     ]
@@ -812,7 +812,7 @@ def edit_candidate_score(candidate_id, score_id):
     breadcrumbs = [
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
         {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
-        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_detail', candidate_id=candidate.id)},
+        {'name': f'{candidate.first_name} {candidate.last_name}', 'url': url_for('main.candidate_profile', candidate_id=candidate.id)},
         {'name': 'Punteggi', 'url': url_for('main.view_candidate_scores', candidate_id=candidate.id)},
         {'name': 'Modifica Punteggio', 'url': None}
     ]
