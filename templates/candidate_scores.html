@@ -68,9 +68,11 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4>Punteggi - {{ candidate.first_name }} {{ candidate.last_name }}</h4>
                     <div>
+                        {% if not current_user.is_ospite() %}
                         <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-success">
                             <i class="bi bi-plus"></i> Aggiungi Punteggio
                         </a>
+                        {% endif %}
                         <a href="{{ url_for('main.candidates_list') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Torna alla Lista
                         </a>

@@ -10,10 +10,14 @@
   --background-dark: #23243a;
   --text-light: #2d3142;
   --text-dark: #f6f7fb;
+  --text-muted-dark: #adb5bd;
   --card-bg-light: #fff;
   --card-bg-dark: #2d3142;
   --sidebar-bg-light: #eaf0fa;
   --sidebar-bg-dark: #292b3e;
+  --border-color-light: #dee2e6;
+  --border-color-dark: #495057;
+  --input-bg-dark: #292b3e;
   --border-radius: 1rem;
   --transition: 0.3s;
 }
@@ -92,6 +96,105 @@ body[data-theme="dark"] .modal-title {
 
 body[data-theme="dark"] .btn-close {
   filter: invert(1) brightness(1.5);
+}
+
+/* Modal personalizzati per gestione utenti - tema scuro */
+body[data-theme="dark"] .user-management-container .modal-content {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .user-management-container .modal-header {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-bottom-color: #444 !important;
+}
+
+body[data-theme="dark"] .user-management-container .modal-body {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .user-management-container .modal form {
+  background: var(--card-bg-dark) !important;
+}
+
+body[data-theme="dark"] .user-management-container .modal-actions {
+  background: var(--card-bg-dark) !important;
+  border-top-color: #444 !important;
+}
+
+body[data-theme="dark"] .user-management-container .close {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .user-management-container .close:hover {
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .user-management-container .form-control {
+  background: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .user-management-container .form-control:focus {
+  background: #292b3e !important;
+  color: var(--text-dark) !important;
+  border-color: var(--primary) !important;
+}
+
+body[data-theme="dark"] .user-management-container .form-group label {
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .user-management-container .form-help {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .user-management-container .warning {
+  color: var(--warning) !important;
+}
+
+/* Gestione Utenti - tema scuro */
+body[data-theme="dark"] .user-card {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .user-info h3 {
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .user-info .email,
+body[data-theme="dark"] .created-date {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .user-meta {
+  border-top-color: #444 !important;
+}
+
+body[data-theme="dark"] .filter-btn {
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .filter-btn:hover {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+body[data-theme="dark"] .management-header .subtitle,
+body[data-theme="dark"] .search-box i,
+body[data-theme="dark"] .no-results {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .current-user-badge {
+  color: var(--text-dark) !important;
 }
 
 /* Nav tabs nel modal - tema scuro */
@@ -1035,4 +1138,58 @@ body[data-theme="dark"] select option {
   .modal-dialog {
     margin: 0.5rem;
   }
+}
+
+/* Miglioramenti tema scuro globali */
+body[data-theme="dark"] {
+  background: var(--background-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .card {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: #444 !important;
+}
+
+body[data-theme="dark"] .navbar-light {
+  background: var(--sidebar-bg-dark) !important;
+  border-bottom: 1px solid #444 !important;
+}
+
+body[data-theme="dark"] .navbar-light .navbar-brand {
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .alert-info {
+  background-color: rgba(125, 183, 232, 0.1) !important;
+  border-color: var(--primary) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .btn-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+body[data-theme="dark"] .btn-secondary {
+  background-color: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .btn-success {
+  background-color: var(--success) !important;
+  border-color: var(--success) !important;
+  color: var(--text-light) !important;
+}
+
+body[data-theme="dark"] .text-muted {
+  color: #adb5bd !important;
+}
+
+/* Container e layout principale */
+body[data-theme="dark"] .container,
+body[data-theme="dark"] .container-fluid {
+  color: var(--text-dark) !important;
 }

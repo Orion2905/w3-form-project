@@ -18,7 +18,7 @@ from w3form import db
 from w3form.models import (
     User, Candidate, DynamicForm, Score, ScoreCategory
 )
-from w3form.decorators import role_required
+from w3form.decorators import role_required, developer_required, view_only_required
 from w3form.azure_utils import get_secure_image_url, get_secure_document_url
 import requests, time
 from requests.auth import HTTPBasicAuth
@@ -64,6 +64,8 @@ def dashboard():
     return render_template('dashboard.html', candidates=candidates, sidebar=True, breadcrumbs=breadcrumbs)
 
 @main.route('/candidato/aggiungi', methods=['GET', 'POST'])
+@login_required
+@role_required('intervistatore')
 def add_candidate():
     breadcrumbs = [
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
@@ -75,7 +77,7 @@ def add_candidate():
 
 @main.route('/candidati')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def candidates_list():
     candidates = Candidate.query.all()
     breadcrumbs = [
@@ -209,14 +211,14 @@ def edit_candidate(candidate_id):
 
 @main.route('/esporta/pdf')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def export_pdf():
     # TODO: implementare esportazione PDF
     return 'Funzione esportazione PDF in sviluppo'
 
 @main.route('/esporta/excel')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def export_excel():
     # TODO: implementare esportazione Excel
     return 'Funzione esportazione Excel in sviluppo'
@@ -347,7 +349,7 @@ def api_form_privacy_settings(slug):
 
 @main.route('/api/candidates', methods=['GET'])
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def api_get_candidates():
     # Filtra per candidati non archiviati per default
     archived = request.args.get('archived', 'false').lower() == 'true'
@@ -412,7 +414,7 @@ def api_get_candidates():
 
 @main.route('/api/filter-options', methods=['GET'])
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def api_get_filter_options():
     """Restituisce le opzioni disponibili per i filtri dropdown"""
     # Query per ottenere tutti i form distinti con le loro categorie e sottocategorie
@@ -571,7 +573,7 @@ def api_archive_candidate(candidate_id):
 
 @main.route('/file/curriculum/<path:filename>')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def serve_curriculum(filename):
     """Serve curriculum files attraverso URL sicuri con SAS token"""
     try:
@@ -608,7 +610,7 @@ def serve_curriculum(filename):
 
 @main.route('/curriculum/view/<path:filename>')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def view_curriculum_inline(filename):
     """Visualizza il curriculum in una pagina dedicata con viewer PDF integrato"""
     try:
@@ -634,7 +636,7 @@ def view_curriculum_inline(filename):
 
 @main.route('/pdf-proxy/<path:filename>')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def pdf_proxy(filename):
     """Proxy che scarica il PDF dal blob storage e lo serve con header appropriati"""
     try:
@@ -678,7 +680,7 @@ def pdf_proxy(filename):
 
 @main.route('/file/photo/<path:filename>')
 @login_required  
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def serve_photo(filename):
     """Serve photo files attraverso URL sicuri con SAS token"""
     try:
@@ -715,6 +717,7 @@ def success():
 
 @main.route('/candidati/<int:candidate_id>/punteggi')
 @login_required
+@view_only_required('intervistatore')
 def view_candidate_scores(candidate_id):
     """Visualizza i punteggi di un candidato"""
     candidate = Candidate.query.get_or_404(candidate_id)
@@ -972,7 +975,7 @@ def api_get_candidate_scores(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/profilo')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def candidate_profile(candidate_id):
     """Visualizza il profilo completo del candidato"""
     candidate = Candidate.query.options(
@@ -1017,7 +1020,7 @@ def api_add_candidate_score(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/export/pdf')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def export_candidate_pdf(candidate_id):
     """Esporta il profilo del candidato in formato PDF"""
     try:
@@ -1075,7 +1078,7 @@ def export_candidate_pdf(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/export/print')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def export_candidate_print(candidate_id):
     """Mostra la pagina di stampa del profilo candidato con dialog automatico"""
     try:
@@ -1096,7 +1099,7 @@ def export_candidate_print(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/export/csv')
 @login_required
-@role_required('intervistatore')
+@view_only_required('intervistatore')
 def export_candidate_csv(candidate_id):
     """Esporta il profilo del candidato in formato CSV"""
     try:
@@ -1509,6 +1512,8 @@ def test_filtri():
 
 # API per le statistiche della dashboard
 @main.route('/api/stats/summary', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_summary():
     """API per le statistiche principali della dashboard"""
     try:
@@ -1571,6 +1576,8 @@ def stats_summary():
         return jsonify({'error': str(e)}), 500
 
 @main.route('/api/stats/eventi', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_eventi():
     """API per la lista degli eventi (categorie) per i filtri"""
     try:
@@ -1583,6 +1590,8 @@ def stats_eventi():
         return jsonify([])
 
 @main.route('/api/stats/aziende', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_aziende():
     """API per la lista delle aziende (sottocategorie) per i filtri"""
     try:
@@ -1596,6 +1605,8 @@ def stats_aziende():
 
 # API placeholder per i grafici della dashboard
 @main.route('/api/stats/roles', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_roles():
     """API per statistiche ruoli/occupazioni"""
     try:
@@ -1619,6 +1630,8 @@ def stats_roles():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/gender', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_gender():
     """API per statistiche genere"""
     try:
@@ -1642,6 +1655,8 @@ def stats_gender():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/marital_status', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_marital_status():
     """API per statistiche stato civile"""
     try:
@@ -1665,6 +1680,8 @@ def stats_marital_status():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/tshirt_size', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_tshirt_size():
     """API per statistiche taglia t-shirt"""
     try:
@@ -1688,6 +1705,8 @@ def stats_tshirt_size():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/auto_moto_munito', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_auto_moto():
     """API per statistiche auto/moto"""
     try:
@@ -1715,6 +1734,8 @@ def stats_auto_moto():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/monthly', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_monthly():
     """API per statistiche mensili"""
     try:
@@ -1739,6 +1760,8 @@ def stats_monthly():
         return jsonify({})
 
 @main.route('/api/stats/cities', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_cities():
     """API per statistiche città"""
     try:
@@ -1764,6 +1787,8 @@ def stats_cities():
         return jsonify({'Non specificato': 0})
 
 @main.route('/api/stats/latest', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def stats_latest():
     """API per ultimi candidati inseriti"""
     try:
@@ -1796,6 +1821,7 @@ def stats_latest():
 
 @main.route('/api/stats/license_category', methods=['GET'])
 @login_required
+@view_only_required('intervistatore')
 def stats_license_category():
     """API per le statistiche delle tipologie di patente"""
     try:
@@ -1830,6 +1856,7 @@ def stats_license_category():
 
 @main.route('/api/stats/languages', methods=['GET'])
 @login_required
+@view_only_required('intervistatore')
 def stats_languages():
     """API per le statistiche delle lingue parlate"""
     try:
@@ -1862,3 +1889,232 @@ def stats_languages():
     except Exception as e:
         print(f"Errore in stats_languages: {e}")
         return jsonify({'Errore': 1})
+
+# === GESTIONE UTENTI ===
+
+@main.route('/gestione-utenti')
+@login_required
+@developer_required
+def user_management():
+    """Pagina principale per la gestione utenti"""
+    users = User.query.all()
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Gestione Utenti', 'url': None}
+    ]
+    return render_template('user_management.html', users=users, breadcrumbs=breadcrumbs)
+
+@main.route('/api/users', methods=['GET'])
+@login_required
+@developer_required
+def api_get_users():
+    """API per ottenere la lista degli utenti"""
+    users = User.query.all()
+    users_data = []
+    for user in users:
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': user.role,
+            'created_at': user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else 'N/A'
+        })
+    return jsonify(users_data)
+
+@main.route('/api/users', methods=['POST'])
+@login_required
+@developer_required
+def api_create_user():
+    """API per creare un nuovo utente"""
+    try:
+        data = request.get_json()
+        
+        # Validazione
+        if not data.get('username'):
+            return jsonify({'error': 'Username richiesto'}), 400
+        if not data.get('email'):
+            return jsonify({'error': 'Email richiesta'}), 400
+        if not data.get('password'):
+            return jsonify({'error': 'Password richiesta'}), 400
+        if not data.get('role'):
+            return jsonify({'error': 'Ruolo richiesto'}), 400
+        
+        # Controlla se l'username esiste già
+        existing_user = User.query.filter_by(username=data['username']).first()
+        if existing_user:
+            return jsonify({'error': 'Username già esistente'}), 400
+            
+        # Controlla se l'email esiste già
+        existing_email = User.query.filter_by(email=data['email']).first()
+        if existing_email:
+            return jsonify({'error': 'Email già esistente'}), 400
+        
+        # Validazione ruolo
+        valid_roles = ['developer', 'intervistatore', 'ospite']
+        if data['role'] not in valid_roles:
+            return jsonify({'error': f'Ruolo non valido. Ruoli disponibili: {", ".join(valid_roles)}'}), 400
+        
+        # Crea nuovo utente
+        new_user = User(
+            username=data['username'],
+            email=data['email'],
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            role=data['role']
+        )
+        new_user.set_password(data['password'])
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Utente {data["username"]} creato con successo',
+            'user': {
+                'id': new_user.id,
+                'username': new_user.username,
+                'email': new_user.email,
+                'first_name': new_user.first_name,
+                'last_name': new_user.last_name,
+                'role': new_user.role,
+                'created_at': new_user.created_at.strftime('%d/%m/%Y %H:%M')
+            }
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Errore durante la creazione dell\'utente: {str(e)}'}), 500
+
+@main.route('/api/users/<int:user_id>', methods=['PUT'])
+@login_required
+@developer_required
+def api_update_user(user_id):
+    """API per aggiornare un utente"""
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        
+        # Non permettere di modificare se stesso se si sta cambiando il ruolo da developer
+        if user.id == current_user.id and data.get('role') != 'developer':
+            return jsonify({'error': 'Non puoi rimuovere i tuoi privilegi di developer'}), 400
+        
+        # Aggiorna username se fornito
+        if 'username' in data and data['username']:
+            # Controlla se il nuovo username è già in uso
+            existing_user = User.query.filter_by(username=data['username']).first()
+            if existing_user and existing_user.id != user.id:
+                return jsonify({'error': 'Username già esistente'}), 400
+            user.username = data['username']
+        
+        # Aggiorna email se fornita
+        if 'email' in data and data['email']:
+            # Controlla se la nuova email è già in uso
+            existing_user = User.query.filter_by(email=data['email']).first()
+            if existing_user and existing_user.id != user.id:
+                return jsonify({'error': 'Email già esistente'}), 400
+            user.email = data['email']
+        
+        # Aggiorna nome se fornito
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        
+        # Aggiorna cognome se fornito
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        
+        # Aggiorna password se fornita
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+        
+        # Aggiorna ruolo se fornito
+        if 'role' in data and data['role']:
+            valid_roles = ['developer', 'intervistatore', 'ospite']
+            if data['role'] not in valid_roles:
+                return jsonify({'error': f'Ruolo non valido. Ruoli disponibili: {", ".join(valid_roles)}'}), 400
+            user.role = data['role']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Utente {user.username} aggiornato con successo',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'created_at': user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else 'N/A'
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Errore durante l\'aggiornamento dell\'utente: {str(e)}'}), 500
+
+@main.route('/api/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@developer_required
+def api_delete_user(user_id):
+    """API per eliminare un utente"""
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Non permettere di eliminare se stesso
+        if user.id == current_user.id:
+            return jsonify({'error': 'Non puoi eliminare il tuo account'}), 400
+        
+        username = user.username
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': f'Utente {username} eliminato con successo'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Errore durante l\'eliminazione dell\'utente: {str(e)}'}), 500
+
+
+# === EXPORT CANDIDATI PER OSPITI ===
+
+@main.route('/api/candidates/export')
+@login_required
+@view_only_required('ospite')
+def export_candidates():
+    """Esporta lista candidati in formato CSV per utenti ospite"""
+    import csv
+    from io import StringIO
+    from flask import make_response
+    
+    candidates = Candidate.query.all()
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Header CSV
+    writer.writerow([
+        'Nome', 'Cognome', 'Email', 'Telefono', 'Città', 
+        'Genere', 'Stato', 'Data Creazione'
+    ])
+    
+    # Dati candidati
+    for candidate in candidates:
+        writer.writerow([
+            candidate.first_name or '',
+            candidate.last_name or '',
+            candidate.email or '',
+            candidate.phone or '',
+            candidate.city or '',
+            candidate.gender or '',
+            candidate.status or '',
+            candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else ''
+        ])
+    
+    output.seek(0)
+    
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=candidati.csv'
+    
+    return response

@@ -17,6 +17,7 @@
         <span class="sidebar-text">Elenco Candidati</span>
       </a>
     </li>
+    {% if not current_user.is_ospite() %}
     <li class="nav-item mb-2">
       <a class="nav-link d-flex align-items-center px-3 py-2 {% if 'form' in request.endpoint %}active{% endif %}" href="/forms">
         <span class="sidebar-icon me-2"><i class="bi bi-ui-checks-grid"></i></span>
@@ -29,6 +30,15 @@
         <span class="sidebar-text">Punteggi</span>
       </a>
     </li>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.is_developer() %}
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2 {% if 'gestione-utenti' in request.endpoint %}active{% endif %}" href="/gestione-utenti">
+        <span class="sidebar-icon me-2"><i class="bi bi-gear"></i></span>
+        <span class="sidebar-text">Gestione Utenti</span>
+      </a>
+    </li>
+    {% endif %}
     <li class="nav-item mt-4">
       <a class="nav-link d-flex align-items-center text-danger px-3 py-2" href="/logout">
         <span class="sidebar-icon me-2"><i class="bi bi-box-arrow-right"></i></span>

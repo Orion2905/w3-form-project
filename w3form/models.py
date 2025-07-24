@@ -124,14 +124,27 @@ class Candidate(db.Model):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(128), unique=True, nullable=True)  # Temporaneamente nullable per migrazione
+    first_name = db.Column(db.String(64), nullable=True)
+    last_name = db.Column(db.String(64), nullable=True)
     password_hash = db.Column(db.String(512), nullable=False)
-    role = db.Column(db.String(16), nullable=False)  # intervistatore/ospite
+    role = db.Column(db.String(16), nullable=False)  # developer/intervistatore/ospite
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def is_developer(self):
+        return self.role == 'developer'
+    
+    def is_intervistatore(self):
+        return self.role == 'intervistatore'
+    
+    def is_ospite(self):
+        return self.role == 'ospite'
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)

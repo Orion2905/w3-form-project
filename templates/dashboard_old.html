@@ -1,6 +1,130 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
+<!-- Dashboard unificata per tutti gli utenti autenticati -->
+<style>
+/* Sezione Filtri - Tema principale */
+.filters-section {
+  <div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Benvenuto!</strong> Stai accedendo come ospite. Puoi visualizzare i dati ma non modificarli.
+  </div>
+  
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card p-4 text-center">
+        <div class="fs-1 text-primary mb-3">
+          <i class="fas fa-users"></i>
+        </div>
+        <h4>{{ candidates|length }}</h4>
+        <p class="text-muted mb-3">Candidati totali</p>
+        <a href="/candidati" class="btn btn-primary">
+          <i class="fas fa-eye me-2"></i>Visualizza Candidati
+        </a>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-4 text-center">
+        <div class="fs-1 text-success mb-3">
+          <i class="fas fa-download"></i>
+        </div>
+        <h4>Export</h4>
+        <p class="text-muted mb-3">Scarica dati candidati</p>
+        <button class="btn btn-success" onclick="exportCandidates()">
+          <i class="fas fa-file-csv me-2"></i>Esporta CSV
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-chart-bar me-2"></i>
+        Statistiche Rapide
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value text-primary">{{ candidates|selectattr('status', 'equalto', 'available')|list|length }}</div>
+            <div class="stat-label">Disponibili</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value text-warning">{{ candidates|selectattr('status', 'equalto', 'archived')|list|length }}</div>
+            <div class="stat-label">Archiviati</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value text-info">{{ candidates|selectattr('gender', 'equalto', 'M')|list|length }}</div>
+            <div class="stat-label">Uomini</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value text-info">{{ candidates|selectattr('gender', 'equalto', 'F')|list|length }}</div>
+            <div class="stat-label">Donne</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<style>
+.guest-dashboard .card {
+  transition: transform 0.2s ease;
+  background: var(--card-bg-light);
+  color: var(--text-light);
+}
+
+.guest-dashboard .card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Tema scuro per dashboard ospite */
+body[data-theme="dark"] .guest-dashboard .card {
+  background: var(--card-bg-dark) !important;
+  color: var(--text-dark) !important;
+}
+
+body[data-theme="dark"] .guest-dashboard .stat-label {
+  color: #adb5bd !important;
+}
+
+body[data-theme="dark"] .guest-dashboard .alert-info {
+  background-color: rgba(125, 183, 232, 0.1) !important;
+  border-color: var(--primary) !important;
+  color: var(--text-dark) !important;
+}
+</style>
+
+<script>
+function exportCandidates() {
+  window.location.href = '/api/candidates/export';
+}
+</script>
+
+{% else %}
 <!-- Dashboard normale per developer e intervistatori -->
 <style>
 /* Sezione Filtri - Tema principale */
@@ -777,5 +901,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
+{% endif %}
 {% endblock %}

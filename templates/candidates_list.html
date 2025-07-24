@@ -1591,8 +1591,10 @@ function renderTable(data) {
       <td>
         <div class="btn-group" role="group">
           <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
+          {% if not current_user.is_ospite() %}
           <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
           ${getArchiveButton(c)}
+          {% endif %}
         </div>
       </td>
     `;

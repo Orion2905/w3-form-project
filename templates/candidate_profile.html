@@ -44,9 +44,11 @@
           </li>
         </ul>
       </div>
+      {% if not current_user.is_ospite() %}
       <button class="btn btn-primary" onclick="openEdit({{ candidate.id }})">
         <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Modifica</span>
       </button>
+      {% endif %}
     </div>
   </div>
 
@@ -416,9 +418,11 @@
                 <h6 class="mb-0">
                   <i class="bi bi-star-fill text-warning"></i> Valutazioni del candidato
                 </h6>
+                {% if not current_user.is_ospite() %}
                 <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-sm btn-primary">
                   <i class="bi bi-plus"></i> Aggiungi punteggio
                 </a>
+                {% endif %}
               </div>
 
               {% if candidate.scores %}
@@ -491,6 +495,7 @@
                                 <small class="text-muted">
                                   {{ score.created_at.strftime('%d/%m/%Y') }}
                                 </small>
+                                {% if not current_user.is_ospite() %}
                                 <div class="btn-group btn-group-sm ms-2">
                                   <a href="{{ url_for('main.edit_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
                                      class="btn btn-outline-secondary" title="Modifica">
@@ -503,6 +508,7 @@
                                     </button>
                                   </form>
                                 </div>
+                                {% endif %}
                               </div>
                             </div>
                             {% if score.notes %}
@@ -534,11 +540,15 @@
                 <div class="text-center py-4">
                   <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
                   <h6 class="mt-3 text-muted">Nessuna valutazione presente</h6>
+                  {% if not current_user.is_ospite() %}
                   <p class="text-muted">Aggiungi il primo punteggio per questo candidato</p>
                   <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" 
                      class="btn btn-primary">
                     <i class="bi bi-plus"></i> Aggiungi prima valutazione
                   </a>
+                  {% else %}
+                  <p class="text-muted">Al momento non ci sono valutazioni per questo candidato</p>
+                  {% endif %}
                 </div>
               {% endif %}
             </div>

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from w3form import db
 from w3form.models import Candidate, Photo, Curriculum, DynamicForm, Score, User
-from w3form.decorators import role_required
+from w3form.decorators import role_required, view_only_required
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -78,6 +78,8 @@ def candidate_to_dict(c):
 
 # Aggiungi candidato
 @api.route('/', methods=['POST'])
+@login_required
+@role_required('intervistatore')
 def add_candidate_api():
     data = request.json
     try:
@@ -132,6 +134,8 @@ def add_candidate_api():
 
 # Modifica candidato
 @api.route('/<int:id>', methods=['PUT'])
+@login_required
+@role_required('intervistatore')
 def update_candidate_api(id):
     c = Candidate.query.get_or_404(id)
     
@@ -214,6 +218,8 @@ def update_candidate_api(id):
 
 # Elimina candidato
 @api.route('/<int:id>', methods=['DELETE'])
+@login_required
+@role_required('intervistatore')
 def delete_candidate_api(id):
     c = Candidate.query.get_or_404(id)
     try:
@@ -226,6 +232,8 @@ def delete_candidate_api(id):
 
 # Aggiungi candidato con upload file
 @api.route('/uploadfile', methods=['POST'])
+@login_required
+@role_required('intervistatore')
 def upload_file_api():
     file = request.files.get('file')
     if not file:
@@ -238,6 +246,8 @@ def upload_file_api():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api.route('/upload', methods=['POST'])
+@login_required
+@role_required('intervistatore')
 def upload_candidate_api():
     data = request.form
     files = request.files
@@ -315,6 +325,8 @@ def upload_candidate_api():
 
 # Ottieni tutti i candidati (con paginazione opzionale)
 @api.route('/', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def get_candidates_api():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 20))
@@ -331,6 +343,8 @@ def get_candidates_api():
 
 # Ottieni un singolo candidato per id
 @api.route('/<int:id>', methods=['GET'])
+@login_required
+@view_only_required('intervistatore')
 def get_candidate_api(id):
     c = Candidate.query.get_or_404(id)
     return jsonify({'success': True, 'candidate': candidate_to_dict(c)})
