@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from w3form import db
-from w3form.models import Candidate, Photo, Curriculum, DynamicForm, Score, User
+from w3form.models import Candidate, Photo, Curriculum, DynamicForm, Score, User, FormFieldConfiguration
 from w3form.decorators import role_required, view_only_required
 from datetime import datetime
 import os
@@ -245,78 +245,186 @@ def upload_file_api():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+def filter_visible_fields(form_data, form_id):
+    """
+    Filtra i dati del form mantenendo solo i campi visibili secondo la configurazione.
+    
+    Args:
+        form_data: Dati dal form (request.form)
+        form_id: ID del form dinamico
+        
+    Returns:
+        dict: Dati filtrati con solo i campi visibili
+    """
+    try:
+        # Recupera la configurazione dei campi per questo form
+        field_config = FormFieldConfiguration.get_form_configuration(form_id)
+        
+        # Se non c'è configurazione, restituisci tutti i dati (fallback)
+        if not field_config:
+            print(f"⚠️ Nessuna configurazione trovata per form {form_id}, usando tutti i campi")
+            return dict(form_data)
+        
+        # Campi che devono sempre essere inclusi indipendentemente dalla configurazione
+        essential_fields = [
+            'form_id', 'gdpr_consent', 'first_name', 'last_name', 'email'
+        ]
+        
+        # Filtra solo i campi visibili
+        filtered_data = {}
+        visible_fields = []
+        
+        # Prima aggiungi i campi essenziali se presenti
+        for field in essential_fields:
+            if field in form_data:
+                filtered_data[field] = form_data.get(field)
+                if field not in visible_fields:
+                    visible_fields.append(field)
+                print(f"✅ Campo essenziale incluso: {field}")
+        
+        # Poi aggiungi i campi configurati come visibili
+        for field_name, config in field_config.items():
+            if config.is_visible:  # Accesso diretto alla proprietà dell'oggetto
+                if field_name in form_data and field_name not in filtered_data:
+                    filtered_data[field_name] = form_data.get(field_name)
+                    visible_fields.append(field_name)
+        
+        print(f"✅ Campi visibili filtrati ({len(visible_fields)}): {visible_fields}")
+        print(f"📊 Campi totali ricevuti: {len(form_data)}, Campi filtrati: {len(filtered_data)}")
+        
+        return filtered_data
+        
+    except Exception as e:
+        print(f"❌ Errore nel filtraggio campi: {e}")
+        # In caso di errore, restituisci tutti i dati per sicurezza
+        return dict(form_data)
+
 @api.route('/upload', methods=['POST'])
 @login_required
 @role_required('intervistatore')
 def upload_candidate_api():
-    data = request.form
+    original_data = request.form
     files = request.files
+    
     try:
+        # Ottieni il form_id per determinare quali campi filtrare
+        form_id = original_data.get('form_id')
+        if not form_id:
+            return jsonify({'success': False, 'error': 'form_id mancante'}), 400
+        
+        # Filtra i dati mantenendo solo i campi visibili
+        data = filter_visible_fields(original_data, form_id)
+        
         auto_moto_munito = data.get('auto_moto_munito')
         if auto_moto_munito is not None:
             auto_moto_munito = str(auto_moto_munito).lower() in ['1', 'true', 'on']
-        c = Candidate(
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
-            gender=data.get('gender'),
-            date_of_birth=datetime.fromisoformat(data.get('date_of_birth')) if data.get('date_of_birth') else None,
-            place_of_birth=data.get('place_of_birth'),
-            nationality=data.get('nationality'),
-            marital_status=data.get('marital_status'),
-            height_cm=data.get('height_cm'),
-            weight_kg=data.get('weight_kg'),
-            tshirt_size=data.get('tshirt_size'),
-            shoe_size_eu=data.get('shoe_size_eu'),
-            phone_number=data.get('phone_number'),
-            email=data.get('email'),
-            address=data.get('address'),
-            city=data.get('city'),
-            postal_code=data.get('postal_code'),
-            country_of_residence=data.get('country_of_residenza'),
-            id_document=data.get('id_document'),
-            id_number=data.get('id_number'),
-            id_expiry_date=datetime.fromisoformat(data.get('id_expiry_date')) if data.get('id_expiry_date') else None,
-            id_country=data.get('id_country'),
-            additional_document=data.get('additional_document'),
-            license_country=data.get('license_country'),
-            license_number=data.get('license_number'),
-            license_category=data.get('license_category'),
-            license_issue_date=datetime.fromisoformat(data.get('license_issue_date')) if data.get('license_issue_date') else None,
-            license_expiry_date=datetime.fromisoformat(data.get('license_expiry_date')) if data.get('license_expiry_date') else None,
-            years_driving_experience=data.get('years_driving_experience'),
-            auto_moto_munito=auto_moto_munito,
-            occupation=data.get('occupation'),
-            other_experience=data.get('other_experience'),
-            availability_from=datetime.fromisoformat(data.get('availability_from')) if data.get('availability_from') else None,
-            availability_till=datetime.fromisoformat(data.get('availability_till')) if data.get('availability_till') else None,
-            city_availability=data.get('other_location'),
-            language_1=data.get('language_1'),
-            proficiency_1=data.get('proficiency_1'),
-            language_2=data.get('language_2'),
-            proficiency_2=data.get('proficiency_2'),
-            language_3=data.get('language_3'),
-            proficiency_3=data.get('proficiency_3'),
-            codice_fiscale=data.get('codice_fiscale'),
-            permesso_soggiorno=data.get('permesso_soggiorno'),
-            come_sei_arrivato=data.get('come_sei_arrivato'),
-            form_id=data.get('form_id'),
-        )
+        
+        # Crea il candidato solo con i campi visibili e non vuoti
+        candidate_data = {}
+        
+        # Campi di testo semplici
+        text_fields = [
+            'first_name', 'last_name', 'gender', 'place_of_birth', 'nationality', 'marital_status',
+            'height_cm', 'weight_kg', 'tshirt_size', 'shoe_size_eu', 'phone_number', 'email',
+            'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 'id_number',
+            'id_country', 'additional_document', 'license_country', 'license_number', 
+            'license_category', 'years_driving_experience', 'occupation', 'other_experience',
+            'city_availability', 'language_1', 'proficiency_1', 'language_2', 'proficiency_2',
+            'language_3', 'proficiency_3', 'codice_fiscale', 'permesso_soggiorno', 
+            'come_sei_arrivato', 'form_id'
+        ]
+        
+        # Recupera la configurazione per determinare la visibilità
+        field_config = FormFieldConfiguration.get_form_configuration(form_id)
+        
+        for field in text_fields:
+            if field in data and data.get(field):
+                # Il campo è presente e ha un valore
+                candidate_data[field] = data.get(field)
+            elif field_config and field in field_config and not field_config[field].is_visible:
+                # Il campo è nascosto nella configurazione, passa stringa vuota invece di NULL
+                if field in ['first_name', 'last_name', 'email']:
+                    # Per campi essenziali, usa un valore di default significativo
+                    if field == 'first_name':
+                        candidate_data[field] = '[Nome nascosto]'
+                    elif field == 'last_name':
+                        candidate_data[field] = '[Cognome nascosto]'
+                    elif field == 'email':
+                        candidate_data[field] = 'hidden@example.com'
+                else:
+                    # Per altri campi, usa stringa vuota
+                    candidate_data[field] = ''
+                print(f"🚫 Campo nascosto {field}, usando valore di default")
+            elif field in ['first_name', 'last_name', 'email']:
+                # Campi essenziali devono sempre avere un valore, anche se vuoto nel form
+                candidate_data[field] = data.get(field, '')
+        
+        # Campi data con conversione
+        date_fields = {
+            'date_of_birth': 'date_of_birth',
+            'id_expiry_date': 'id_expiry_date', 
+            'license_issue_date': 'license_issue_date',
+            'license_expiry_date': 'license_expiry_date',
+            'availability_from': 'availability_from',
+            'availability_till': 'availability_till'
+        }
+        
+        for field_name, attr_name in date_fields.items():
+            if field_name in data and data.get(field_name):
+                try:
+                    candidate_data[attr_name] = datetime.fromisoformat(data.get(field_name))
+                except (ValueError, TypeError):
+                    print(f"⚠️ Errore conversione data per campo {field_name}: {data.get(field_name)}")
+            elif field_config and field_name in field_config and not field_config[field_name].is_visible:
+                # Campo data nascosto - non aggiungere nulla (rimane NULL che è permesso per le date)
+                print(f"🚫 Campo data nascosto {field_name}, omesso dal salvataggio")
+        
+        # Campo booleano speciale
+        if 'auto_moto_munito' in data:
+            candidate_data['auto_moto_munito'] = auto_moto_munito
+        elif field_config and 'auto_moto_munito' in field_config and not field_config['auto_moto_munito'].is_visible:
+            # Campo nascosto - usa False come default per booleani
+            candidate_data['auto_moto_munito'] = False
+            print(f"🚫 Campo booleano nascosto auto_moto_munito, usando False")
+            
+        # Gestione del campo country_of_residence (può avere nomi diversi)
+        if 'country_of_residenza' in data and data.get('country_of_residenza'):
+            candidate_data['country_of_residence'] = data.get('country_of_residenza')
+        
+        print(f"📝 Creazione candidato con {len(candidate_data)} campi: {list(candidate_data.keys())}")
+        
+        c = Candidate(**candidate_data)
         db.session.add(c)
         db.session.flush()  # Per ottenere l'id
-        # Gestione file immagine profilo
+        
+        # Recupera la configurazione per verificare la visibilità dei campi file
+        field_config = FormFieldConfiguration.get_form_configuration(form_id)
+        
+        # Gestione file immagine profilo (solo se il campo è visibile)
         if 'profile_photo' in files and files['profile_photo'].filename:
-            photo_file = files['profile_photo']
-            filename = secure_filename(photo_file.filename)
-            url = upload_to_azure(photo_file, filename)
-            photo = Photo(candidate_id=c.id, filename=url)
-            db.session.add(photo)
-        # Gestione file curriculum
+            # Controlla se il campo profile_photo è visibile nella configurazione
+            if not field_config or 'profile_photo' not in field_config or field_config['profile_photo'].is_visible:
+                photo_file = files['profile_photo']
+                filename = secure_filename(photo_file.filename)
+                url = upload_to_azure(photo_file, filename)
+                photo = Photo(candidate_id=c.id, filename=url)
+                db.session.add(photo)
+                print("📷 File foto profilo salvato (campo visibile)")
+            else:
+                print("🚫 File foto profilo ignorato (campo nascosto)")
+                
+        # Gestione file curriculum (solo se il campo è visibile)
         if 'curriculum_file' in files and files['curriculum_file'].filename:
-            cv_file = files['curriculum_file']
-            filename = secure_filename(cv_file.filename)
-            url = upload_to_azure(cv_file, filename)
-            curriculum = Curriculum(candidate_id=c.id, filename=url)
-            db.session.add(curriculum)
+            # Controlla se il campo curriculum_file è visibile nella configurazione
+            if not field_config or 'curriculum_file' not in field_config or field_config['curriculum_file'].is_visible:
+                cv_file = files['curriculum_file']
+                filename = secure_filename(cv_file.filename)
+                url = upload_to_azure(cv_file, filename)
+                curriculum = Curriculum(candidate_id=c.id, filename=url)
+                db.session.add(curriculum)
+                print("📄 File curriculum salvato (campo visibile)")
+            else:
+                print("🚫 File curriculum ignorato (campo nascosto)")
         db.session.commit()
         return jsonify({'success': True, 'candidate_id': c.id}), 201
     except Exception as e:

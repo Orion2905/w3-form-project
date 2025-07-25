@@ -168,6 +168,7 @@
                                         <td>{{ score.evaluator.username if score.evaluator else '-' }}</td>
                                         <td>{{ score.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                         <td>
+                                            {% if not current_user.is_ospite() %}
                                             <a href="{{ url_for('main.edit_candidate_score', candidate_id=candidate.id, score_id=score.id) }}" 
                                                class="btn btn-sm btn-warning">
                                                 <i class="bi bi-pencil"></i>
@@ -179,6 +180,9 @@
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
+                                            {% else %}
+                                            <span class="text-muted"><i class="bi bi-eye"></i> Solo lettura</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -188,9 +192,11 @@
                     {% else %}
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> Nessun punteggio assegnato a questo candidato.
+                            {% if not current_user.is_ospite() %}
                             <a href="{{ url_for('main.add_candidate_score', candidate_id=candidate.id) }}" class="btn btn-primary btn-sm ml-2">
                                 Aggiungi il primo punteggio
                             </a>
+                            {% endif %}
                         </div>
                     {% endif %}
                     

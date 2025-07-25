@@ -152,7 +152,19 @@
               </div>
             </div>
     
-    <button type="submit" class="btn btn-primary mt-4">Salva modifiche</button>
+    <div class="d-flex gap-2 align-items-center mt-4">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-circle"></i> Salva modifiche
+      </button>
+      
+      <a href="{{ url_for('main.manage_form_fields', form_id=form.id) }}" class="btn btn-warning">
+        <i class="bi bi-sliders"></i> Gestisci Campi
+      </a>
+      
+      <a href="{{ url_for('main.list_dynamic_forms') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Torna alla lista
+      </a>
+    </div>
   </form>
 </div>
 

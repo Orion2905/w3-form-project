@@ -830,7 +830,7 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
         <!-- PDF Iframe -->
         <div class="ratio ratio-16x9 mb-4">
           <iframe 
-            src="https://w3data.blob.core.windows.net/public-docs/Istruzioni%20foto.pdf" 
+            src="https://w3data.blob.core.windows.net/public-docs/Istruzioni_foto_2.pdf" 
             title="Istruzioni Foto PDF"
             style="border: 1px solid #dee2e6; border-radius: 0.375rem;">
           </iframe>
@@ -857,8 +857,11 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
   </div>
 </div>
 <script>
-// CONFIGURAZIONE TEST - Imposta a true per disabilitare la validazione obbligatoria
-const DISABLE_REQUIRED_VALIDATION = true; // Cambia a true per i test
+// CONFIGURAZIONE TEST - Ora dinamica dal backend
+const DISABLE_REQUIRED_VALIDATION = {{ test_mode|tojson }}; // Modalità test globale controllata dal pannello sviluppatore
+
+// CONFIGURAZIONE CAMPI DINAMICI - Caricata dal backend
+let FIELD_VISIBILITY_CONFIG = {};
 
 // CONFIGURAZIONE PRIVACY LINK - Ora caricata dinamicamente dall'API
 let PRIVACY_LINK_CONFIG = {
@@ -983,6 +986,12 @@ function validateField(fieldId) {
 }
 
 function validateCurrentStep() {
+  // Se la validazione è disabilitata per i test, considera sempre valido
+  if (DISABLE_REQUIRED_VALIDATION) {
+    return true;
+  }
+  
+  // Mappatura dei campi per step
   const stepFields = {
     0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
         'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
@@ -999,9 +1008,24 @@ function validateCurrentStep() {
   const currentStepFields = stepFields[currentStep] || [];
   let allValid = true;
   
-  currentStepFields.forEach(fieldId => {
+  // Filtra solo i campi che sono sia nello step corrente che nella lista dei campi obbligatori dinamici
+  const requiredFieldsForCurrentStep = currentStepFields.filter(fieldId => {
+    // Controlla se il campo è nella configurazione dinamica e se è obbligatorio e visibile
+    if (FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldId]) {
+      return FIELD_VISIBILITY_CONFIG[fieldId].is_visible && FIELD_VISIBILITY_CONFIG[fieldId].is_required;
+    }
+    // Se non c'è configurazione dinamica, usa la lista statica requiredFields come fallback
+    return requiredFields && requiredFields.includes(fieldId);
+  });
+  
+  console.log(`🔍 Validazione step ${currentStep}, campi obbligatori:`, requiredFieldsForCurrentStep);
+  
+  requiredFieldsForCurrentStep.forEach(fieldId => {
     if (!validateField(fieldId)) {
       allValid = false;
+      console.log(`❌ Campo non valido: ${fieldId}`);
+    } else {
+      console.log(`✅ Campo valido: ${fieldId}`);
     }
   });
   
@@ -1018,9 +1042,26 @@ function showMissingFieldsSummary() {
   
   const missingFields = [];
   
-  requiredFields.forEach(fieldId => {
+  // Usa la configurazione dinamica se disponibile, altrimenti fallback alla lista statica
+  let fieldsToCheck = [];
+  
+  if (FIELD_VISIBILITY_CONFIG) {
+    // Filtra i campi che sono visibili e obbligatori dalla configurazione dinamica
+    fieldsToCheck = Object.keys(FIELD_VISIBILITY_CONFIG).filter(fieldId => {
+      const config = FIELD_VISIBILITY_CONFIG[fieldId];
+      return config.is_visible && config.is_required;
+    });
+  } else if (requiredFields) {
+    // Fallback alla lista statica
+    fieldsToCheck = requiredFields;
+  }
+  
+  console.log('🔍 Controllo campi mancanti per:', fieldsToCheck);
+  
+  fieldsToCheck.forEach(fieldId => {
     if (!validateField(fieldId)) {
       missingFields.push(fieldLabels[fieldId] || fieldId);
+      console.log(`❌ Campo mancante: ${fieldId}`);
     }
   });
   
@@ -1054,6 +1095,47 @@ function nextStep() {
     if (currentStep < steps.length - 1) {
       showStep(currentStep + 1);
     }
+  } else {
+    // Mostra un messaggio più dettagliato con i campi mancanti
+    showMissingFieldsAlert();
+  }
+}
+
+function showMissingFieldsAlert() {
+  // Mappatura dei campi per step
+  const stepFields = {
+    0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
+        'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
+        'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
+    1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
+        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+        'license_country', 'license_number', 'license_category', 'license_issue_date', 
+        'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
+    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+        'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
+        'gdpr_consent']
+  };
+  
+  const currentStepFields = stepFields[currentStep] || [];
+  const missingFields = [];
+  
+  // Filtra solo i campi che sono sia nello step corrente che nella lista dei campi obbligatori dinamici
+  const requiredFieldsForCurrentStep = currentStepFields.filter(fieldId => {
+    if (FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldId]) {
+      return FIELD_VISIBILITY_CONFIG[fieldId].is_visible && FIELD_VISIBILITY_CONFIG[fieldId].is_required;
+    }
+    return requiredFields && requiredFields.includes(fieldId);
+  });
+  
+  requiredFieldsForCurrentStep.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      missingFields.push(fieldLabels[fieldId] || fieldId);
+    }
+  });
+  
+  if (missingFields.length > 0) {
+    const message = `Per favore, compila i seguenti campi obbligatori prima di continuare:\n\n• ${missingFields.join('\n• ')}`;
+    alert(message);
   } else {
     alert('Per favore, compila tutti i campi obbligatori prima di continuare.');
   }
@@ -1205,14 +1287,96 @@ requiredFields.forEach(fieldId => {
   }
 });
 
+// Funzione per creare FormData filtrato con solo i campi visibili
+function createFilteredFormData(form) {
+  const formData = new FormData();
+  const originalFormData = new FormData(form);
+  let visibleFieldsCount = 0;
+  let totalFieldsCount = 0;
+  
+  // Itera attraverso tutti i campi del form originale
+  for (let [fieldName, value] of originalFormData.entries()) {
+    totalFieldsCount++;
+    
+    // Controlla se il campo è visibile nella configurazione
+    let isVisible = true; // Default: visibile se non c'è configurazione
+    
+    if (FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldName]) {
+      isVisible = FIELD_VISIBILITY_CONFIG[fieldName].is_visible;
+    }
+    
+    if (isVisible) {
+      formData.append(fieldName, value);
+      visibleFieldsCount++;
+      console.log(`✅ Campo incluso: ${fieldName}`);
+    } else {
+      console.log(`🚫 Campo escluso (nascosto): ${fieldName}`);
+    }
+  }
+  
+  console.log(`📊 Invio dati: ${visibleFieldsCount}/${totalFieldsCount} campi inclusi`);
+  
+  return formData;
+}
+
+// Funzione di validazione completa per il submit finale
+function validateFormForSubmit() {
+  // Se la validazione è disabilitata per i test, considera sempre valido
+  if (DISABLE_REQUIRED_VALIDATION) {
+    return true;
+  }
+  
+  const missingFields = [];
+  let fieldsToCheck = [];
+  
+  // Usa la configurazione dinamica se disponibile
+  if (FIELD_VISIBILITY_CONFIG) {
+    fieldsToCheck = Object.keys(FIELD_VISIBILITY_CONFIG).filter(fieldId => {
+      const config = FIELD_VISIBILITY_CONFIG[fieldId];
+      return config.is_visible && config.is_required;
+    });
+    console.log('🔍 Validazione submit con configurazione dinamica:', fieldsToCheck);
+  } else if (requiredFields) {
+    // Fallback alla lista statica
+    fieldsToCheck = requiredFields;
+    console.log('🔍 Validazione submit con lista statica:', fieldsToCheck);
+  }
+  
+  fieldsToCheck.forEach(fieldId => {
+    if (!validateField(fieldId)) {
+      const fieldLabel = fieldLabels[fieldId] || fieldId;
+      missingFields.push(fieldLabel);
+      console.log(`❌ Campo obbligatorio mancante: ${fieldId} (${fieldLabel})`);
+    }
+  });
+  
+  if (missingFields.length > 0) {
+    const message = `Per favore, compila i seguenti campi obbligatori prima di inviare la candidatura:\n\n• ${missingFields.join('\n• ')}`;
+    alert(message);
+    
+    // Mostra anche il sommario visuale
+    const summaryDiv = document.getElementById('missingFieldsSummary');
+    const listEl = document.getElementById('missingFieldsList');
+    if (summaryDiv && listEl) {
+      listEl.innerHTML = missingFields.map(field => `<li>${field}</li>`).join('');
+      summaryDiv.classList.add('show');
+      summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    return false;
+  }
+  
+  console.log('✅ Validazione submit completata con successo');
+  return true;
+}
+
 // Modifica invio form per includere foto scattata e validazione
 const form = document.getElementById('candidateForm');
 form.onsubmit = async function(e) {
   e.preventDefault();
   
-  // Valida tutti i campi prima dell'invio
-  if (!showMissingFieldsSummary()) {
-    alert('Per favore, compila tutti i campi obbligatori prima di inviare il form.');
+  // Valida tutti i campi obbligatori usando la configurazione dinamica
+  if (!validateFormForSubmit()) {
     return;
   }
   
@@ -1223,9 +1387,20 @@ form.onsubmit = async function(e) {
   if(submitBtn) submitBtn.disabled = true;
   
   try {
-    const formData = new FormData(form);
+    // Crea FormData filtrato con solo i campi visibili
+    const formData = createFilteredFormData(form);
+    
+    // Aggiungi la foto scattata se presente e se il campo è visibile
     if(photoModeCamera.checked && capturedPhotoBlob) {
-      formData.set('profile_photo', capturedPhotoBlob, 'profile_photo.jpg');
+      const profilePhotoVisible = FIELD_VISIBILITY_CONFIG && 
+                                  FIELD_VISIBILITY_CONFIG['profile_photo'] ? 
+                                  FIELD_VISIBILITY_CONFIG['profile_photo'].is_visible : true;
+      if (profilePhotoVisible) {
+        formData.set('profile_photo', capturedPhotoBlob, 'profile_photo.jpg');
+        console.log('📷 Foto scattata aggiunta ai dati (campo visibile)');
+      } else {
+        console.log('🚫 Foto scattata non aggiunta (campo nascosto)');
+      }
     }
     
     const resp = await fetch('/api/candidates/upload', {
@@ -1289,6 +1464,109 @@ function initPrivacyLink() {
   }
 }
 
+// Funzione per caricare la configurazione di visibilità dei campi dall'API
+async function loadFieldVisibilityConfig() {
+  try {
+    console.log('🔄 Caricamento configurazione campi per form:', FORM_SLUG);
+    
+    const response = await fetch(`/api/form/${FORM_SLUG}/field-visibility`);
+    
+    if (!response.ok) {
+      console.warn('⚠️ Impossibile caricare la configurazione campi:', response.status);
+      return;
+    }
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      FIELD_VISIBILITY_CONFIG = data.field_visibility;
+      console.log('✅ Configurazione campi caricata:', FIELD_VISIBILITY_CONFIG);
+      
+      // Applica la configurazione ai campi
+      applyFieldVisibilityConfig();
+    } else {
+      console.warn('⚠️ Errore nella risposta API:', data.error);
+    }
+    
+  } catch (error) {
+    console.error('❌ Errore nel caricamento configurazione campi:', error);
+  }
+}
+
+// Funzione per applicare la configurazione di visibilità ai campi
+function applyFieldVisibilityConfig() {
+  Object.entries(FIELD_VISIBILITY_CONFIG).forEach(([fieldName, config]) => {
+    const field = document.getElementById(fieldName);
+    
+    if (field) {
+      // Trova il contenitore del campo (di solito un div con class mb-3)
+      let fieldContainer = field.closest('.mb-3');
+      
+      // Per campi speciali come profile_photo che hanno strutture diverse
+      if (!fieldContainer && fieldName === 'profile_photo') {
+        fieldContainer = field.closest('.form-section');
+      }
+      
+      if (fieldContainer) {
+        // Gestisci visibilità
+        if (!config.is_visible) {
+          fieldContainer.style.display = 'none';
+          console.log(`🙈 Campo nascosto: ${fieldName}`);
+        } else {
+          fieldContainer.style.display = '';
+          console.log(`👁️ Campo visibile: ${fieldName}`);
+        }
+        
+        // Gestisci obbligatorietà
+        if (config.is_visible) {
+          const label = fieldContainer.querySelector('label');
+          const requiredSpan = label ? label.querySelector('.required-field::after, .text-danger') : null;
+          
+          if (config.is_required) {
+            // Aggiungi classe required-field se non presente
+            if (label && !label.classList.contains('required-field')) {
+              label.classList.add('required-field');
+            }
+            field.required = true;
+            console.log(`⚠️ Campo obbligatorio: ${fieldName}`);
+          } else {
+            // Rimuovi classe required-field se presente
+            if (label && label.classList.contains('required-field')) {
+              label.classList.remove('required-field');
+            }
+            field.required = false;
+            console.log(`🔹 Campo facoltativo: ${fieldName}`);
+          }
+        }
+      }
+    } else {
+      console.warn(`⚠️ Campo non trovato nel DOM: ${fieldName}`);
+    }
+  });
+  
+  // Aggiorna la lista dei campi obbligatori dinamicamente
+  updateRequiredFieldsList();
+}
+
+// Funzione per aggiornare la lista dei campi obbligatori basata sulla configurazione
+function updateRequiredFieldsList() {
+  const dynamicRequiredFields = [];
+  
+  Object.entries(FIELD_VISIBILITY_CONFIG).forEach(([fieldName, config]) => {
+    if (config.is_visible && config.is_required) {
+      dynamicRequiredFields.push(fieldName);
+    }
+  });
+  
+  // Aggiorna la lista globale requiredFields se esiste
+  if (typeof requiredFields !== 'undefined') {
+    // Sostituisci la lista esistente con quella dinamica
+    requiredFields.length = 0;
+    requiredFields.push(...dynamicRequiredFields);
+    console.log('📝 Lista campi obbligatori aggiornata:', requiredFields);
+  }
+}
+
 // Funzione per caricare le impostazioni privacy dall'API
 async function loadPrivacySettings() {
   try {
@@ -1325,6 +1603,9 @@ async function loadPrivacySettings() {
 document.addEventListener('DOMContentLoaded', function() {
   // Nascondi il sommario all'inizio
   document.getElementById('missingFieldsSummary').classList.remove('show');
+  
+  // Carica la configurazione dei campi e applica visibilità/obbligatorietà
+  loadFieldVisibilityConfig();
   
   // Carica le impostazioni privacy dall'API e inizializza il link
   loadPrivacySettings();

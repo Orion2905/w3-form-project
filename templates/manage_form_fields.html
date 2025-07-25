@@ -1,0 +1,401 @@
+{% extends 'layout_sidebar.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-sliders"></i> Gestione Campi - {{ form.name }}</h2>
+  <div>
+    <button type="button" class="btn btn-success" id="saveConfigBtn">
+      <i class="bi bi-check-circle"></i> Salva Configurazione
+    </button>
+    <a href="{{ url_for('main.edit_dynamic_form', form_id=form.id) }}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Torna al Form
+    </a>
+  </div>
+</div>
+
+<!-- Alert per messaggi -->
+<div id="alertContainer"></div>
+
+<!-- Loading indicator -->
+<div id="loadingIndicator" class="text-center my-4" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Caricamento...</span>
+  </div>
+  <div class="mt-2">Caricamento configurazione campi...</div>
+</div>
+
+<!-- Pannello di controllo globale -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-gear"></i> Controlli Globali</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-success" id="showAllBtn">
+            <i class="bi bi-eye"></i> Mostra Tutti
+          </button>
+          <button type="button" class="btn btn-outline-danger" id="hideAllBtn">
+            <i class="bi bi-eye-slash"></i> Nascondi Tutti
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-warning" id="requireAllBtn">
+            <i class="bi bi-exclamation-triangle"></i> Rendi Tutti Obbligatori
+          </button>
+          <button type="button" class="btn btn-outline-info" id="optionalAllBtn">
+            <i class="bi bi-question-circle"></i> Rendi Tutti Facoltativi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contenitore per i campi raggruppati per step -->
+<div id="fieldsContainer">
+  <!-- I campi verranno caricati dinamicamente qui -->
+</div>
+
+<script>
+let fieldsConfig = {};
+const formId = {{ form.id }};
+
+// Funzioni di utilità per gli alert
+function showAlert(message, type = 'info') {
+  const alertContainer = document.getElementById('alertContainer');
+  const alertId = 'alert-' + Date.now();
+  
+  const alertHTML = `
+    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+      <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+    </div>
+  `;
+  
+  alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+  
+  // Auto-rimuovi dopo 5 secondi
+  setTimeout(() => {
+    const alert = document.getElementById(alertId);
+    if (alert) {
+      alert.remove();
+    }
+  }, 5000);
+}
+
+// Carica la configurazione dei campi
+async function loadFieldsConfig() {
+  try {
+    document.getElementById('loadingIndicator').style.display = 'block';
+    
+    const response = await fetch(`/api/form/${formId}/fields-config`);
+    const data = await response.json();
+    
+    if (data.success) {
+      fieldsConfig = data.fields;
+      renderFieldsConfig();
+      showAlert('Configurazione campi caricata con successo', 'success');
+    } else {
+      showAlert('Errore nel caricamento: ' + data.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Errore di rete: ' + error.message, 'danger');
+  } finally {
+    document.getElementById('loadingIndicator').style.display = 'none';
+  }
+}
+
+// Renderizza la configurazione dei campi
+function renderFieldsConfig() {
+  const container = document.getElementById('fieldsContainer');
+  const stepGroups = {};
+  
+  // Raggruppa i campi per step
+  Object.entries(fieldsConfig).forEach(([fieldName, config]) => {
+    const step = config.step;
+    if (!stepGroups[step]) {
+      stepGroups[step] = {};
+    }
+    
+    const section = config.section;
+    if (!stepGroups[step][section]) {
+      stepGroups[step][section] = [];
+    }
+    
+    stepGroups[step][section].push({
+      name: fieldName,
+      ...config
+    });
+  });
+  
+  let html = '';
+  
+  // Crea le card per ogni step
+  Object.entries(stepGroups).sort((a, b) => a[0] - b[0]).forEach(([step, sections]) => {
+    html += `
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-list-ol"></i> Step ${step}
+            <span class="badge bg-primary ms-2">${Object.values(sections).flat().length} campi</span>
+          </h5>
+        </div>
+        <div class="card-body">
+    `;
+    
+    // Crea le sezioni per ogni step
+    Object.entries(sections).forEach(([sectionName, fields]) => {
+      html += `
+        <div class="mb-4">
+          <h6 class="border-bottom pb-2 mb-3">
+            <i class="bi bi-folder"></i> ${sectionName}
+            <span class="badge bg-secondary ms-2">${fields.length} campi</span>
+          </h6>
+          <div class="row">
+      `;
+      
+      // Crea i controlli per ogni campo
+      fields.forEach(field => {
+        html += `
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100 field-card" data-field="${field.name}">
+              <div class="card-body p-3">
+                <h6 class="card-title mb-2">${field.label}</h6>
+                <div class="mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input visibility-toggle" type="checkbox" id="visible_${field.name}" ${field.is_visible ? 'checked' : ''}>
+                    <label class="form-check-label" for="visible_${field.name}">
+                      <i class="bi bi-eye${field.is_visible ? '' : '-slash'}"></i> Visibile
+                    </label>
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input required-toggle" type="checkbox" id="required_${field.name}" ${field.is_required ? 'checked' : ''} ${!field.is_visible ? 'disabled' : ''}>
+                    <label class="form-check-label" for="required_${field.name}">
+                      <i class="bi bi-exclamation-triangle${field.is_required ? '' : '-fill'}"></i> Obbligatorio
+                    </label>
+                  </div>
+                </div>
+                <small class="text-muted">Campo: <code>${field.name}</code></small>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      html += `
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+  
+  // Aggiungi event listeners
+  addEventListeners();
+}
+
+// Aggiungi event listeners per i controlli
+function addEventListeners() {
+  // Toggle visibilità
+  document.querySelectorAll('.visibility-toggle').forEach(toggle => {
+    toggle.addEventListener('change', function() {
+      const fieldName = this.id.replace('visible_', '');
+      const requiredToggle = document.getElementById(`required_${fieldName}`);
+      const eyeIcon = this.parentElement.querySelector('i');
+      
+      fieldsConfig[fieldName].is_visible = this.checked;
+      
+      // Aggiorna icona
+      eyeIcon.className = this.checked ? 'bi bi-eye' : 'bi bi-eye-slash';
+      
+      // Se nascosto, disabilita il toggle "obbligatorio"
+      if (!this.checked) {
+        requiredToggle.disabled = true;
+        requiredToggle.checked = false;
+        fieldsConfig[fieldName].is_required = false;
+      } else {
+        requiredToggle.disabled = false;
+      }
+      
+      // Aggiorna stile della card
+      updateCardStyle(fieldName);
+    });
+  });
+  
+  // Toggle obbligatorio
+  document.querySelectorAll('.required-toggle').forEach(toggle => {
+    toggle.addEventListener('change', function() {
+      const fieldName = this.id.replace('required_', '');
+      const exclamationIcon = this.parentElement.querySelector('i');
+      
+      fieldsConfig[fieldName].is_required = this.checked;
+      
+      // Aggiorna icona
+      exclamationIcon.className = this.checked ? 'bi bi-exclamation-triangle' : 'bi bi-exclamation-triangle-fill';
+      
+      // Aggiorna stile della card
+      updateCardStyle(fieldName);
+    });
+  });
+  
+  // Controlli globali
+  document.getElementById('showAllBtn').addEventListener('click', () => toggleAllVisibility(true));
+  document.getElementById('hideAllBtn').addEventListener('click', () => toggleAllVisibility(false));
+  document.getElementById('requireAllBtn').addEventListener('click', () => toggleAllRequired(true));
+  document.getElementById('optionalAllBtn').addEventListener('click', () => toggleAllRequired(false));
+  
+  // Salva configurazione
+  document.getElementById('saveConfigBtn').addEventListener('click', saveConfiguration);
+  
+  // Aggiorna stili iniziali
+  Object.keys(fieldsConfig).forEach(updateCardStyle);
+}
+
+// Aggiorna lo stile della card in base alla configurazione
+function updateCardStyle(fieldName) {
+  const card = document.querySelector(`[data-field="${fieldName}"]`);
+  if (!card) return;
+  
+  const config = fieldsConfig[fieldName];
+  
+  // Rimuovi tutte le classi di stato
+  card.classList.remove('border-success', 'border-warning', 'border-danger', 'border-secondary');
+  
+  if (!config.is_visible) {
+    // Campo nascosto = bordo rosso
+    card.classList.add('border-danger');
+    card.style.opacity = '0.6';
+  } else if (config.is_required) {
+    // Campo visibile e obbligatorio = bordo verde
+    card.classList.add('border-success');
+    card.style.opacity = '1';
+  } else {
+    // Campo visibile ma facoltativo = bordo arancione
+    card.classList.add('border-warning');
+    card.style.opacity = '1';
+  }
+}
+
+// Controlli globali
+function toggleAllVisibility(visible) {
+  Object.keys(fieldsConfig).forEach(fieldName => {
+    fieldsConfig[fieldName].is_visible = visible;
+    const toggle = document.getElementById(`visible_${fieldName}`);
+    const requiredToggle = document.getElementById(`required_${fieldName}`);
+    
+    if (toggle) {
+      toggle.checked = visible;
+      toggle.dispatchEvent(new Event('change'));
+    }
+  });
+  
+  showAlert(`Tutti i campi sono stati ${visible ? 'mostrati' : 'nascosti'}`, visible ? 'success' : 'warning');
+}
+
+function toggleAllRequired(required) {
+  Object.keys(fieldsConfig).forEach(fieldName => {
+    if (fieldsConfig[fieldName].is_visible) { // Solo per campi visibili
+      fieldsConfig[fieldName].is_required = required;
+      const toggle = document.getElementById(`required_${fieldName}`);
+      
+      if (toggle && !toggle.disabled) {
+        toggle.checked = required;
+        toggle.dispatchEvent(new Event('change'));
+      }
+    }
+  });
+  
+  showAlert(`Tutti i campi visibili sono stati resi ${required ? 'obbligatori' : 'facoltativi'}`, required ? 'warning' : 'info');
+}
+
+// Salva la configurazione
+async function saveConfiguration() {
+  try {
+    const saveBtn = document.getElementById('saveConfigBtn');
+    const originalText = saveBtn.innerHTML;
+    
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-clock"></i> Salvando...';
+    
+    const response = await fetch(`/api/form/${formId}/fields-config`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: fieldsConfig
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showAlert('Configurazione salvata con successo!', 'success');
+    } else {
+      showAlert('Errore nel salvataggio: ' + data.error, 'danger');
+    }
+  } catch (error) {
+    showAlert('Errore di rete: ' + error.message, 'danger');
+  } finally {
+    const saveBtn = document.getElementById('saveConfigBtn');
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Salva Configurazione';
+  }
+}
+
+// Carica la configurazione all'avvio
+document.addEventListener('DOMContentLoaded', function() {
+  loadFieldsConfig();
+});
+</script>
+
+<style>
+.field-card {
+  transition: all 0.3s ease;
+  border-width: 2px !important;
+}
+
+.field-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.form-check-input:disabled {
+  opacity: 0.5;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+#alertContainer {
+  position: relative;
+  z-index: 1050;
+}
+
+code {
+  font-size: 0.8em;
+  background-color: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+</style>
+{% endblock %}

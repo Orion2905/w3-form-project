@@ -16,7 +16,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import joinedload
 from w3form import db
 from w3form.models import (
-    User, Candidate, DynamicForm, Score, ScoreCategory
+    User, Candidate, DynamicForm, Score, ScoreCategory, SystemSettings, FormFieldConfiguration
 )
 from w3form.decorators import role_required, developer_required, view_only_required
 from w3form.azure_utils import get_secure_image_url, get_secure_document_url
@@ -290,7 +290,50 @@ def public_dynamic_form(slug):
     if not form.is_active or (form.active_from and now < form.active_from) or (form.active_until and now > form.active_until):
         return render_template('404.html'), 404
     dropdown_options = form.dropdown_options or {}
-    return render_template('dynamic_form_public.html', form=form, dropdown_options=dropdown_options)
+    
+    # Ottieni la modalità test globale
+    test_mode = form.is_test_mode_active()
+    
+    # Ottieni la configurazione dei campi per questo form
+    fields_config = FormFieldConfiguration.get_form_configuration(form.id)
+    
+    return render_template('dynamic_form_public.html', 
+                         form=form, 
+                         dropdown_options=dropdown_options,
+                         test_mode=test_mode,
+                         fields_config=fields_config)
+
+
+@main.route('/api/form/<slug>/field-visibility', methods=['GET'])
+def get_form_field_visibility(slug):
+    """API pubblica per ottenere la configurazione di visibilità dei campi di un form"""
+    try:
+        form = DynamicForm.query.filter_by(slug=slug).first_or_404()
+        
+        # Ottieni la configurazione dei campi
+        fields_config = FormFieldConfiguration.get_form_configuration(form.id)
+        default_fields = FormFieldConfiguration.get_default_fields()
+        
+        # Crea la risposta con visibilità e obbligatorietà
+        field_visibility = {}
+        for field_name in default_fields.keys():
+            config = fields_config.get(field_name)
+            field_visibility[field_name] = {
+                'is_visible': config.is_visible if config else True,
+                'is_required': config.is_required if config else True
+            }
+        
+        return jsonify({
+            'success': True,
+            'form_slug': slug,
+            'field_visibility': field_visibility
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nel caricamento configurazione: {str(e)}'
+        }), 500
 
 @main.route('/forms/modifica/<int:form_id>', methods=['GET', 'POST'])
 def edit_dynamic_form(form_id):
@@ -743,6 +786,7 @@ def view_candidate_scores(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/punteggi/aggiungi', methods=['GET', 'POST'])
 @login_required
+@role_required('intervistatore')
 def add_candidate_score(candidate_id):
     """Aggiungi un punteggio a un candidato"""
     candidate = Candidate.query.get_or_404(candidate_id)
@@ -789,6 +833,7 @@ def add_candidate_score(candidate_id):
 
 @main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/modifica', methods=['GET', 'POST'])
 @login_required
+@role_required('intervistatore')
 def edit_candidate_score(candidate_id, score_id):
     """Modifica un punteggio di un candidato"""
     candidate = Candidate.query.get_or_404(candidate_id)
@@ -828,6 +873,7 @@ def edit_candidate_score(candidate_id, score_id):
 
 @main.route('/candidati/<int:candidate_id>/punteggi/<int:score_id>/elimina', methods=['POST'])
 @login_required
+@role_required('intervistatore')
 def delete_candidate_score(candidate_id, score_id):
     """Elimina un punteggio di un candidato"""
     candidate = Candidate.query.get_or_404(candidate_id)
@@ -993,6 +1039,7 @@ def candidate_profile(candidate_id):
 
 @main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
 @login_required
+@role_required('intervistatore')
 def api_add_candidate_score(candidate_id):
     """API per aggiungere un punteggio a un candidato"""
     candidate = Candidate.query.get_or_404(candidate_id)
@@ -2076,6 +2123,131 @@ def api_delete_user(user_id):
         return jsonify({'error': f'Errore durante l\'eliminazione dell\'utente: {str(e)}'}), 500
 
 
+# === PANNELLO CONTROLLO SVILUPPATORI ===
+
+@main.route('/developer-panel')
+@login_required
+@developer_required
+def developer_panel():
+    """Pannello di controllo per sviluppatori - gestione impostazioni globali del sistema"""
+    from .models import SystemSettings
+    
+    try:
+        # Recupera le impostazioni correnti con conversione esplicita
+        test_mode_raw = SystemSettings.get_setting('global_form_test_mode', False)
+        
+        # Conversione esplicita a booleano
+        if isinstance(test_mode_raw, str):
+            test_mode = test_mode_raw.lower() in ('true', '1', 'yes', 'on')
+        else:
+            test_mode = bool(test_mode_raw)
+            
+        print(f"DEBUG: test_mode convertito = {test_mode} (tipo: {type(test_mode)})")
+    except Exception as e:
+        print(f"DEBUG: Errore recupero test_mode: {e}")
+        test_mode = False
+    
+    return render_template('developer_panel.html', 
+                         title='Pannello Sviluppatore',
+                         test_mode=test_mode)
+
+
+@main.route('/api/developer/settings', methods=['GET'])
+@login_required
+@developer_required
+def get_developer_settings():
+    """API per recuperare le impostazioni di sistema per sviluppatori"""
+    from .models import SystemSettings
+    
+    try:
+        settings = {
+            'global_form_test_mode': SystemSettings.get_setting('global_form_test_mode', False),
+            'system_maintenance_mode': SystemSettings.get_setting('system_maintenance_mode', False),
+            'debug_mode': SystemSettings.get_setting('debug_mode', False)
+        }
+        
+        return jsonify(settings)
+        
+    except Exception as e:
+        return jsonify({'error': f'Errore nel recupero delle impostazioni: {str(e)}'}), 500
+
+
+@main.route('/api/developer/settings', methods=['POST'])
+@login_required
+@developer_required
+def update_developer_settings():
+    """API per aggiornare le impostazioni di sistema per sviluppatori"""
+    from .models import SystemSettings
+    
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'Dati non forniti'}), 400
+        
+        # Aggiorna le impostazioni specificate
+        updated_settings = []
+        
+        if 'global_form_test_mode' in data:
+            SystemSettings.set_setting('global_form_test_mode', data['global_form_test_mode'], 
+                                     'boolean', category='system', user_id=current_user.id)
+            updated_settings.append('global_form_test_mode')
+        
+        if 'system_maintenance_mode' in data:
+            SystemSettings.set_setting('system_maintenance_mode', data['system_maintenance_mode'], 
+                                     'boolean', category='system', user_id=current_user.id)
+            updated_settings.append('system_maintenance_mode')
+        
+        if 'debug_mode' in data:
+            SystemSettings.set_setting('debug_mode', data['debug_mode'], 
+                                     'boolean', category='system', user_id=current_user.id)
+            updated_settings.append('debug_mode')
+        
+        return jsonify({
+            'message': f'Impostazioni aggiornate: {", ".join(updated_settings)}',
+            'updated': updated_settings
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Errore nell\'aggiornamento delle impostazioni: {str(e)}'}), 500
+
+
+@main.route('/api/developer/test-mode/toggle', methods=['POST'])
+@login_required
+@developer_required
+def toggle_test_mode():
+    """API per attivare/disattivare la modalità test globale dei form"""
+    from .models import SystemSettings
+    
+    try:
+        # Recupera lo stato corrente
+        current_state = SystemSettings.get_setting('global_form_test_mode', False)
+        new_state = not current_state
+        print(f"DEBUG: Toggle test mode - current: {current_state}, new: {new_state}")
+        
+        # Aggiorna l'impostazione
+        SystemSettings.set_setting('global_form_test_mode', new_state, 'boolean', category='system', user_id=current_user.id)
+        print(f"DEBUG: Test mode aggiornato nel DB a: {new_state}")
+        
+        # Verifica che sia stato salvato correttamente
+        verify_state = SystemSettings.get_setting('global_form_test_mode', False)
+        print(f"DEBUG: Verifica post-salvataggio: {verify_state}")
+        
+        action = 'attivata' if new_state else 'disattivata'
+        
+        return jsonify({
+            'message': f'Modalità test globale {action}',
+            'test_mode': new_state,
+            'changed_by': current_user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Errore nel cambio modalità test: {str(e)}'}), 500
+
+
 # === EXPORT CANDIDATI PER OSPITI ===
 
 @main.route('/api/candidates/export')
@@ -2118,3 +2290,120 @@ def export_candidates():
     response.headers['Content-Disposition'] = 'attachment; filename=candidati.csv'
     
     return response
+
+
+# ===============================
+# API GESTIONE CONFIGURAZIONE CAMPI FORM DINAMICO
+# ===============================
+
+@main.route('/api/form/<int:form_id>/fields-config', methods=['GET'])
+@login_required
+@role_required('intervistatore')
+def get_form_fields_config(form_id):
+    """Ottiene la configurazione dei campi per un form specifico"""
+    try:
+        # Verifica che il form esista
+        form = DynamicForm.query.get_or_404(form_id)
+        
+        # Ottieni la configurazione esistente
+        existing_configs = FormFieldConfiguration.get_form_configuration(form_id)
+        
+        # Ottieni i campi predefiniti
+        default_fields = FormFieldConfiguration.get_default_fields()
+        
+        # Crea la configurazione completa
+        fields_config = {}
+        for field_name, field_info in default_fields.items():
+            config = existing_configs.get(field_name)
+            fields_config[field_name] = {
+                'label': field_info['label'],
+                'step': field_info['step'],
+                'section': field_info['section'],
+                'is_visible': config.is_visible if config else True,
+                'is_required': config.is_required if config else True,
+                'field_order': config.field_order if config else 0
+            }
+        
+        return jsonify({
+            'success': True,
+            'form_id': form_id,
+            'form_name': form.name,
+            'fields': fields_config
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nel caricamento configurazione: {str(e)}'
+        }), 500
+
+
+@main.route('/api/form/<int:form_id>/fields-config', methods=['POST'])
+@login_required
+@role_required('intervistatore')
+def update_form_fields_config(form_id):
+    """Aggiorna la configurazione dei campi per un form specifico"""
+    try:
+        # Verifica che il form esista
+        form = DynamicForm.query.get_or_404(form_id)
+        
+        data = request.get_json()
+        if not data or 'fields' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Dati di configurazione mancanti'
+            }), 400
+        
+        updated_fields = []
+        
+        # Aggiorna ogni campo
+        for field_name, config in data['fields'].items():
+            is_visible = config.get('is_visible', True)
+            is_required = config.get('is_required', True)
+            
+            # Salva la configurazione
+            field_config = FormFieldConfiguration.set_field_config(
+                form_id=form_id,
+                field_name=field_name,
+                is_visible=is_visible,
+                is_required=is_required,
+                user_id=current_user.id
+            )
+            
+            updated_fields.append({
+                'field_name': field_name,
+                'is_visible': is_visible,
+                'is_required': is_required
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Configurazione aggiornata per {len(updated_fields)} campi',
+            'updated_fields': updated_fields
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nell\'aggiornamento configurazione: {str(e)}'
+        }), 500
+
+
+@main.route('/gestione-form/<int:form_id>/campi')
+@login_required
+@role_required('intervistatore')
+def manage_form_fields(form_id):
+    """Pagina per la gestione dei campi di un form dinamico"""
+    form = DynamicForm.query.get_or_404(form_id)
+    
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Form Dinamici', 'url': url_for('main.list_dynamic_forms')},
+        {'name': form.name, 'url': url_for('main.edit_dynamic_form', form_id=form_id)},
+        {'name': 'Gestione Campi', 'url': None}
+    ]
+    
+    return render_template('manage_form_fields.html', 
+                         form=form, 
+                         sidebar=True, 
+                         breadcrumbs=breadcrumbs)

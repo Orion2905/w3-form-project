@@ -38,6 +38,12 @@
         <span class="sidebar-text">Gestione Utenti</span>
       </a>
     </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2 {% if 'developer-panel' in request.endpoint %}active{% endif %}" href="/developer-panel">
+        <span class="sidebar-icon me-2"><i class="bi bi-code-slash"></i></span>
+        <span class="sidebar-text">Pannello Sviluppatore</span>
+      </a>
+    </li>
     {% endif %}
     <li class="nav-item mt-4">
       <a class="nav-link d-flex align-items-center text-danger px-3 py-2" href="/logout">
@@ -50,6 +56,24 @@
 {% endblock %}
 {% block main_content %}
 <div class="flex-grow-1 p-4 d-flex flex-column">
+  
+  <!-- Sistema di messaggi flash overlay centralizzato -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div id="flashOverlay" class="flash-overlay">
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }} alert alert-{% if category == 'danger' %}danger{% elif category == 'success' %}success{% elif category == 'warning' %}warning{% else %}info{% endif %} alert-dismissible" role="alert">
+              <i class="bi {% if category == 'danger' %}bi-exclamation-triangle-fill{% elif category == 'success' %}bi-check-circle-fill{% elif category == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endwith %}
+  
   <!-- Breadcrumbs -->
   {% if breadcrumbs %}
   <nav aria-label="breadcrumb" class="mb-3">
@@ -99,5 +123,43 @@
     document.body.classList.toggle('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed'));
   }
 })();
+
+// Flash Messages Animation System
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide flash messages after 5 seconds
+    const flashMessages = document.querySelectorAll('.flash-message');
+    
+    flashMessages.forEach(function(message, index) {
+        // Stagger the animation start
+        message.style.animationDelay = (index * 0.1) + 's';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            hideFlashMessage(message);
+        }, 5000 + (index * 100));
+    });
+    
+    // Handle manual close
+    document.querySelectorAll('.flash-message .btn-close').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const message = this.closest('.flash-message');
+            hideFlashMessage(message);
+        });
+    });
+    
+    function hideFlashMessage(message) {
+        message.classList.add('flash-hiding');
+        setTimeout(function() {
+            const container = message.closest('.flash-container');
+            message.remove();
+            
+            // Remove overlay if no more messages
+            if (container && container.children.length === 0) {
+                const overlay = container.closest('.flash-overlay');
+                if (overlay) overlay.remove();
+            }
+        }, 300);
+    }
+});
 </script>
 {% endblock %}

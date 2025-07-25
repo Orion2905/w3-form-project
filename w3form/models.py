@@ -178,6 +178,21 @@ class DynamicForm(db.Model):
     privacy_policy_new_tab = db.Column(db.Boolean, default=True, nullable=False)  # Se aprire in nuova tab
     
     candidates = db.relationship('Candidate', back_populates='form', cascade="all, delete-orphan")
+    
+    def is_test_mode_active(self):
+        """Verifica se la modalità test è attiva globalmente"""
+        test_mode_raw = SystemSettings.get_setting('global_form_test_mode', False)
+        
+        # Conversione esplicita a booleano per gestire stringhe dal database
+        if isinstance(test_mode_raw, str):
+            return test_mode_raw.lower() in ('true', '1', 'yes', 'on')
+        else:
+            return bool(test_mode_raw)
+    
+    @property
+    def test_mode(self):
+        """Proprietà per compatibilità - usa la modalità test globale"""
+        return self.is_test_mode_active()
 
 class Score(db.Model):
     """Tabella per gestire i punteggi dei candidati"""
@@ -233,6 +248,205 @@ class ScoreCategory(db.Model):
     
     def __repr__(self):
         return f"<ScoreCategory {self.name}>"
+
+class SystemSettings(db.Model):
+    """Tabella per le impostazioni globali del sistema"""
+    __tablename__ = 'system_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(64), unique=True, nullable=False)  # Chiave dell'impostazione
+    setting_value = db.Column(db.String(256), nullable=True)  # Valore come stringa
+    setting_type = db.Column(db.String(16), nullable=False, default='string')  # tipo: string, boolean, integer, float
+    description = db.Column(db.Text, nullable=True)  # Descrizione dell'impostazione
+    category = db.Column(db.String(32), nullable=True)  # Categoria per raggruppare le impostazioni
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Chi ha modificato l'impostazione
+    
+    # Relazione con User
+    updated_by_user = db.relationship('User', backref='system_settings_updated')
+    
+    @property
+    def typed_value(self):
+        """Restituisce il valore convertito nel tipo corretto"""
+        if self.setting_value is None:
+            return None
+        
+        if self.setting_type == 'boolean':
+            # Gestisce vari formati per boolean
+            if isinstance(self.setting_value, bool):
+                return self.setting_value
+            if isinstance(self.setting_value, str):
+                return self.setting_value.lower() in ('true', '1', 'yes', 'on', 't', 'y')
+            return bool(self.setting_value)
+        elif self.setting_type == 'integer':
+            try:
+                return int(self.setting_value)
+            except (ValueError, TypeError):
+                return None
+        elif self.setting_type == 'float':
+            try:
+                return float(self.setting_value)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return self.setting_value
+    
+    @classmethod
+    def get_setting(cls, key, default=None):
+        """Ottiene un'impostazione per chiave"""
+        setting = cls.query.filter_by(setting_key=key).first()
+        if setting:
+            return setting.typed_value
+        return default
+    
+    @classmethod
+    def set_setting(cls, key, value, setting_type='string', description=None, category=None, user_id=None):
+        """Imposta un'impostazione"""
+        setting = cls.query.filter_by(setting_key=key).first()
+        if not setting:
+            setting = cls(setting_key=key)
+            db.session.add(setting)
+        
+        setting.setting_value = str(value) if value is not None else None
+        setting.setting_type = setting_type
+        if description:
+            setting.description = description
+        if category:
+            setting.category = category
+        if user_id:
+            setting.updated_by = user_id
+        
+        db.session.commit()
+        return setting
+    
+    def __repr__(self):
+        return f"<SystemSettings {self.setting_key}={self.setting_value}>"
+
+
+class FormFieldConfiguration(db.Model):
+    """
+    Configurazione dei campi del form dinamico.
+    Permette di controllare visibilità e obbligatorietà per ogni form.
+    """
+    __tablename__ = 'form_field_configurations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    form_id = db.Column(db.Integer, db.ForeignKey('dynamic_form.id'), nullable=False)
+    field_name = db.Column(db.String(128), nullable=False)  # Nome del campo (es: 'first_name', 'email')
+    is_visible = db.Column(db.Boolean, default=True, nullable=False)  # Campo visibile o nascosto
+    is_required = db.Column(db.Boolean, default=True, nullable=False)  # Campo obbligatorio o facoltativo
+    field_order = db.Column(db.Integer, default=0)  # Ordine del campo nel form
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))  # Chi ha modificato la configurazione
+    
+    # Relazioni
+    form = db.relationship('DynamicForm', backref='field_configurations')
+    updated_by_user = db.relationship('User', foreign_keys=[updated_by])
+    
+    # Constraint per evitare duplicati
+    __table_args__ = (
+        UniqueConstraint('form_id', 'field_name', name='unique_form_field_config'),
+    )
+    
+    @staticmethod
+    def get_field_config(form_id, field_name):
+        """Ottiene la configurazione di un campo specifico"""
+        return FormFieldConfiguration.query.filter_by(
+            form_id=form_id, 
+            field_name=field_name
+        ).first()
+    
+    @staticmethod
+    def set_field_config(form_id, field_name, is_visible=True, is_required=True, user_id=None):
+        """Imposta o aggiorna la configurazione di un campo"""
+        config = FormFieldConfiguration.get_field_config(form_id, field_name)
+        
+        if not config:
+            config = FormFieldConfiguration(
+                form_id=form_id,
+                field_name=field_name,
+                is_visible=is_visible,
+                is_required=is_required,
+                updated_by=user_id
+            )
+            db.session.add(config)
+        else:
+            config.is_visible = is_visible
+            config.is_required = is_required
+            config.updated_at = datetime.utcnow()
+            if user_id:
+                config.updated_by = user_id
+        
+        db.session.commit()
+        return config
+    
+    @staticmethod
+    def get_form_configuration(form_id):
+        """Ottiene tutte le configurazioni dei campi per un form"""
+        configs = FormFieldConfiguration.query.filter_by(form_id=form_id).all()
+        return {config.field_name: config for config in configs}
+    
+    @staticmethod
+    def get_default_fields():
+        """Restituisce la lista dei campi predefiniti del form candidato"""
+        return {
+            # Step 1: Dati anagrafici
+            'first_name': {'label': 'Nome', 'step': 1, 'section': 'Informazioni Personali'},
+            'last_name': {'label': 'Cognome', 'step': 1, 'section': 'Informazioni Personali'},
+            'gender': {'label': 'Genere', 'step': 1, 'section': 'Informazioni Personali'},
+            'date_of_birth': {'label': 'Data di Nascita', 'step': 1, 'section': 'Informazioni Personali'},
+            'place_of_birth': {'label': 'Luogo di Nascita', 'step': 1, 'section': 'Informazioni Personali'},
+            'nationality': {'label': 'Nazionalità', 'step': 1, 'section': 'Informazioni Personali'},
+            'marital_status': {'label': 'Stato Civile', 'step': 1, 'section': 'Stato Civile e Contatti'},
+            'phone_number': {'label': 'Numero di Telefono', 'step': 1, 'section': 'Stato Civile e Contatti'},
+            'email': {'label': 'Indirizzo Email', 'step': 1, 'section': 'Stato Civile e Contatti'},
+            'come_sei_arrivato': {'label': 'Come sei arrivato a noi', 'step': 1, 'section': 'Stato Civile e Contatti'},
+            'height_cm': {'label': 'Altezza (cm)', 'step': 1, 'section': 'Caratteristiche Fisiche'},
+            'weight_kg': {'label': 'Peso (kg)', 'step': 1, 'section': 'Caratteristiche Fisiche'},
+            'tshirt_size': {'label': 'Taglia T-shirt', 'step': 1, 'section': 'Caratteristiche Fisiche'},
+            'shoe_size_eu': {'label': 'Numero Scarpe (EU)', 'step': 1, 'section': 'Caratteristiche Fisiche'},
+            'profile_photo': {'label': 'Immagine Profilo', 'step': 1, 'section': 'Foto Profilo'},
+            
+            # Step 2: Documenti e patente
+            'address': {'label': 'Indirizzo', 'step': 2, 'section': 'Informazioni di Residenza'},
+            'city': {'label': 'Città', 'step': 2, 'section': 'Informazioni di Residenza'},
+            'postal_code': {'label': 'Codice Postale', 'step': 2, 'section': 'Informazioni di Residenza'},
+            'country_of_residence': {'label': 'Paese di Residenza', 'step': 2, 'section': 'Informazioni di Residenza'},
+            'id_document': {'label': 'Tipo Documento', 'step': 2, 'section': 'Documento d\'Identità'},
+            'id_number': {'label': 'Numero Documento', 'step': 2, 'section': 'Documento d\'Identità'},
+            'id_expiry_date': {'label': 'Scadenza Documento', 'step': 2, 'section': 'Documento d\'Identità'},
+            'id_country': {'label': 'Paese Documento', 'step': 2, 'section': 'Documento d\'Identità'},
+            'additional_document': {'label': 'Documento Aggiuntivo', 'step': 2, 'section': 'Documento d\'Identità'},
+            'codice_fiscale': {'label': 'Codice Fiscale', 'step': 2, 'section': 'Documenti Fiscali e Legali'},
+            'permesso_soggiorno': {'label': 'Numero Permesso di Soggiorno', 'step': 2, 'section': 'Documenti Fiscali e Legali'},
+            'license_country': {'label': 'Paese Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'license_number': {'label': 'Numero Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'license_category': {'label': 'Categoria Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'license_issue_date': {'label': 'Data Rilascio Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'license_expiry_date': {'label': 'Scadenza Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'years_driving_experience': {'label': 'Anni di Esperienza di Guida', 'step': 2, 'section': 'Esperienza di Guida'},
+            'auto_moto_munito': {'label': 'Auto/Moto Munito', 'step': 2, 'section': 'Esperienza di Guida'},
+            'curriculum_file': {'label': 'Curriculum', 'step': 2, 'section': 'Upload Curriculum'},
+            
+            # Step 3: Esperienze e lingue
+            'occupation': {'label': 'Occupazione', 'step': 3, 'section': 'Esperienza Lavorativa'},
+            'other_experience': {'label': 'Altre Esperienze', 'step': 3, 'section': 'Esperienza Lavorativa'},
+            'availability_from': {'label': 'Disponibilità Da', 'step': 3, 'section': 'Disponibilità Lavorativa'},
+            'availability_till': {'label': 'Disponibilità Fino A', 'step': 3, 'section': 'Disponibilità Lavorativa'},
+            'other_location': {'label': 'Città di Disponibilità', 'step': 3, 'section': 'Disponibilità Lavorativa'},
+            'language_1': {'label': 'Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'proficiency_1': {'label': 'Livello Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'language_2': {'label': 'Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'proficiency_2': {'label': 'Livello Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'language_3': {'label': 'Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'proficiency_3': {'label': 'Livello Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'gdpr_consent': {'label': 'Consenso al trattamento dei dati personali', 'step': 3, 'section': 'Consenso Privacy'},
+        }
+    
+    def __repr__(self):
+        return f"<FormFieldConfiguration form_id={self.form_id} field={self.field_name} visible={self.is_visible} required={self.is_required}>"
 
 
 

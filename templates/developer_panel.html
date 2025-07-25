@@ -1,0 +1,412 @@
+{% extends "layout_sidebar.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block sidebar %}
+<nav id="sidebar" class="sidebar border-end d-flex flex-column align-items-center">
+  <div class="sidebar-logo my-3">
+    <img src="https://placehold.co/48x48?text=W3" alt="Logo" width="48" height="48" style="border-radius:12px;">
+  </div>
+  <ul class="nav flex-column py-4 w-100 px-2">
+    <!-- Sezioni Developer Panel -->
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2 active" href="#system-settings" onclick="scrollToSection('system-settings')">
+        <span class="sidebar-icon me-2"><i class="bi bi-gear"></i></span>
+        <span class="sidebar-text">Impostazioni</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="#test-mode" onclick="scrollToSection('test-mode')">
+        <span class="sidebar-icon me-2"><i class="bi bi-flask"></i></span>
+        <span class="sidebar-text">Modalità Test</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="#system-info" onclick="scrollToSection('system-info')">
+        <span class="sidebar-icon me-2"><i class="bi bi-info-circle"></i></span>
+        <span class="sidebar-text">Info Sistema</span>
+      </a>
+    </li>
+    
+    <!-- Divider -->
+    <li class="nav-item my-3">
+      <hr class="text-muted w-100 mx-3">
+    </li>
+    
+    <!-- Accesso Rapido -->
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="{{ url_for('main.user_management') }}">
+        <span class="sidebar-icon me-2"><i class="bi bi-people-fill"></i></span>
+        <span class="sidebar-text">Gestione Utenti</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="{{ url_for('main.list_dynamic_forms') }}">
+        <span class="sidebar-icon me-2"><i class="bi bi-ui-checks-grid"></i></span>
+        <span class="sidebar-text">Form Dinamici</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="{{ url_for('main.dashboard') }}">
+        <span class="sidebar-icon me-2"><i class="bi bi-house"></i></span>
+        <span class="sidebar-text">Dashboard</span>
+      </a>
+    </li>
+    
+    <!-- Logout -->
+    <li class="nav-item mt-4">
+      <a class="nav-link d-flex align-items-center text-danger px-3 py-2" href="/logout">
+        <span class="sidebar-icon me-2"><i class="bi bi-box-arrow-right"></i></span>
+        <span class="sidebar-text">Logout</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-code text-primary"></i>
+                Pannello Sviluppatore
+            </h1>
+            <p class="page-subtitle">
+                Controllo delle impostazioni avanzate e modalità di sistema
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Sezione Modalità Test -->
+<div class="row mb-4" id="test-mode">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-flask"></i>
+                    Modalità Test Globale Form
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">Stato Modalità Test</h6>
+                        <p class="mb-1" id="test-mode-description">
+                            La modalità test è attualmente <strong id="test-mode-status">{{ 'attiva' if test_mode == True or test_mode == 'true' or test_mode == 'True' else 'disattiva' }}</strong>.
+                        </p>
+                        <small class="text-muted">
+                            Quando attiva, i form dinamici mostreranno indicatori visivi di test e dati di debug.
+                            Questa impostazione si applica globalmente a tutti i form del sistema.
+                        </small>
+                        
+                        <div class="mt-3" id="test-mode-info" style="display: {{ 'block' if (test_mode == True or test_mode == 'true' or test_mode == 'True') else 'none' }};">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Modalità Test Attiva:</strong> I form dinamici mostreranno banner di test e informazioni di debug.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="form-check form-switch form-switch-lg">
+                            <input class="form-check-input" type="checkbox" id="testModeSwitch" 
+                                   {{ 'checked' if (test_mode == True or test_mode == 'true' or test_mode == 'True') else '' }}>
+                            <label class="form-check-label fw-bold" for="testModeSwitch">
+                                Test Mode
+                            </label>
+                        </div>
+                        <button class="btn btn-warning btn-sm mt-2" id="toggleTestModeBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            {{ 'Disattiva' if (test_mode == True or test_mode == 'true' or test_mode == 'True') else 'Attiva' }} Test Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sezione Impostazioni Sistema -->
+<div class="row mb-4" id="system-settings">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i>
+                    Impostazioni di Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="setting-item">
+                            <h6>Modalità Manutenzione</h6>
+                            <p class="text-muted">Disabilita l'accesso al sistema per tutti tranne gli sviluppatori</p>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                                <label class="form-check-label" for="maintenanceMode">
+                                    Modalità Manutenzione
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="setting-item">
+                            <h6>Modalità Debug</h6>
+                            <p class="text-muted">Abilita informazioni di debug nell'interfaccia</p>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="debugMode">
+                                <label class="form-check-label" for="debugMode">
+                                    Debug Mode
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-end">
+                    <button class="btn btn-outline-secondary me-2" id="loadSettingsBtn">
+                        <i class="fas fa-refresh"></i>
+                        Ricarica Impostazioni
+                    </button>
+                    <button class="btn btn-primary" id="saveSettingsBtn">
+                        <i class="fas fa-save"></i>
+                        Salva Impostazioni
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sezione Info Sistema -->
+<div class="row mb-4" id="system-info">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    Informazioni Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <h6>Versione Applicazione</h6>
+                            <p class="h5 text-primary">v1.0.0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <h6>Ultimo Aggiornamento</h6>
+                            <p class="h6" id="lastUpdate">
+                                <script>document.write(new Date().toLocaleString('it-IT'))</script>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <h6>Ambiente</h6>
+                            <p class="h6"><span class="badge bg-success">Produzione</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Utenti Sviluppatori Attivi</h6>
+                        <div id="developersList">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Caricamento...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Log delle Modifiche Recenti</h6>
+                        <div id="recentChanges">
+                            <small class="text-muted">Funzionalità in sviluppo...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast per notifiche -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="successMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="errorMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Stato corrente - conversione corretta da stringa a booleano
+    let currentTestMode = {{ test_mode|tojson }};
+    // Converti stringa a booleano se necessario
+    if (typeof currentTestMode === 'string') {
+        currentTestMode = currentTestMode.toLowerCase() === 'true';
+    }
+    console.log('DEBUG: currentTestMode iniziale =', currentTestMode, typeof currentTestMode);
+    loadSystemSettings();
+    
+    // === GESTIONE MODALITÀ TEST ===
+    
+    // Toggle modalità test
+    $('#toggleTestModeBtn, #testModeSwitch').on('click', function(e) {
+        if (e.target.id === 'testModeSwitch') {
+            // Se è lo switch, usa il suo stato
+            toggleTestMode($('#testModeSwitch').is(':checked'));
+        } else {
+            // Se è il bottone, inverti lo stato corrente
+            toggleTestMode(!currentTestMode);
+        }
+    });
+    
+    function toggleTestMode(newState) {
+        $.ajax({
+            url: '/api/developer/test-mode/toggle',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            success: function(response) {
+                currentTestMode = response.test_mode;
+                updateTestModeUI(currentTestMode);
+                showSuccess(response.message + ' da ' + response.changed_by);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Errore sconosciuto';
+                showError('Errore: ' + error);
+                // Ripristina lo stato precedente dell'UI
+                updateTestModeUI(currentTestMode);
+            }
+        });
+    }
+    
+    function updateTestModeUI(isActive) {
+        // Aggiorna switch
+        $('#testModeSwitch').prop('checked', isActive);
+        
+        // Aggiorna testo stato
+        $('#test-mode-status').text(isActive ? 'attiva' : 'disattiva');
+        
+        // Aggiorna bottone
+        $('#toggleTestModeBtn')
+            .html('<i class="fas fa-sync-alt"></i> ' + (isActive ? 'Disattiva' : 'Attiva') + ' Test Mode');
+        
+        // Mostra/nascondi info
+        $('#test-mode-info').toggle(isActive);
+    }
+    
+    // === GESTIONE IMPOSTAZIONI SISTEMA ===
+    
+    function loadSystemSettings() {
+        $.ajax({
+            url: '/api/developer/settings',
+            method: 'GET',
+            success: function(settings) {
+                $('#maintenanceMode').prop('checked', settings.system_maintenance_mode || false);
+                $('#debugMode').prop('checked', settings.debug_mode || false);
+                // Il test mode è già gestito separatamente
+                currentTestMode = settings.global_form_test_mode || false;
+                updateTestModeUI(currentTestMode);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Errore nel caricamento impostazioni';
+                showError('Errore: ' + error);
+            }
+        });
+    }
+    
+    $('#loadSettingsBtn').on('click', function() {
+        loadSystemSettings();
+        showSuccess('Impostazioni ricaricate');
+    });
+    
+    $('#saveSettingsBtn').on('click', function() {
+        const settings = {
+            system_maintenance_mode: $('#maintenanceMode').is(':checked'),
+            debug_mode: $('#debugMode').is(':checked')
+        };
+        
+        $.ajax({
+            url: '/api/developer/settings',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            data: JSON.stringify(settings),
+            success: function(response) {
+                showSuccess(response.message);
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Errore nel salvataggio';
+                showError('Errore: ' + error);
+            }
+        });
+    });
+    
+    // === FUNZIONI UTILITY ===
+    
+    function showSuccess(message) {
+        $('#successMessage').text(message);
+        new bootstrap.Toast($('#successToast')[0]).show();
+    }
+    
+    function showError(message) {
+        $('#errorMessage').text(message);
+        new bootstrap.Toast($('#errorToast')[0]).show();
+    }
+    
+    // Smooth scrolling per i link della sidebar
+    window.scrollToSection = function(sectionId) {
+        const target = $('#' + sectionId);
+        if (target.length) {
+            $('html, body').animate({
+                scrollTop: target.offset().top - 20
+            }, 500);
+            
+            // Aggiorna stato attivo nella sidebar
+            $('.sidebar .nav-link').removeClass('active');
+            $(`a[href="#${sectionId}"]`).addClass('active');
+        }
+    };
+    
+    // Aggiorna link attivo in base allo scroll
+    $(window).scroll(function() {
+        let current = '';
+        $('div[id]').each(function() {
+            const sectionTop = $(this).offset().top;
+            if (sectionTop <= $(window).scrollTop() + 100) {
+                current = $(this).attr('id');
+            }
+        });
+        
+        if (current) {
+            $('.sidebar .nav-link').removeClass('active');
+            $(`.sidebar a[href="#${current}"]`).addClass('active');
+        }
+    });
+});
+</script>
+{% endblock %}
