@@ -35,6 +35,73 @@ from azure.storage.blob import BlobServiceClient
 
 main = Blueprint("main", __name__)
 
+def get_available_export_fields():
+    """Restituisce una lista di tutti i campi disponibili per l'esportazione organizzati per sezioni"""
+    return {
+        'Dati Personali': [
+            {'name': 'name', 'label': 'Nome', 'checked': True},
+            {'name': 'surname', 'label': 'Cognome', 'checked': True},
+            {'name': 'birth_date', 'label': 'Data di Nascita', 'checked': False},
+            {'name': 'birth_place', 'label': 'Luogo di Nascita', 'checked': False},
+            {'name': 'nationality', 'label': 'Nazionalità', 'checked': False},
+            {'name': 'gender', 'label': 'Genere', 'checked': False},
+            {'name': 'marital_status', 'label': 'Stato Civile', 'checked': False},
+            {'name': 'height_cm', 'label': 'Altezza (cm)', 'checked': False},
+            {'name': 'weight_kg', 'label': 'Peso (kg)', 'checked': False},
+            {'name': 'tshirt_size', 'label': 'Taglia T-Shirt', 'checked': False},
+            {'name': 'shoe_size_eu', 'label': 'Taglia Scarpe (EU)', 'checked': False},
+        ],
+        'Contatti': [
+            {'name': 'email', 'label': 'Email', 'checked': True},
+            {'name': 'phone', 'label': 'Telefono', 'checked': True},
+            {'name': 'address', 'label': 'Indirizzo', 'checked': False},
+            {'name': 'city', 'label': 'Città', 'checked': False},
+            {'name': 'postal_code', 'label': 'CAP', 'checked': False},
+            {'name': 'country_of_residence', 'label': 'Paese di Residenza', 'checked': False},
+            {'name': 'residence', 'label': 'Residenza Completa', 'checked': False},
+        ],
+        'Documenti': [
+            {'name': 'id_document', 'label': 'Tipo Documento', 'checked': False},
+            {'name': 'id_number', 'label': 'Numero Documento', 'checked': False},
+            {'name': 'id_expiry_date', 'label': 'Scadenza Documento', 'checked': False},
+            {'name': 'id_country', 'label': 'Paese Documento', 'checked': False},
+            {'name': 'additional_document', 'label': 'Documento Aggiuntivo', 'checked': False},
+            {'name': 'codice_fiscale', 'label': 'Codice Fiscale', 'checked': False},
+            {'name': 'permesso_soggiorno', 'label': 'Permesso di Soggiorno', 'checked': False},
+        ],
+        'Patente': [
+            {'name': 'license_country', 'label': 'Paese Patente', 'checked': False},
+            {'name': 'license_number', 'label': 'Numero Patente', 'checked': False},
+            {'name': 'license_category', 'label': 'Categoria Patente', 'checked': False},
+            {'name': 'license_issue_date', 'label': 'Data Rilascio Patente', 'checked': False},
+            {'name': 'license_expiry_date', 'label': 'Scadenza Patente', 'checked': False},
+            {'name': 'years_driving_experience', 'label': 'Anni Esperienza Guida', 'checked': False},
+            {'name': 'auto_moto_munito', 'label': 'Auto/Moto Munito', 'checked': False},
+        ],
+        'Informazioni Professionali': [
+            {'name': 'occupation', 'label': 'Occupazione', 'checked': True},
+            {'name': 'other_experience', 'label': 'Altre Esperienze', 'checked': False},
+            {'name': 'availability_from', 'label': 'Disponibilità Da', 'checked': False},
+            {'name': 'availability_till', 'label': 'Disponibilità Fino', 'checked': False},
+            {'name': 'city_availability', 'label': 'Città Disponibilità', 'checked': False},
+            {'name': 'come_sei_arrivato', 'label': 'Come sei arrivato', 'checked': False},
+        ],
+        'Lingue': [
+            {'name': 'language_1', 'label': 'Lingua 1', 'checked': False},
+            {'name': 'proficiency_1', 'label': 'Competenza Lingua 1', 'checked': False},
+            {'name': 'language_2', 'label': 'Lingua 2', 'checked': False},
+            {'name': 'proficiency_2', 'label': 'Competenza Lingua 2', 'checked': False},
+            {'name': 'language_3', 'label': 'Lingua 3', 'checked': False},
+            {'name': 'proficiency_3', 'label': 'Competenza Lingua 3', 'checked': False},
+        ],
+        'Dati Amministrativi': [
+            {'name': 'archived', 'label': 'Archiviato', 'checked': False},
+            {'name': 'created_at', 'label': 'Data di Creazione', 'checked': False},
+            {'name': 'form_name', 'label': 'Nome Form', 'checked': False},
+            {'name': 'total_score', 'label': 'Punteggio Totale', 'checked': False},
+        ]
+    }
+
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -84,7 +151,11 @@ def candidates_list():
         {'name': 'Dashboard', 'url': url_for('main.dashboard')},
         {'name': 'Elenco Candidati', 'url': None}
     ]
-    return render_template('candidates_list.html', candidates=candidates, breadcrumbs=breadcrumbs)
+    
+    # Genera la lista di tutti i campi disponibili per l'esportazione
+    available_fields = get_available_export_fields()
+    
+    return render_template('candidates_list.html', candidates=candidates, breadcrumbs=breadcrumbs, available_fields=available_fields)
 
 @main.route('/candidati/archiviati')
 @login_required
@@ -97,7 +168,11 @@ def archived_candidates_list():
         {'name': 'Elenco Candidati', 'url': url_for('main.candidates_list')},
         {'name': 'Candidati Archiviati', 'url': None}
     ]
-    return render_template('candidates_list.html', candidates=candidates, archived=True, breadcrumbs=breadcrumbs)
+    
+    # Genera la lista di tutti i campi disponibili per l'esportazione
+    available_fields = get_available_export_fields()
+    
+    return render_template('candidates_list.html', candidates=candidates, archived=True, breadcrumbs=breadcrumbs, available_fields=available_fields)
 
 @main.route('/candidati/modifica/<int:candidate_id>', methods=['GET', 'POST'])
 @login_required
@@ -1288,25 +1363,55 @@ def export_candidates_csv():
             flash('Nessun campo selezionato per l\'esportazione', 'error')
             return redirect(url_for('main.candidates_list'))
         
-        # Mappa dei campi con le relative etichette - CORRETTI per il modello Candidate
+        # Mappa dei campi con le relative etichette - COMPLETA per tutti i campi del modello Candidate
         field_labels = {
-            'name': 'Nome',  # first_name
-            'surname': 'Cognome',  # last_name
-            'birth_date': 'Data di Nascita',  # date_of_birth
-            'birth_place': 'Luogo di Nascita',  # place_of_birth
-            'nationality': 'Nazionalità',  # nationality
-            'residence': 'Residenza',  # address + city
-            'email': 'Email',  # email
-            'phone': 'Telefono',  # phone_number
-            'gender': 'Genere',  # gender
-            'marital_status': 'Stato Civile',  # marital_status
-            'codice_fiscale': 'Codice Fiscale',  # codice_fiscale
-            'occupation': 'Occupazione',  # occupation
-            'city_availability': 'Città Disponibilità',  # city_availability
-            'come_sei_arrivato': 'Come sei arrivato',  # come_sei_arrivato
-            'archived': 'Archiviato',  # archived
-            'created_at': 'Data di Creazione',  # created_at
-            'form_name': 'Nome Form',  # tramite relazione form
+            'name': 'Nome',
+            'surname': 'Cognome', 
+            'birth_date': 'Data di Nascita',
+            'birth_place': 'Luogo di Nascita',
+            'nationality': 'Nazionalità',
+            'gender': 'Genere',
+            'marital_status': 'Stato Civile',
+            'height_cm': 'Altezza (cm)',
+            'weight_kg': 'Peso (kg)',
+            'tshirt_size': 'Taglia T-Shirt',
+            'shoe_size_eu': 'Taglia Scarpe (EU)',
+            'email': 'Email',
+            'phone': 'Telefono',
+            'address': 'Indirizzo',
+            'city': 'Città',
+            'postal_code': 'CAP',
+            'country_of_residence': 'Paese di Residenza',
+            'residence': 'Residenza Completa',
+            'id_document': 'Tipo Documento',
+            'id_number': 'Numero Documento',
+            'id_expiry_date': 'Scadenza Documento',
+            'id_country': 'Paese Documento',
+            'additional_document': 'Documento Aggiuntivo',
+            'codice_fiscale': 'Codice Fiscale',
+            'permesso_soggiorno': 'Permesso di Soggiorno',
+            'license_country': 'Paese Patente',
+            'license_number': 'Numero Patente',
+            'license_category': 'Categoria Patente',
+            'license_issue_date': 'Data Rilascio Patente',
+            'license_expiry_date': 'Scadenza Patente',
+            'years_driving_experience': 'Anni Esperienza Guida',
+            'auto_moto_munito': 'Auto/Moto Munito',
+            'occupation': 'Occupazione',
+            'other_experience': 'Altre Esperienze',
+            'availability_from': 'Disponibilità Da',
+            'availability_till': 'Disponibilità Fino',
+            'city_availability': 'Città Disponibilità',
+            'come_sei_arrivato': 'Come sei arrivato',
+            'language_1': 'Lingua 1',
+            'proficiency_1': 'Competenza Lingua 1',
+            'language_2': 'Lingua 2',
+            'proficiency_2': 'Competenza Lingua 2',
+            'language_3': 'Lingua 3',
+            'proficiency_3': 'Competenza Lingua 3',
+            'archived': 'Archiviato',
+            'created_at': 'Data di Creazione',
+            'form_name': 'Nome Form',
             'total_score': 'Punteggio Totale',
         }
         
@@ -1347,6 +1452,30 @@ def export_candidates_csv():
                     row.append(candidate.place_of_birth or '')
                 elif field == 'nationality':
                     row.append(candidate.nationality or '')
+                elif field == 'gender':
+                    row.append(candidate.gender or '')
+                elif field == 'marital_status':
+                    row.append(candidate.marital_status or '')
+                elif field == 'height_cm':
+                    row.append(str(candidate.height_cm) if candidate.height_cm else '')
+                elif field == 'weight_kg':
+                    row.append(str(candidate.weight_kg) if candidate.weight_kg else '')
+                elif field == 'tshirt_size':
+                    row.append(candidate.tshirt_size or '')
+                elif field == 'shoe_size_eu':
+                    row.append(candidate.shoe_size_eu or '')
+                elif field == 'email':
+                    row.append(candidate.email or '')
+                elif field == 'phone':
+                    row.append(candidate.phone_number or '')
+                elif field == 'address':
+                    row.append(candidate.address or '')
+                elif field == 'city':
+                    row.append(candidate.city or '')
+                elif field == 'postal_code':
+                    row.append(candidate.postal_code or '')
+                elif field == 'country_of_residence':
+                    row.append(candidate.country_of_residence or '')
                 elif field == 'residence':
                     address_parts = []
                     if candidate.address:
@@ -1354,22 +1483,58 @@ def export_candidates_csv():
                     if candidate.city:
                         address_parts.append(candidate.city)
                     row.append(', '.join(address_parts))
-                elif field == 'email':
-                    row.append(candidate.email or '')
-                elif field == 'phone':
-                    row.append(candidate.phone_number or '')
-                elif field == 'gender':
-                    row.append(candidate.gender or '')
-                elif field == 'marital_status':
-                    row.append(candidate.marital_status or '')
+                elif field == 'id_document':
+                    row.append(candidate.id_document or '')
+                elif field == 'id_number':
+                    row.append(candidate.id_number or '')
+                elif field == 'id_expiry_date':
+                    row.append(candidate.id_expiry_date.strftime('%d/%m/%Y') if candidate.id_expiry_date else '')
+                elif field == 'id_country':
+                    row.append(candidate.id_country or '')
+                elif field == 'additional_document':
+                    row.append(candidate.additional_document or '')
                 elif field == 'codice_fiscale':
                     row.append(candidate.codice_fiscale or '')
+                elif field == 'permesso_soggiorno':
+                    row.append(candidate.permesso_soggiorno or '')
+                elif field == 'license_country':
+                    row.append(candidate.license_country or '')
+                elif field == 'license_number':
+                    row.append(candidate.license_number or '')
+                elif field == 'license_category':
+                    row.append(candidate.license_category or '')
+                elif field == 'license_issue_date':
+                    row.append(candidate.license_issue_date.strftime('%d/%m/%Y') if candidate.license_issue_date else '')
+                elif field == 'license_expiry_date':
+                    row.append(candidate.license_expiry_date.strftime('%d/%m/%Y') if candidate.license_expiry_date else '')
+                elif field == 'years_driving_experience':
+                    row.append(str(candidate.years_driving_experience) if candidate.years_driving_experience else '')
+                elif field == 'auto_moto_munito':
+                    row.append('Sì' if candidate.auto_moto_munito else 'No')
                 elif field == 'occupation':
                     row.append(candidate.occupation or '')
+                elif field == 'other_experience':
+                    row.append(candidate.other_experience or '')
+                elif field == 'availability_from':
+                    row.append(candidate.availability_from.strftime('%d/%m/%Y') if candidate.availability_from else '')
+                elif field == 'availability_till':
+                    row.append(candidate.availability_till.strftime('%d/%m/%Y') if candidate.availability_till else '')
                 elif field == 'city_availability':
                     row.append(candidate.city_availability or '')
                 elif field == 'come_sei_arrivato':
                     row.append(candidate.come_sei_arrivato or '')
+                elif field == 'language_1':
+                    row.append(candidate.language_1 or '')
+                elif field == 'proficiency_1':
+                    row.append(candidate.proficiency_1 or '')
+                elif field == 'language_2':
+                    row.append(candidate.language_2 or '')
+                elif field == 'proficiency_2':
+                    row.append(candidate.proficiency_2 or '')
+                elif field == 'language_3':
+                    row.append(candidate.language_3 or '')
+                elif field == 'proficiency_3':
+                    row.append(candidate.proficiency_3 or '')
                 elif field == 'archived':
                     row.append('Sì' if candidate.archived else 'No')
                 elif field == 'created_at':

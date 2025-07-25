@@ -1,8 +1,27 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
 <div class="container-fluid mt-3">
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{{ url_for('main.dashboard') }}">
+          <i class="bi bi-house"></i> Dashboard
+        </a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{{ url_for('main.list_dynamic_forms') }}">
+          <i class="bi bi-file-earmark-text"></i> Form Dinamici
+        </a>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        <i class="bi bi-pencil"></i> Modifica: {{ form.name }}
+      </li>
+    </ol>
+  </nav>
+
   <h2 class="mb-4">Modifica Form Dinamico</h2>
-  <form method="post">
+  <form method="post" id="form-edit">
     <div class="row">
       <div class="col-md-6">
         <div class="mb-3">
@@ -151,21 +170,26 @@
                 </a>
               </div>
             </div>
-    
-    <div class="d-flex gap-2 align-items-center mt-4">
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-check-circle"></i> Salva modifiche
-      </button>
-      
-      <a href="{{ url_for('main.manage_form_fields', form_id=form.id) }}" class="btn btn-warning">
-        <i class="bi bi-sliders"></i> Gestisci Campi
-      </a>
-      
-      <a href="{{ url_for('main.list_dynamic_forms') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Torna alla lista
-      </a>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
+
+  <!-- Action Buttons -->
+  <div class="d-flex gap-2 align-items-center mt-4 mb-4">
+    <button type="submit" form="form-edit" class="btn btn-primary">
+      <i class="bi bi-check-circle"></i> Salva modifiche
+    </button>
+    
+    <a href="{{ url_for('main.manage_form_fields', form_id=form.id) }}" class="btn btn-warning">
+      <i class="bi bi-sliders"></i> Gestisci Campi
+    </a>
+    
+    <a href="{{ url_for('main.list_dynamic_forms') }}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Torna alla lista
+    </a>
+  </div>
 </div>
 
 <script>

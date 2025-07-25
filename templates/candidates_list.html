@@ -2939,101 +2939,17 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         
         <div class="row">
-          <!-- Dati Personali -->
-          <div class="col-md-6">
-            <h6 class="fw-bold mb-3">Dati Personali</h6>
+          {% for section_name, fields in available_fields.items() %}
+          <div class="col-md-6 mb-4">
+            <h6 class="fw-bold mb-3">{{ section_name }}</h6>
+            {% for field in fields %}
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="name" id="field_name" checked>
-              <label class="form-check-label" for="field_name">Nome</label>
+              <input class="form-check-input" type="checkbox" value="{{ field.name }}" id="field_{{ field.name }}" {% if field.checked %}checked{% endif %}>
+              <label class="form-check-label" for="field_{{ field.name }}">{{ field.label }}</label>
             </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="surname" id="field_surname" checked>
-              <label class="form-check-label" for="field_surname">Cognome</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="birth_date" id="field_birth_date">
-              <label class="form-check-label" for="field_birth_date">Data di Nascita</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="birth_place" id="field_birth_place">
-              <label class="form-check-label" for="field_birth_place">Luogo di Nascita</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="nationality" id="field_nationality">
-              <label class="form-check-label" for="field_nationality">Nazionalità</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="residence" id="field_residence">
-              <label class="form-check-label" for="field_residence">Residenza</label>
-            </div>
+            {% endfor %}
           </div>
-          
-          <!-- Contatti -->
-          <div class="col-md-6">
-            <h6 class="fw-bold mb-3">Contatti</h6>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="email" id="field_email" checked>
-              <label class="form-check-label" for="field_email">Email</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="phone" id="field_phone" checked>
-              <label class="form-check-label" for="field_phone">Telefono</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="gender" id="field_gender">
-              <label class="form-check-label" for="field_gender">Genere</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="marital_status" id="field_marital_status">
-              <label class="form-check-label" for="field_marital_status">Stato Civile</label>
-            </div>
-          </div>
-        </div>
-        
-        <hr class="my-4">
-        
-        <div class="row">
-          <!-- Informazioni Professionali -->
-          <div class="col-md-6">
-            <h6 class="fw-bold mb-3">Informazioni Professionali</h6>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="occupation" id="field_occupation" checked>
-              <label class="form-check-label" for="field_occupation">Occupazione</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="city_availability" id="field_city_availability">
-              <label class="form-check-label" for="field_city_availability">Città Disponibilità</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="come_sei_arrivato" id="field_come_sei_arrivato">
-              <label class="form-check-label" for="field_come_sei_arrivato">Come sei arrivato</label>
-            </div>
-          </div>
-          
-          <!-- Dati Amministrativi -->
-          <div class="col-md-6">
-            <h6 class="fw-bold mb-3">Dati Amministrativi</h6>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="codice_fiscale" id="field_codice_fiscale">
-              <label class="form-check-label" for="field_codice_fiscale">Codice Fiscale</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="archived" id="field_archived">
-              <label class="form-check-label" for="field_archived">Archiviato</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="created_at" id="field_created_at">
-              <label class="form-check-label" for="field_created_at">Data di Creazione</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="form_name" id="field_form_name">
-              <label class="form-check-label" for="field_form_name">Nome Form</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="total_score" id="field_total_score">
-              <label class="form-check-label" for="field_total_score">Punteggio Totale</label>
-            </div>
-          </div>
+          {% endfor %}
         </div>
         
         <!-- Selezione tipo di esportazione -->
