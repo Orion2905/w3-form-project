@@ -39,10 +39,11 @@ def get_available_export_fields():
     """Restituisce una lista di tutti i campi disponibili per l'esportazione organizzati per sezioni"""
     return {
         'Dati Personali': [
-            {'name': 'name', 'label': 'Nome', 'checked': True},
-            {'name': 'surname', 'label': 'Cognome', 'checked': True},
-            {'name': 'birth_date', 'label': 'Data di Nascita', 'checked': False},
-            {'name': 'birth_place', 'label': 'Luogo di Nascita', 'checked': False},
+            {'name': 'first_name', 'label': 'Nome', 'checked': True},
+            {'name': 'last_name', 'label': 'Cognome', 'checked': True},
+            {'name': 'profile_photo', 'label': 'Foto Profilo', 'checked': False},
+            {'name': 'date_of_birth', 'label': 'Data di Nascita', 'checked': False},
+            {'name': 'place_of_birth', 'label': 'Luogo di Nascita', 'checked': False},
             {'name': 'nationality', 'label': 'Nazionalità', 'checked': False},
             {'name': 'gender', 'label': 'Genere', 'checked': False},
             {'name': 'marital_status', 'label': 'Stato Civile', 'checked': False},
@@ -53,12 +54,11 @@ def get_available_export_fields():
         ],
         'Contatti': [
             {'name': 'email', 'label': 'Email', 'checked': True},
-            {'name': 'phone', 'label': 'Telefono', 'checked': True},
+            {'name': 'phone_number', 'label': 'Telefono', 'checked': True},
             {'name': 'address', 'label': 'Indirizzo', 'checked': False},
             {'name': 'city', 'label': 'Città', 'checked': False},
             {'name': 'postal_code', 'label': 'CAP', 'checked': False},
             {'name': 'country_of_residence', 'label': 'Paese di Residenza', 'checked': False},
-            {'name': 'residence', 'label': 'Residenza Completa', 'checked': False},
         ],
         'Documenti': [
             {'name': 'id_document', 'label': 'Tipo Documento', 'checked': False},
@@ -2572,3 +2572,133 @@ def manage_form_fields(form_id):
                          form=form, 
                          sidebar=True, 
                          breadcrumbs=breadcrumbs)
+
+
+# ===== ROUTE PER VISUALIZZAZIONE LINK CONDIVISI =====
+
+@main.route('/shared/<token>')
+def view_shared_candidates(token):
+    """
+    Visualizza i candidati tramite link condiviso pubblico
+    """
+    from w3form.models import ShareLink
+    
+    # Trova il link condiviso
+    share_link = ShareLink.query.filter_by(token=token).first()
+    if not share_link:
+        abort(404, "Link non trovato")
+    
+    # Controlla se è scaduto
+    if share_link.is_expired():
+        return render_template('shared_expired.html'), 410
+    
+    # Controlla se richiede password
+    if share_link.password_hash:
+        # Se c'è una password in sessione, controllala
+        if request.method == 'POST':
+            password = request.form.get('password')
+            if share_link.check_password(password):
+                session[f'shared_auth_{token}'] = True
+            else:
+                flash('Password non corretta', 'error')
+                return render_template('shared_password.html', token=token)
+        
+        # Se non è autenticato, mostra form password
+        if not session.get(f'shared_auth_{token}'):
+            return render_template('shared_password.html', token=token)
+    
+    # Incrementa contatore accessi
+    share_link.increment_access_count()
+    
+    # Recupera i dati dei candidati
+    candidates_data = share_link.get_candidates_data()
+    
+    # Prepara le etichette dei campi per la visualizzazione
+    from w3form.models import FormFieldConfiguration
+    field_labels = FormFieldConfiguration.get_default_fields()
+    
+    visible_fields = []
+    for field in share_link.fields:
+        if field in field_labels:
+            visible_fields.append({
+                'key': field,
+                'label': field_labels[field]['label']
+            })
+        else:
+            visible_fields.append({
+                'key': field,
+                'label': field.replace('_', ' ').title()
+            })
+    
+    return render_template('shared_candidates.html',
+                         share_link=share_link,
+                         candidates=candidates_data,
+                         visible_fields=visible_fields,
+                         total_count=len(candidates_data))
+
+
+@main.route('/shared/<token>/auth', methods=['POST'])
+def authenticate_shared_link(token):
+    """
+    Autenticazione per link condivisi protetti da password
+    """
+    from w3form.models import ShareLink
+    
+    share_link = ShareLink.query.filter_by(token=token).first()
+    if not share_link or share_link.is_expired():
+        abort(404)
+    
+    password = request.form.get('password')
+    if share_link.check_password(password):
+        session[f'shared_auth_{token}'] = True
+        return redirect(url_for('main.view_shared_candidates', token=token))
+    else:
+        flash('Password non corretta', 'error')
+        return render_template('shared_password.html', token=token)
+
+
+@main.route('/candidati/shares/manage')
+@login_required
+def manage_shared_links():
+    """
+    Pagina per gestire i link condivisi creati dall'utente
+    """
+    from w3form.models import ShareLink
+    
+    # Recupera i link condivisi dell'utente corrente
+    user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+    share_links = ShareLink.query.filter_by(created_by=user_email)\
+                                 .order_by(ShareLink.created_at.desc()).all()
+    
+    breadcrumbs = [
+        {'name': 'Dashboard', 'url': url_for('main.dashboard')},
+        {'name': 'Lista Candidati', 'url': url_for('main.candidates_list')},
+        {'name': 'Gestione Link Condivisi', 'url': None}
+    ]
+    
+    return render_template('manage_shared_links.html',
+                         share_links=share_links,
+                         sidebar=True,
+                         breadcrumbs=breadcrumbs)
+
+
+@main.route('/candidati/shares/<int:share_id>/delete', methods=['POST'])
+@login_required
+def delete_shared_link(share_id):
+    """
+    Elimina un link condiviso
+    """
+    from w3form.models import ShareLink
+    
+    share_link = ShareLink.query.get_or_404(share_id)
+    
+    # Controlla che l'utente sia il proprietario
+    user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+    if share_link.created_by != user_email:
+        abort(403)
+    
+    db.session.delete(share_link)
+    db.session.commit()
+    
+    flash('Link condiviso eliminato con successo', 'success')
+    return redirect(url_for('main.manage_shared_links'))

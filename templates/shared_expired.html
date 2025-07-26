@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Scaduto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .expired-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .expired-header {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            padding: 3rem 2rem;
+        }
+        .expired-body {
+            padding: 3rem 2rem;
+        }
+        .expired-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .btn-outline-primary:hover {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="expired-card mx-auto">
+                    <div class="expired-header">
+                        <i class="bi bi-clock-history expired-icon"></i>
+                        <h2 class="mb-0">Link Scaduto</h2>
+                        <p class="mb-0 mt-2">Questo link di condivisione non è più valido</p>
+                    </div>
+                    
+                    <div class="expired-body">
+                        <div class="mb-4">
+                            <h4 class="text-muted mb-3">Cosa è successo?</h4>
+                            <p class="text-muted">
+                                Il link di condivisione che stai tentando di accedere è scaduto. 
+                                I link condivisi hanno una durata limitata per motivi di sicurezza.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5 class="text-muted mb-3">Cosa puoi fare?</h5>
+                            <ul class="list-unstyled text-muted text-start">
+                                <li class="mb-2">
+                                    <i class="bi bi-person-lines-fill text-primary me-2"></i>
+                                    Contatta la persona che ha condiviso il link
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-arrow-clockwise text-primary me-2"></i>
+                                    Richiedi la generazione di un nuovo link
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-envelope text-primary me-2"></i>
+                                    Verifica se hai ricevuto un link aggiornato
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button onclick="history.back()" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Torna Indietro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

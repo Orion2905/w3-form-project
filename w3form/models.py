@@ -449,4 +449,118 @@ class FormFieldConfiguration(db.Model):
         return f"<FormFieldConfiguration form_id={self.form_id} field={self.field_name} visible={self.is_visible} required={self.is_required}>"
 
 
+class ShareLink(db.Model):
+    """
+    Modello per gestire i link di condivisione delle liste candidati
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False, default='Lista Candidati Condivisa')
+    
+    # Configurazione dati
+    fields = db.Column(db.JSON, nullable=False)  # Lista dei campi da mostrare
+    filters = db.Column(db.JSON, nullable=True)  # Filtri applicati (se scope='filtered')
+    scope = db.Column(db.String(20), nullable=False, default='all')  # 'all' o 'filtered'
+    archived = db.Column(db.Boolean, nullable=False, default=False)  # Se include candidati archiviati
+    
+    # Sicurezza
+    password_hash = db.Column(db.String(255), nullable=True)  # Password opzionale
+    
+    # Scadenza
+    expires_at = db.Column(db.DateTime, nullable=True)  # Data di scadenza opzionale
+    
+    # Tracking
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    accessed_count = db.Column(db.Integer, default=0, nullable=False)
+    last_accessed_at = db.Column(db.DateTime, nullable=True)
+    
+    # Chi ha creato il link
+    created_by = db.Column(db.String(100), nullable=True)  # Email o username del creatore
+    
+    def set_password(self, password):
+        """Imposta la password per il link condiviso"""
+        if password:
+            self.password_hash = generate_password_hash(password)
+        else:
+            self.password_hash = None
+    
+    def check_password(self, password):
+        """Verifica la password del link condiviso"""
+        if not self.password_hash:
+            return True  # Nessuna password richiesta
+        return check_password_hash(self.password_hash, password)
+    
+    def is_expired(self):
+        """Controlla se il link è scaduto"""
+        if not self.expires_at:
+            return False
+        return datetime.utcnow() > self.expires_at
+    
+    def is_accessible(self):
+        """Controlla se il link è ancora accessibile"""
+        return not self.is_expired()
+    
+    def increment_access_count(self):
+        """Incrementa il contatore degli accessi"""
+        self.accessed_count += 1
+        self.last_accessed_at = datetime.utcnow()
+        db.session.commit()
+    
+    def get_candidates_data(self):
+        """
+        Recupera i dati dei candidati secondo i filtri e campi specificati
+        """
+        from .models import Candidate  # Import locale per evitare riferimenti circolari
+        from w3form.azure_utils import get_secure_image_url
+        
+        # Query base
+        query = Candidate.query
+        
+        # Filtro archiviati
+        query = query.filter(Candidate.archived == self.archived)
+        
+        # Applica filtri se scope è 'filtered'
+        if self.scope == 'filtered' and self.filters:
+            for filter_key, filter_value in self.filters.items():
+                if filter_value and hasattr(Candidate, filter_key):
+                    column = getattr(Candidate, filter_key)
+                    if isinstance(filter_value, str):
+                        query = query.filter(column.ilike(f'%{filter_value}%'))
+                    else:
+                        query = query.filter(column == filter_value)
+        
+        candidates = query.all()
+        
+        # Filtra solo i campi richiesti
+        result = []
+        for candidate in candidates:
+            candidate_data = {}
+            for field in self.fields:
+                if field == 'profile_photo':
+                    # Gestione speciale per le foto profilo
+                    if candidate.photos:
+                        # Prendi la prima foto come foto profilo
+                        photo = candidate.photos[0]
+                        try:
+                            secure_url = get_secure_image_url(photo.filename)
+                            candidate_data[field] = secure_url
+                        except:
+                            candidate_data[field] = None
+                    else:
+                        candidate_data[field] = None
+                elif hasattr(candidate, field):
+                    value = getattr(candidate, field)
+                    # Converti datetime e date in stringhe
+                    if hasattr(value, 'strftime'):
+                        candidate_data[field] = value.strftime('%d/%m/%Y')
+                    else:
+                        candidate_data[field] = value
+            result.append(candidate_data)
+        
+        return result
+    
+    def __repr__(self):
+        return f"<ShareLink {self.token} expires={self.expires_at}>"
+
+
 

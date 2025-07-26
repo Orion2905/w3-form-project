@@ -703,3 +703,64 @@ def stats_cities():
                 .limit(10).all()
     
     return jsonify({c or 'Non specificata': count for c, count in data})
+
+
+# ===== ROUTE PER LA CONDIVISIONE =====
+
+@api.route('/share', methods=['POST'])
+@login_required
+def create_share_link():
+    """
+    Crea un nuovo link di condivisione per la lista candidati
+    """
+    import secrets
+    from w3form.models import ShareLink
+    from datetime import timedelta
+    
+    try:
+        data = request.get_json()
+        
+        # Validazione input
+        if not data.get('fields'):
+            return jsonify({'success': False, 'error': 'Nessun campo selezionato'}), 400
+        
+        # Genera token univoco
+        token = secrets.token_urlsafe(32)
+        while ShareLink.query.filter_by(token=token).first():
+            token = secrets.token_urlsafe(32)
+        
+        # Crea il link condiviso
+        share_link = ShareLink(
+            token=token,
+            fields=data.get('fields', []),
+            filters=data.get('filters', {}),
+            scope=data.get('scope', 'all'),
+            archived=data.get('archived', False),
+            created_by=current_user.email if hasattr(current_user, 'email') else 'user'
+        )
+        
+        # Imposta password se fornita
+        if data.get('password'):
+            share_link.set_password(data.get('password'))
+        
+        # Imposta scadenza se fornita
+        if data.get('expiry_days'):
+            days = int(data.get('expiry_days'))
+            share_link.expires_at = datetime.utcnow() + timedelta(days=days)
+        
+        db.session.add(share_link)
+        db.session.commit()
+        
+        # Costruisci URL completo
+        share_url = request.url_root.rstrip('/') + f'/shared/{token}'
+        
+        return jsonify({
+            'success': True,
+            'share_url': share_url,
+            'token': token,
+            'expires_at': share_link.expires_at.isoformat() if share_link.expires_at else None
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

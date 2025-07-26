@@ -501,6 +501,11 @@
         </ul>
       </div>
       
+      <!-- Pulsante condivisione -->
+      <button type="button" class="btn btn-info" onclick="openShareModal()">
+        <i class="bi bi-share"></i> <span class="d-none d-sm-inline">Condividi</span>
+      </button>
+      
       <!-- Pulsanti navigazione -->
       <div class="btn-group" role="group">
         <a href="/candidati" class="btn {% if not archived %}btn-primary{% else %}btn-outline-primary{% endif %}">
@@ -2918,6 +2923,194 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Funzioni per la condivisione
+function openShareModal() {
+  console.log('Opening share modal');
+  const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+  modal.show();
+  updateShareFilteredCount();
+}
+
+function updateShareFilteredCount() {
+  const countElement = document.getElementById('share_filtered_count');
+  if (countElement) {
+    const count = filteredCandidates.length;
+    countElement.textContent = `(${count} candidat${count !== 1 ? 'i' : 'o'} attualmente visualizzat${count !== 1 ? 'i' : 'o'})`;
+  }
+}
+
+function selectAllShareFields() {
+  const checkboxes = document.querySelectorAll('#shareModal .share-field');
+  checkboxes.forEach(function(checkbox) {
+    checkbox.checked = true;
+  });
+}
+
+function deselectAllShareFields() {
+  const checkboxes = document.querySelectorAll('#shareModal .share-field');
+  checkboxes.forEach(function(checkbox) {
+    checkbox.checked = false;
+  });
+}
+
+function generateShareLink() {
+  console.log('Generating share link...');
+  
+  const selectedFields = [];
+  const checkboxes = document.querySelectorAll('#shareModal .share-field:checked');
+  checkboxes.forEach(function(checkbox) {
+    selectedFields.push(checkbox.value);
+  });
+  
+  if (selectedFields.length === 0) {
+    alert('Seleziona almeno un campo da condividere');
+    return;
+  }
+  
+  const shareScope = document.querySelector('input[name="share_scope"]:checked').value;
+  const withPassword = document.getElementById('share_with_password').checked;
+  const withExpiry = document.getElementById('share_with_expiry').checked;
+  const password = withPassword ? document.getElementById('share_password').value : '';
+  const expiryDays = withExpiry ? document.getElementById('share_expiry_days').value : null;
+  
+  if (withPassword && !password) {
+    alert('Inserisci una password');
+    return;
+  }
+  
+  // Determina se siamo nella sezione archivio
+  const isArchived = {% if archived %}true{% else %}false{% endif %};
+  
+  // Prepara i dati per la chiamata API
+  const shareData = {
+    fields: selectedFields,
+    scope: shareScope,
+    password: password,
+    expiry_days: expiryDays,
+    archived: isArchived
+  };
+  
+  // Se è filtrato, includi i filtri attuali
+  if (shareScope === 'filtered') {
+    shareData.filters = getCurrentFilters();
+  }
+  
+  // Mostra loading sul bottone
+  const btn = document.getElementById('generate_share_btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Generando...';
+  btn.disabled = true;
+  
+  // Chiamata API
+  fetch('/api/candidates/share', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(shareData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Mostra il link generato
+      document.getElementById('share_link').value = data.share_url;
+      document.getElementById('share_link_section').style.display = 'block';
+      document.getElementById('generate_share_btn').style.display = 'none';
+      document.getElementById('manage_shares_btn').style.display = 'inline-block';
+    } else {
+      alert('Errore nella generazione del link: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Errore nella generazione del link');
+  })
+  .finally(() => {
+    // Ripristina il bottone
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
+}
+
+function getCurrentFilters() {
+  // Raccoglie tutti i filtri attualmente attivi
+  const filters = {};
+  
+  // Filtri macro
+  const formFilter = document.getElementById('macro_filter_form_name');
+  if (formFilter && formFilter.value) filters.form_name = formFilter.value;
+  
+  // Aggiungi altri filtri se necessario
+  // ...
+  
+  return filters;
+}
+
+function copyShareLink() {
+  const linkInput = document.getElementById('share_link');
+  linkInput.select();
+  linkInput.setSelectionRange(0, 99999); // Per mobile
+  
+  try {
+    document.execCommand('copy');
+    // Feedback visivo
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i> Copiato!';
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-outline-secondary');
+    }, 2000);
+  } catch (err) {
+    console.error('Errore nel copiare il link:', err);
+    alert('Errore nel copiare il link');
+  }
+}
+
+function manageSharedLinks() {
+  // Apre una nuova finestra per gestire i link condivisi
+  window.open('/candidati/shares/manage', '_blank');
+}
+
+// Event listeners per le opzioni di condivisione
+document.addEventListener('DOMContentLoaded', function() {
+  // Password toggle
+  const passwordCheckbox = document.getElementById('share_with_password');
+  const passwordSection = document.getElementById('password_section');
+  
+  if (passwordCheckbox) {
+    passwordCheckbox.addEventListener('change', function() {
+      passwordSection.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+  
+  // Expiry toggle
+  const expiryCheckbox = document.getElementById('share_with_expiry');
+  const expirySection = document.getElementById('expiry_section');
+  
+  if (expiryCheckbox) {
+    expiryCheckbox.addEventListener('change', function() {
+      expirySection.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+  
+  // Update count quando si apre il modal di condivisione
+  const shareModal = document.getElementById('shareModal');
+  if (shareModal) {
+    shareModal.addEventListener('show.bs.modal', function() {
+      updateShareFilteredCount();
+      // Reset del modal
+      document.getElementById('share_link_section').style.display = 'none';
+      document.getElementById('generate_share_btn').style.display = 'inline-block';
+      document.getElementById('manage_shares_btn').style.display = 'none';
+    });
+  }
+});
 </script>
 
 <!-- Modal per la selezione dei campi -->
@@ -2974,6 +3167,113 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
         <button type="button" class="btn btn-primary" onclick="processExport()">Esporta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal condivisione -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Condividi Lista Candidati</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="row mb-3">
+          <div class="col-12">
+            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllShareFields()">Seleziona Tutti</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllShareFields()">Deseleziona Tutti</button>
+          </div>
+        </div>
+        
+        <div class="row">
+          {% for section_name, fields in available_fields.items() %}
+          <div class="col-md-6 mb-4">
+            <h6 class="fw-bold mb-3">{{ section_name }}</h6>
+            {% for field in fields %}
+            <div class="form-check">
+              <input class="form-check-input share-field" type="checkbox" value="{{ field.name }}" id="share_field_{{ field.name }}" {% if field.checked %}checked{% endif %}>
+              <label class="form-check-label" for="share_field_{{ field.name }}">{{ field.label }}</label>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Selezione tipo di condivisione -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6>Tipo di Condivisione</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="share_scope" id="share_all" value="all" checked>
+              <label class="form-check-label" for="share_all">
+                <strong>Tutti i candidati</strong> <small class="text-muted">(include anche candidati archiviati se nella vista archiviati)</small>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="share_scope" id="share_filtered" value="filtered">
+              <label class="form-check-label" for="share_filtered">
+                <strong>Solo candidati attualmente visualizzati</strong> <small class="text-muted" id="share_filtered_count">(include filtri attivi)</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opzioni di condivisione -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h6>Opzioni Condivisione</h6>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="share_with_password" value="1">
+              <label class="form-check-label" for="share_with_password">
+                Proteggi con password
+              </label>
+            </div>
+            <div id="password_section" style="display: none;" class="mt-2">
+              <input type="password" class="form-control" id="share_password" placeholder="Inserisci password">
+            </div>
+            
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="share_with_expiry" value="1">
+              <label class="form-check-label" for="share_with_expiry">
+                Imposta scadenza
+              </label>
+            </div>
+            <div id="expiry_section" style="display: none;" class="mt-2">
+              <select class="form-select" id="share_expiry_days">
+                <option value="1">1 giorno</option>
+                <option value="7" selected>7 giorni</option>
+                <option value="30">30 giorni</option>
+                <option value="90">90 giorni</option>
+                <option value="365">1 anno</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Link generato -->
+        <div id="share_link_section" style="display: none;" class="mt-4">
+          <h6>Link di Condivisione</h6>
+          <div class="input-group">
+            <input type="text" class="form-control" id="share_link" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyShareLink()">
+              <i class="bi bi-clipboard"></i> Copia
+            </button>
+          </div>
+          <small class="text-muted">Condividi questo link con chi vuoi abbia accesso ai dati</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-success" onclick="generateShareLink()" id="generate_share_btn">
+          <i class="bi bi-share"></i> Genera Link
+        </button>
+        <button type="button" class="btn btn-info" onclick="manageSharedLinks()" style="display: none;" id="manage_shares_btn">
+          <i class="bi bi-gear"></i> Gestisci Condivisioni
+        </button>
       </div>
     </div>
   </div>

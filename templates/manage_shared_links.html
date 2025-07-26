@@ -1,0 +1,202 @@
+{% extends "layout_full.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-share me-2"></i>
+                Gestione Link Condivisi
+            </h2>
+        </div>
+
+        {% if share_links %}
+            <div class="row">
+                {% for link in share_links %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-link-45deg me-1"></i>
+                                Link Condiviso #{{ link.id }}
+                            </h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="/shared/{{ link.token }}" target="_blank">
+                                            <i class="bi bi-eye me-2"></i>Visualizza
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" onclick="copyShareUrl('{{ request.url_root.rstrip('/') }}/shared/{{ link.token }}')">
+                                            <i class="bi bi-clipboard me-2"></i>Copia Link
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('main.delete_shared_link', share_id=link.id) }}" 
+                                              style="display: inline;" 
+                                              onsubmit="return confirm('Sei sicuro di voler eliminare questo link condiviso?')">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash me-2"></i>Elimina
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <!-- Informazioni di base -->
+                            <div class="mb-3">
+                                <p class="mb-2">
+                                    <i class="bi bi-calendar me-2 text-muted"></i>
+                                    <strong>Creato:</strong> {{ link.created_at.strftime('%d/%m/%Y alle %H:%M') }}
+                                </p>
+                                
+                                {% if link.expires_at %}
+                                <p class="mb-2">
+                                    <i class="bi bi-clock me-2 text-muted"></i>
+                                    <strong>Scade:</strong> 
+                                    <span class="{% if link.is_expired() %}text-danger{% else %}text-success{% endif %}">
+                                        {{ link.expires_at.strftime('%d/%m/%Y alle %H:%M') }}
+                                        {% if link.is_expired() %}
+                                            <span class="badge bg-danger ms-1">Scaduto</span>
+                                        {% endif %}
+                                    </span>
+                                </p>
+                                {% else %}
+                                <p class="mb-2">
+                                    <i class="bi bi-infinity me-2 text-muted"></i>
+                                    <strong>Scadenza:</strong> Nessuna
+                                </p>
+                                {% endif %}
+                                
+                                <p class="mb-2">
+                                    <i class="bi bi-shield me-2 text-muted"></i>
+                                    <strong>Protezione:</strong> 
+                                    {% if link.password_hash %}
+                                        <span class="badge bg-warning">Password protetto</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Pubblico</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            
+                            <!-- Statistiche -->
+                            <div class="mb-3">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="border-end">
+                                            <h5 class="mb-1 text-primary">{{ link.fields|length }}</h5>
+                                            <small class="text-muted">Campi</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <h5 class="mb-1 text-success">{{ link.accessed_count }}</h5>
+                                        <small class="text-muted">Visualizzazioni</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configurazione -->
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Configurazione:</h6>
+                                <ul class="list-unstyled small">
+                                    <li>
+                                        <i class="bi bi-collection me-1"></i>
+                                        <strong>Scope:</strong> 
+                                        {% if link.scope == 'all' %}
+                                            Tutti i candidati
+                                        {% else %}
+                                            Solo candidati filtrati
+                                        {% endif %}
+                                    </li>
+                                    <li>
+                                        <i class="bi bi-archive me-1"></i>
+                                        <strong>Archivio:</strong> 
+                                        {% if link.archived %}
+                                            Candidati archiviati
+                                        {% else %}
+                                            Candidati attivi
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            {% if link.last_accessed_at %}
+                            <div class="text-muted small">
+                                <i class="bi bi-clock-history me-1"></i>
+                                Ultimo accesso: {{ link.last_accessed_at.strftime('%d/%m/%Y alle %H:%M') }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-footer bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Token: {{ link.token[:8] }}...</small>
+                                <div>
+                                    <a href="/shared/{{ link.token }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary ms-1" 
+                                            onclick="copyShareUrl('{{ request.url_root.rstrip('/') }}/shared/{{ link.token }}')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Stato vuoto -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-share" style="font-size: 4rem; color: #dee2e6;"></i>
+                </div>
+                <h4 class="text-muted mb-3">Nessun link condiviso</h4>
+                <p class="text-muted mb-4">
+                    Non hai ancora creato alcun link di condivisione per le liste candidati.<br>
+                    Vai alla lista candidati e usa il pulsante "Condividi" per creare il tuo primo link.
+                </p>
+                <a href="{{ url_for('main.candidates_list') }}" class="btn btn-primary">
+                    <i class="bi bi-people me-2"></i>
+                    Vai alla Lista Candidati
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast per feedback -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="copyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-check-circle-fill text-success me-2"></i>
+            <strong class="me-auto">Successo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Link copiato negli appunti!
+        </div>
+    </div>
+</div>
+
+<script>
+function copyShareUrl(url) {
+    navigator.clipboard.writeText(url).then(function() {
+        // Mostra il toast
+        const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+        toast.show();
+    }).catch(function(err) {
+        console.error('Errore nel copiare il link: ', err);
+        alert('Errore nel copiare il link');
+    });
+}
+</script>
+{% endblock %}

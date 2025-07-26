@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Candidati Condivisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+    <style>
+        .shared-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .candidate-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+            color: #495057;
+            font-weight: 600;
+        }
+        .info-badge {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .candidate-row {
+            transition: background-color 0.2s ease;
+        }
+        .candidate-row:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .footer-info {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+        .profile-photo-thumb {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .profile-photo-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .no-photo-placeholder {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            border: 2px solid #e9ecef;
+        }
+        .modal-body img {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="shared-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="mb-2">
+                        <i class="bi bi-share me-2"></i>
+                        Lista Candidati Condivisa
+                    </h1>
+                    <p class="mb-0">Visualizzazione pubblica dei candidati selezionati</p>
+                </div>
+                <div class="col-auto">
+                    <div class="info-badge">
+                        <i class="bi bi-people me-1"></i>
+                        {{ total_count }} candidat{{ 'i' if total_count != 1 else 'o' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if candidates %}
+            <div class="candidate-table">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                {% for field in visible_fields %}
+                                <th scope="col">{{ field.label }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in candidates %}
+                            <tr class="candidate-row">
+                                {% for field in visible_fields %}
+                                <td>
+                                    {% set value = candidate.get(field.key) %}
+                                    {% if value %}
+                                        {% if field.key == 'profile_photo' %}
+                                            <img src="{{ value }}" 
+                                                 alt="Foto profilo" 
+                                                 class="profile-photo-thumb" 
+                                                 onclick="showImageModal('{{ value }}', '{{ candidate.get('first_name', '') }} {{ candidate.get('last_name', '') }}')"
+                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; cursor: pointer;">
+                                        {% elif field.key in ['date_of_birth', 'availability_from', 'availability_till', 'id_expiry_date', 'license_issue_date', 'license_expiry_date'] %}
+                                            {{ value }}
+                                        {% elif field.key == 'gender' %}
+                                            {% if value == 'M' %}Maschio{% elif value == 'F' %}Femmina{% else %}{{ value }}{% endif %}
+                                        {% elif field.key == 'auto_moto_munito' %}
+                                            {% if value %}
+                                                <span class="badge bg-success">Sì</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if field.key == 'profile_photo' %}
+                                            <div class="no-photo-placeholder">
+                                                <i class="bi bi-person-circle text-muted" style="font-size: 50px;"></i>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h3>Nessun candidato trovato</h3>
+                <p>Non ci sono candidati che corrispondono ai criteri di questa condivisione.</p>
+            </div>
+        {% endif %}
+
+        <div class="footer-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <i class="bi bi-calendar me-1"></i>
+                        Condiviso il: {{ share_link.created_at.strftime('%d/%m/%Y alle %H:%M') }}
+                    </p>
+                    {% if share_link.expires_at %}
+                    <p class="mb-1">
+                        <i class="bi bi-clock me-1"></i>
+                        Scade il: {{ share_link.expires_at.strftime('%d/%m/%Y alle %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1">
+                        <i class="bi bi-eye me-1"></i>
+                        Visualizzazioni: {{ share_link.accessed_count }}
+                    </p>
+                    {% if share_link.last_accessed_at %}
+                    <p class="mb-1">
+                        <i class="bi bi-clock-history me-1"></i>
+                        Ultimo accesso: {{ share_link.last_accessed_at.strftime('%d/%m/%Y alle %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per l'ingrandimento delle immagini -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Foto Profilo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" alt="Foto profilo" class="img-fluid" style="max-height: 70vh;">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showImageModal(imageUrl, candidateName) {
+            document.getElementById('modalImage').src = imageUrl;
+            document.getElementById('imageModalLabel').textContent = 'Foto Profilo - ' + candidateName;
+            
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>
