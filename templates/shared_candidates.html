@@ -25,6 +25,19 @@
             border-top: none;
             color: #495057;
             font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        .table th:hover {
+            background-color: #e9ecef;
+        }
+        .sort-icon {
+            margin-left: 0.5rem;
+            opacity: 0.5;
+        }
+        .sort-icon.active {
+            opacity: 1;
         }
         .info-badge {
             background: rgba(102, 126, 234, 0.1);
@@ -79,6 +92,60 @@
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+        .search-controls {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        @media (max-width: 768px) {
+            .shared-header {
+                padding: 1rem 0;
+            }
+            .search-controls {
+                padding: 1rem;
+            }
+            .filter-controls {
+                padding: 1rem;
+            }
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            .profile-photo-thumb {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .no-photo-placeholder {
+                width: 40px;
+                height: 40px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -95,7 +162,7 @@
                 <div class="col-auto">
                     <div class="info-badge">
                         <i class="bi bi-people me-1"></i>
-                        {{ total_count }} candidat{{ 'i' if total_count != 1 else 'o' }}
+                        <span id="total-count">{{ total_count }}</span> candidat<span id="plural-suffix">{{ 'i' if total_count != 1 else 'o' }}</span>
                     </div>
                 </div>
             </div>
@@ -104,59 +171,109 @@
 
     <div class="container">
         {% if candidates %}
+            <!-- Statistiche rapide -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="h4 mb-1" id="filtered-count">{{ total_count }}</div>
+                        <div class="small">Candidati visualizzati</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="h4 mb-1" id="available-count">0</div>
+                        <div class="small">Con disponibilità</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="h4 mb-1" id="scored-count">0</div>
+                        <div class="small">Con punteggio</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controlli di ricerca e ordinamento -->
+            <div class="search-controls">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <div class="position-relative">
+                            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" 
+                                   class="form-control ps-5" 
+                                   id="search-input" 
+                                   placeholder="Cerca candidati per nome, email, città...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select" id="sort-select">
+                            <option value="">Ordina per...</option>
+                            <option value="first_name">Nome A-Z</option>
+                            <option value="-first_name">Nome Z-A</option>
+                            <option value="last_name">Cognome A-Z</option>
+                            <option value="-last_name">Cognome Z-A</option>
+                            <option value="-total_score">Punteggio più alto</option>
+                            <option value="total_score">Punteggio più basso</option>
+                            <option value="city">Città A-Z</option>
+                            <option value="occupation">Occupazione A-Z</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabella candidati -->
             <div class="candidate-table">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0" id="candidates-table">
                         <thead>
                             <tr>
                                 {% for field in visible_fields %}
-                                <th scope="col">{{ field.label }}</th>
+                                <th scope="col" class="sortable" data-field="{{ field.key }}">
+                                    {{ field.label }}
+                                    <i class="bi bi-arrow-up-down sort-icon"></i>
+                                </th>
                                 {% endfor %}
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for candidate in candidates %}
-                            <tr class="candidate-row">
-                                {% for field in visible_fields %}
-                                <td>
-                                    {% set value = candidate.get(field.key) %}
-                                    {% if value %}
-                                        {% if field.key == 'profile_photo' %}
-                                            <img src="{{ value }}" 
-                                                 alt="Foto profilo" 
-                                                 class="profile-photo-thumb" 
-                                                 onclick="showImageModal('{{ value }}', '{{ candidate.get('first_name', '') }} {{ candidate.get('last_name', '') }}')"
-                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; cursor: pointer;">
-                                        {% elif field.key in ['date_of_birth', 'availability_from', 'availability_till', 'id_expiry_date', 'license_issue_date', 'license_expiry_date'] %}
-                                            {{ value }}
-                                        {% elif field.key == 'gender' %}
-                                            {% if value == 'M' %}Maschio{% elif value == 'F' %}Femmina{% else %}{{ value }}{% endif %}
-                                        {% elif field.key == 'auto_moto_munito' %}
-                                            {% if value %}
-                                                <span class="badge bg-success">Sì</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">No</span>
-                                            {% endif %}
-                                        {% else %}
-                                            {{ value }}
-                                        {% endif %}
-                                    {% else %}
-                                        {% if field.key == 'profile_photo' %}
-                                            <div class="no-photo-placeholder">
-                                                <i class="bi bi-person-circle text-muted" style="font-size: 50px;"></i>
-                                            </div>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
+                        <tbody id="candidates-tbody">
+                            <!-- I candidati saranno inseriti qui dinamicamente -->
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Messaggio quando non ci sono risultati -->
+                <div id="no-results" class="no-results" style="display: none;">
+                    <i class="bi bi-search"></i>
+                    <h5>Nessun candidato trovato</h5>
+                    <p>Prova a modificare i filtri di ricerca o a usare termini diversi.</p>
+                </div>
             </div>
+
+            <!-- Paginazione -->
+            <div class="pagination-container">
+                <div class="page-size-selector">
+                    <label for="page-size" class="form-label mb-0">Mostra:</label>
+                    <select class="form-select form-select-sm" id="page-size" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="-1">Tutti</option>
+                    </select>
+                    <span class="text-muted">per pagina</span>
+                </div>
+                
+                <nav>
+                    <ul class="pagination mb-0" id="pagination">
+                        <!-- Paginazione dinamica -->
+                    </ul>
+                </nav>
+                
+                <div class="text-muted" id="pagination-info">
+                    <!-- Info paginazione -->
+                </div>
+            </div>
+
         {% else %}
             <div class="empty-state">
                 <i class="bi bi-inbox"></i>
@@ -215,12 +332,332 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Dati candidati dal server
+        let allCandidates = {{ candidates|tojson if candidates else '[]' }};
+        let visibleFields = {{ visible_fields|tojson if visible_fields else '[]' }};
+        let filteredCandidates = [...allCandidates];
+        
+        // Stato paginazione e ricerca
+        let currentPage = 1;
+        let pageSize = 25;
+        let currentSort = { field: '', direction: 'asc' };
+        let searchTerm = '';
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            renderTable();
+            updatePagination();
+            
+            // Event listeners
+            document.getElementById('search-input').addEventListener('input', debounce(applySearch, 300));
+            document.getElementById('sort-select').addEventListener('change', handleSortChange);
+            document.getElementById('page-size').addEventListener('change', handlePageSizeChange);
+            
+            // Event listeners per ordinamento colonne
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.addEventListener('click', () => handleColumnSort(th.dataset.field));
+            });
+        });
+
+        // Funzione per aggiornare le statistiche
+        function updateStats() {
+            const filtered = filteredCandidates.length;
+            const available = filteredCandidates.filter(c => c.availability_from && c.availability_till).length;
+            const scored = filteredCandidates.filter(c => parseFloat(c.total_score || 0) > 0).length;
+            
+            document.getElementById('filtered-count').textContent = filtered;
+            document.getElementById('available-count').textContent = available;
+            document.getElementById('scored-count').textContent = scored;
+            
+            // Aggiorna conteggio totale nell'header
+            document.getElementById('total-count').textContent = filtered;
+            document.getElementById('plural-suffix').textContent = filtered !== 1 ? 'i' : 'o';
+        }
+
+        // Funzione per applicare la ricerca
+        function applySearch() {
+            let filtered = [...allCandidates];
+            
+            // Filtro ricerca
+            searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            if (searchTerm) {
+                filtered = filtered.filter(candidate => {
+                    const searchableFields = ['first_name', 'last_name', 'email', 'city', 'occupation', 'nationality'];
+                    return searchableFields.some(field => 
+                        (candidate[field] || '').toString().toLowerCase().includes(searchTerm)
+                    );
+                });
+            }
+
+            filteredCandidates = filtered;
+            currentPage = 1; // Reset alla prima pagina
+            
+            updateStats();
+            renderTable();
+            updatePagination();
+        }
+
+        // Funzione per ordinamento
+        function handleColumnSort(field) {
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+            
+            // Aggiorna icone di ordinamento
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'bi bi-arrow-up-down sort-icon';
+            });
+            
+            const currentIcon = document.querySelector(`[data-field="${field}"] .sort-icon`);
+            if (currentIcon) {
+                currentIcon.className = `bi bi-arrow-${currentSort.direction === 'asc' ? 'up' : 'down'} sort-icon active`;
+            }
+            
+            sortCandidates();
+            renderTable();
+            updatePagination();
+        }
+
+        function handleSortChange() {
+            const select = document.getElementById('sort-select');
+            const value = select.value;
+            
+            if (!value) {
+                currentSort = { field: '', direction: 'asc' };
+            } else {
+                const isDescending = value.startsWith('-');
+                currentSort.field = isDescending ? value.substring(1) : value;
+                currentSort.direction = isDescending ? 'desc' : 'asc';
+            }
+            
+            // Aggiorna icone di ordinamento
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'bi bi-arrow-up-down sort-icon';
+            });
+            
+            if (currentSort.field) {
+                const currentIcon = document.querySelector(`[data-field="${currentSort.field}"] .sort-icon`);
+                if (currentIcon) {
+                    currentIcon.className = `bi bi-arrow-${currentSort.direction === 'asc' ? 'up' : 'down'} sort-icon active`;
+                }
+            }
+            
+            sortCandidates();
+            renderTable();
+            updatePagination();
+        }
+
+        function sortCandidates() {
+            if (!currentSort.field) return;
+            
+            filteredCandidates.sort((a, b) => {
+                let valueA = a[currentSort.field] || '';
+                let valueB = b[currentSort.field] || '';
+                
+                // Gestione speciale per punteggi numerici
+                if (currentSort.field === 'total_score') {
+                    valueA = parseFloat(valueA) || 0;
+                    valueB = parseFloat(valueB) || 0;
+                } else {
+                    valueA = valueA.toString().toLowerCase();
+                    valueB = valueB.toString().toLowerCase();
+                }
+                
+                if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Funzione per gestire il cambio dimensione pagina
+        function handlePageSizeChange() {
+            pageSize = parseInt(document.getElementById('page-size').value);
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+
+        // Funzione per renderizzare la tabella
+        function renderTable() {
+            const tbody = document.getElementById('candidates-tbody');
+            const noResults = document.getElementById('no-results');
+            
+            if (filteredCandidates.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            const start = pageSize === -1 ? 0 : (currentPage - 1) * pageSize;
+            const end = pageSize === -1 ? filteredCandidates.length : start + pageSize;
+            const pageData = filteredCandidates.slice(start, end);
+            
+            tbody.innerHTML = pageData.map(candidate => {
+                return `<tr class="candidate-row">
+                    ${visibleFields.map(field => {
+                        const value = candidate[field.key];
+                        return `<td>${formatFieldValue(field.key, value, candidate)}</td>`;
+                    }).join('')}
+                </tr>`;
+            }).join('');
+        }
+
+        // Funzione per formattare i valori dei campi
+        function formatFieldValue(fieldKey, value, candidate) {
+            if (!value && value !== 0) {
+                if (fieldKey === 'profile_photo') {
+                    return `<div class="no-photo-placeholder">
+                        <i class="bi bi-person-circle text-muted" style="font-size: 40px;"></i>
+                    </div>`;
+                } else if (fieldKey === 'total_score') {
+                    return '<span class="badge bg-secondary">0.0</span>';
+                } else {
+                    return '<span class="text-muted">-</span>';
+                }
+            }
+            
+            switch (fieldKey) {
+                case 'profile_photo':
+                    const candidateName = `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim();
+                    return `<img src="${value}" 
+                             alt="Foto profilo" 
+                             class="profile-photo-thumb" 
+                             onclick="showImageModal('${value}', '${candidateName}')"
+                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; cursor: pointer;">`;
+                
+                case 'gender':
+                    if (value === 'M') return 'Maschio';
+                    if (value === 'F') return 'Femmina';
+                    return value;
+                
+                case 'auto_moto_munito':
+                    return value ? '<span class="badge bg-success">Sì</span>' : '<span class="badge bg-secondary">No</span>';
+                
+                case 'total_score':
+                    const score = parseFloat(value);
+                    let badgeClass = 'secondary';
+                    if (score >= 80) badgeClass = 'success';
+                    else if (score >= 60) badgeClass = 'warning';
+                    else if (score >= 40) badgeClass = 'info';
+                    else if (score > 0) badgeClass = 'danger';
+                    return `<span class="badge bg-${badgeClass}">${score.toFixed(1)}</span>`;
+                
+                case 'form_name':
+                    return `<span class="badge bg-info">${value}</span>`;
+                
+                case 'form_category':
+                    return `<span class="badge bg-primary">${value}</span>`;
+                
+                case 'form_subcategory':
+                    return `<span class="badge bg-secondary">${value}</span>`;
+                
+                default:
+                    return value;
+            }
+        }
+
+        // Funzione per aggiornare la paginazione
+        function updatePagination() {
+            const totalItems = filteredCandidates.length;
+            const pagination = document.getElementById('pagination');
+            const paginationInfo = document.getElementById('pagination-info');
+            
+            if (pageSize === -1 || totalItems <= pageSize) {
+                pagination.innerHTML = '';
+                paginationInfo.textContent = `Mostrando tutti i ${totalItems} candidati`;
+                return;
+            }
+            
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalItems);
+            
+            paginationInfo.textContent = `Mostrando ${start}-${end} di ${totalItems} candidati`;
+            
+            // Genera paginazione
+            let paginationHTML = '';
+            
+            // Bottone precedente
+            if (currentPage > 1) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="goToPage(${currentPage - 1})">Precedente</a>
+                </li>`;
+            }
+            
+            // Numeri pagina
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="goToPage(1)">1</a>
+                </li>`;
+                if (startPage > 2) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>
+                </li>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="goToPage(${totalPages})">${totalPages}</a>
+                </li>`;
+            }
+            
+            // Bottone successivo
+            if (currentPage < totalPages) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="goToPage(${currentPage + 1})">Successivo</a>
+                </li>`;
+            }
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // Funzione per andare a una pagina specifica
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+            updatePagination();
+            
+            // Scroll verso l'alto della tabella
+            document.getElementById('candidates-table').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Funzione per mostrare il modal dell'immagine
         function showImageModal(imageUrl, candidateName) {
             document.getElementById('modalImage').src = imageUrl;
             document.getElementById('imageModalLabel').textContent = 'Foto Profilo - ' + candidateName;
             
             const modal = new bootstrap.Modal(document.getElementById('imageModal'));
             modal.show();
+        }
+
+        // Funzione di debounce per la ricerca
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
     </script>
 </body>

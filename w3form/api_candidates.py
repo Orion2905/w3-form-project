@@ -764,3 +764,73 @@ def create_share_link():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@api.route('/shares/cleanup', methods=['POST'])
+@login_required
+def cleanup_expired_shares():
+    """
+    Elimina tutti i link condivisi scaduti dell'utente
+    """
+    from w3form.models import ShareLink
+    
+    try:
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova tutti i link scaduti dell'utente
+        expired_links = ShareLink.query.filter_by(created_by=user_email)\
+                                      .filter(ShareLink.expires_at < datetime.utcnow())\
+                                      .all()
+        
+        count = len(expired_links)
+        
+        # Elimina i link scaduti
+        for link in expired_links:
+            db.session.delete(link)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'deleted_count': count,
+            'message': f'Eliminati {count} link scaduti'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@api.route('/shares/<int:share_id>/extend', methods=['POST'])
+@login_required
+def extend_share_expiry(share_id):
+    """
+    Estende la scadenza di un link condiviso
+    """
+    from w3form.models import ShareLink
+    from datetime import timedelta
+    
+    try:
+        data = request.get_json()
+        days = int(data.get('days', 7))
+        
+        share_link = ShareLink.query.get_or_404(share_id)
+        
+        # Controlla che l'utente sia il proprietario
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        if share_link.created_by != user_email:
+            return jsonify({'success': False, 'error': 'Non autorizzato'}), 403
+        
+        # Estende la scadenza
+        share_link.expires_at = datetime.utcnow() + timedelta(days=days)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'new_expiry': share_link.expires_at.isoformat(),
+            'message': f'Scadenza estesa di {days} giorni'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

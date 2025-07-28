@@ -5,6 +5,7 @@
   <h2 class="mb-4">Modifica Candidato</h2>
   <form method="post">
     <div class="row">
+      <!-- Colonna sinistra -->
       <div class="col-md-6">
         <div class="mb-3">
           <label for="first_name" class="form-label">Nome</label>
@@ -23,13 +24,137 @@
           <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ candidate.phone_number }}">
         </div>
         <div class="mb-3">
+          <label for="date_of_birth" class="form-label">Data di nascita</label>
+          <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ candidate.date_of_birth.strftime('%Y-%m-%d') if candidate.date_of_birth else '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="gender" class="form-label">Genere</label>
+          <select class="form-select" id="gender" name="gender">
+            <option value="">Seleziona...</option>
+            {% if dropdown_options.get('gender') %}
+              {% for option in dropdown_options.gender %}
+                <option value="{{ option }}" {% if candidate.gender == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="Maschio" {% if candidate.gender == 'Maschio' %}selected{% endif %}>Maschio</option>
+              <option value="Femmina" {% if candidate.gender == 'Femmina' %}selected{% endif %}>Femmina</option>
+              <option value="Altro" {% if candidate.gender == 'Altro' %}selected{% endif %}>Altro</option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="marital_status" class="form-label">Stato civile</label>
+          <select class="form-select" id="marital_status" name="marital_status">
+            <option value="">Seleziona...</option>
+            {% if dropdown_options.get('marital_status') %}
+              {% for option in dropdown_options.marital_status %}
+                <option value="{{ option }}" {% if candidate.marital_status == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="Single" {% if candidate.marital_status == 'Single' %}selected{% endif %}>Single</option>
+              <option value="Sposato/a" {% if candidate.marital_status == 'Sposato/a' %}selected{% endif %}>Sposato/a</option>
+              <option value="Divorziato/a" {% if candidate.marital_status == 'Divorziato/a' %}selected{% endif %}>Divorziato/a</option>
+              <option value="Vedovo/a" {% if candidate.marital_status == 'Vedovo/a' %}selected{% endif %}>Vedovo/a</option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="place_of_birth" class="form-label">Luogo di nascita</label>
+          <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" value="{{ candidate.place_of_birth }}">
+        </div>
+        <div class="mb-3">
+          <label for="residence" class="form-label">Residenza</label>
+          <input type="text" class="form-control" id="residence" name="residence" value="{{ candidate.residence }}">
+        </div>
+        <div class="mb-3">
           <label for="come_sei_arrivato" class="form-label">Come sei arrivato a noi?</label>
-          <input type="text" class="form-control" id="come_sei_arrivato" name="come_sei_arrivato" value="{{ candidate.come_sei_arrivato }}">
+          <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato">
+            <option value="">Seleziona...</option>
+            {% if dropdown_options.get('come_sei_arrivato') %}
+              {% for option in dropdown_options.come_sei_arrivato %}
+                <option value="{{ option }}" {% if candidate.come_sei_arrivato == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="{{ candidate.come_sei_arrivato }}" {% if candidate.come_sei_arrivato %}selected{% endif %}>{{ candidate.come_sei_arrivato }}</option>
+            {% endif %}
+          </select>
+        </div>
+      </div>
+      
+      <!-- Colonna destra -->
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label for="emergency_contact_name" class="form-label">Nome contatto emergenza</label>
+          <input type="text" class="form-control" id="emergency_contact_name" name="emergency_contact_name" value="{{ candidate.emergency_contact_name }}">
+        </div>
+        <div class="mb-3">
+          <label for="emergency_contact_phone" class="form-label">Telefono contatto emergenza</label>
+          <input type="text" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ candidate.emergency_contact_phone }}">
+        </div>
+        <div class="mb-3">
+          <label for="emergency_contact_relationship" class="form-label">Relazione contatto emergenza</label>
+          <input type="text" class="form-control" id="emergency_contact_relationship" name="emergency_contact_relationship" value="{{ candidate.emergency_contact_relationship }}">
+        </div>
+        <div class="mb-3">
+          <label for="education_level" class="form-label">Livello di istruzione</label>
+          <select class="form-select" id="education_level" name="education_level">
+            <option value="">Seleziona...</option>
+            {% if dropdown_options.get('education_level') %}
+              {% for option in dropdown_options.education_level %}
+                <option value="{{ option }}" {% if candidate.education_level == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="Licenza elementare" {% if candidate.education_level == 'Licenza elementare' %}selected{% endif %}>Licenza elementare</option>
+              <option value="Licenza media" {% if candidate.education_level == 'Licenza media' %}selected{% endif %}>Licenza media</option>
+              <option value="Diploma superiore" {% if candidate.education_level == 'Diploma superiore' %}selected{% endif %}>Diploma superiore</option>
+              <option value="Laurea triennale" {% if candidate.education_level == 'Laurea triennale' %}selected{% endif %}>Laurea triennale</option>
+              <option value="Laurea magistrale" {% if candidate.education_level == 'Laurea magistrale' %}selected{% endif %}>Laurea magistrale</option>
+              <option value="Master/Dottorato" {% if candidate.education_level == 'Master/Dottorato' %}selected{% endif %}>Master/Dottorato</option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="work_experience" class="form-label">Esperienza lavorativa (anni)</label>
+          <input type="number" class="form-control" id="work_experience" name="work_experience" value="{{ candidate.work_experience }}" min="0" step="0.5">
+        </div>
+        <div class="mb-3">
+          <label for="availability" class="form-label">Disponibilità</label>
+          <select class="form-select" id="availability" name="availability">
+            <option value="">Seleziona...</option>
+            {% if dropdown_options.get('availability') %}
+              {% for option in dropdown_options.availability %}
+                <option value="{{ option }}" {% if candidate.availability == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="Immediata" {% if candidate.availability == 'Immediata' %}selected{% endif %}>Immediata</option>
+              <option value="1 settimana" {% if candidate.availability == '1 settimana' %}selected{% endif %}>1 settimana</option>
+              <option value="2 settimane" {% if candidate.availability == '2 settimane' %}selected{% endif %}>2 settimane</option>
+              <option value="1 mese" {% if candidate.availability == '1 mese' %}selected{% endif %}>1 mese</option>
+              <option value="Da concordare" {% if candidate.availability == 'Da concordare' %}selected{% endif %}>Da concordare</option>
+            {% endif %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="skills" class="form-label">Competenze</label>
+          <textarea class="form-control" id="skills" name="skills" rows="3">{{ candidate.skills }}</textarea>
+        </div>
+        <div class="mb-3">
+          <label for="notes" class="form-label">Note</label>
+          <textarea class="form-control" id="notes" name="notes" rows="3">{{ candidate.notes }}</textarea>
+        </div>
+        <div class="mb-3">
+          <label for="score" class="form-label">Punteggio (1-10)</label>
+          <input type="number" class="form-control" id="score" name="score" value="{{ candidate.score }}" min="1" max="10" step="0.1">
         </div>
       </div>
     </div>
-    <button type="submit" class="btn btn-success">Salva</button>
-    <a href="{{ url_for('main.candidates_list') }}" class="btn btn-secondary ms-2">Annulla</a>
+    
+    <div class="row mt-4">
+      <div class="col-12">
+        <button type="submit" class="btn btn-success">Salva modifiche</button>
+        <a href="{{ url_for('main.candidate_profile', candidate_id=candidate.id) }}" class="btn btn-secondary ms-2">Annulla</a>
+      </div>
+    </div>
   </form>
 </div>
 {% endblock %}

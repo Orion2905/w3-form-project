@@ -1,6 +1,48 @@
-{% extends "layout_full.html" %}
+{% extends "layout_sidebar.html" %}
 
 {% block content %}
+<style>
+#bulkActionBar {
+    border-left: 4px solid #0d6efd;
+    transition: all 0.3s ease;
+}
+
+#bulkActionBar .card-body {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.share-link-card {
+    transition: all 0.2s ease;
+}
+
+.share-link-card:has(input[type="checkbox"]:checked) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-color: #0d6efd;
+}
+
+.form-check-input:checked + .form-check-label,
+.form-check-input:checked ~ h6 {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.bulk-action-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.bulk-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+#selectAll:indeterminate {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+}
+</style>
+
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -8,18 +50,141 @@
                 <i class="bi bi-share me-2"></i>
                 Gestione Link Condivisi
             </h2>
+            <div>
+                <button class="btn btn-outline-warning me-2" onclick="cleanupExpiredLinks()">
+                    <i class="bi bi-trash me-2"></i>
+                    Pulisci Scaduti
+                </button>
+                <a href="{{ url_for('main.candidates_list') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Crea Nuovo Link
+                </a>
+            </div>
         </div>
+
+        <!-- Statistiche generali -->
+        {% if share_links %}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary">{{ share_links|length }}</h3>
+                        <p class="text-muted mb-0">Link Totali</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success">{{ (share_links|rejectattr('expires_at')|list|length) + (share_links|selectattr('expires_at')|rejectattr('is_expired')|list|length) }}</h3>
+                        <p class="text-muted mb-0">Link Attivi</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-warning">{{ share_links|selectattr('expires_at')|select('is_expired')|list|length }}</h3>
+                        <p class="text-muted mb-0">Link Scaduti</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info">{{ share_links|sum(attribute='accessed_count') }}</h3>
+                        <p class="text-muted mb-0">Visualizzazioni Totali</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtri e ricerca -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filterStatus" class="form-label">Stato</label>
+                        <select class="form-select" id="filterStatus" onchange="filterLinks()">
+                            <option value="all">Tutti</option>
+                            <option value="active">Solo Attivi</option>
+                            <option value="expired">Solo Scaduti</option>
+                            <option value="protected">Solo Protetti</option>
+                            <option value="public">Solo Pubblici</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sortBy" class="form-label">Ordina per</label>
+                        <select class="form-select" id="sortBy" onchange="sortLinks()">
+                            <option value="created_desc">Più recenti</option>
+                            <option value="created_asc">Più vecchi</option>
+                            <option value="accessed_desc">Più visualizzati</option>
+                            <option value="accessed_asc">Meno visualizzati</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="searchInput" class="form-label">Cerca</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Cerca nei link..." onkeyup="searchLinks()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Selezione</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            <label class="form-check-label" for="selectAll">
+                                Seleziona tutto
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra azioni bulk (nascosta inizialmente) -->
+        <div id="bulkActionBar" class="card mb-4" style="display: none;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span id="selectedCount">0</span> elementi selezionati
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-warning bulk-action-btn" onclick="bulkExtendExpiry()">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Estendi Scadenza
+                        </button>
+                        <button type="button" class="btn btn-outline-info bulk-action-btn" onclick="bulkToggleProtection()">
+                            <i class="bi bi-shield me-1"></i>
+                            Cambia Protezione
+                        </button>
+                        <button type="button" class="btn btn-outline-success bulk-action-btn" onclick="bulkExport()">
+                            <i class="bi bi-download me-1"></i>
+                            Esporta
+                        </button>
+                        <button type="button" class="btn btn-outline-danger bulk-action-btn" onclick="bulkDelete()">
+                            <i class="bi bi-trash me-1"></i>
+                            Elimina
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         {% if share_links %}
             <div class="row">
                 {% for link in share_links %}
-                <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="col-lg-6 col-xl-4 mb-4 share-link-card" 
+                     data-created="{{ link.created_at.isoformat() }}" 
+                     data-accessed="{{ link.accessed_count }}">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="bi bi-link-45deg me-1"></i>
-                                Link Condiviso #{{ link.id }}
-                            </h6>
+                            <div class="d-flex align-items-center">
+                                <input class="form-check-input me-3" type="checkbox" value="{{ link.id }}" 
+                                       id="link_{{ link.id }}" onchange="updateBulkActionBar()" data-link-checkbox>
+                                <h6 class="mb-0">
+                                    <i class="bi bi-link-45deg me-1"></i>
+                                    Link Condiviso #{{ link.id }}
+                                </h6>
+                            </div>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots"></i>
@@ -35,6 +200,13 @@
                                             <i class="bi bi-clipboard me-2"></i>Copia Link
                                         </button>
                                     </li>
+                                    {% if link.expires_at and link.is_expired() %}
+                                    <li>
+                                        <button class="dropdown-item text-warning" onclick="extendExpiry({{ link.id }})">
+                                            <i class="bi bi-clock-history me-2"></i>Estendi Scadenza
+                                        </button>
+                                    </li>
+                                    {% endif %}
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form method="POST" action="{{ url_for('main.delete_shared_link', share_id=link.id) }}" 
@@ -197,6 +369,326 @@ function copyShareUrl(url) {
         console.error('Errore nel copiare il link: ', err);
         alert('Errore nel copiare il link');
     });
+}
+
+// Funzioni per filtri e ricerca
+function filterLinks() {
+    const filter = document.getElementById('filterStatus').value;
+    const cards = document.querySelectorAll('.share-link-card');
+    
+    cards.forEach(card => {
+        let show = true;
+        
+        switch(filter) {
+            case 'active':
+                show = !card.querySelector('.badge-danger');
+                break;
+            case 'expired':
+                show = !!card.querySelector('.badge-danger');
+                break;
+            case 'protected':
+                show = !!card.querySelector('.badge-warning');
+                break;
+            case 'public':
+                show = !!card.querySelector('.badge-info') && !card.querySelector('.badge-warning');
+                break;
+            case 'all':
+            default:
+                show = true;
+                break;
+        }
+        
+        card.style.display = show ? 'block' : 'none';
+    });
+}
+
+function sortLinks() {
+    const sortBy = document.getElementById('sortBy').value;
+    const container = document.querySelector('.row:has(.share-link-card)');
+    const cards = Array.from(document.querySelectorAll('.share-link-card'));
+    
+    if (cards.length === 0) return;
+    
+    cards.sort((a, b) => {
+        switch(sortBy) {
+            case 'created_desc':
+                return new Date(b.dataset.created) - new Date(a.dataset.created);
+            case 'created_asc':
+                return new Date(a.dataset.created) - new Date(b.dataset.created);
+            case 'accessed_desc':
+                return parseInt(b.dataset.accessed) - parseInt(a.dataset.accessed);
+            case 'accessed_asc':
+                return parseInt(a.dataset.accessed) - parseInt(b.dataset.accessed);
+            default:
+                return 0;
+        }
+    });
+    
+    cards.forEach(card => container.appendChild(card));
+}
+
+function searchLinks() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.share-link-card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+// Pulizia link scaduti
+function cleanupExpiredLinks() {
+    if (!confirm('Sei sicuro di voler eliminare tutti i link scaduti? Questa azione non può essere annullata.')) {
+        return;
+    }
+    
+    fetch('/api/candidates/shares/cleanup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Errore: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore nella pulizia dei link');
+    });
+}
+
+// Estensione scadenza
+function extendExpiry(shareId) {
+    const days = prompt('Per quanti giorni vuoi estendere la scadenza?', '7');
+    if (!days || isNaN(days) || days <= 0) {
+        return;
+    }
+    
+    fetch(`/api/candidates/shares/${shareId}/extend`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ days: parseInt(days) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Errore: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore nell\'estensione della scadenza');
+    });
+}
+
+// Funzioni per gestione selezione multipla
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const linkCheckboxes = document.querySelectorAll('[data-link-checkbox]');
+    
+    linkCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateBulkActionBar();
+}
+
+function updateBulkActionBar() {
+    const selectedCheckboxes = document.querySelectorAll('[data-link-checkbox]:checked');
+    const bulkActionBar = document.getElementById('bulkActionBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const allCheckboxes = document.querySelectorAll('[data-link-checkbox]');
+    
+    // Aggiorna il contatore
+    selectedCount.textContent = selectedCheckboxes.length;
+    
+    // Mostra/nascondi la barra delle azioni bulk
+    if (selectedCheckboxes.length > 0) {
+        bulkActionBar.style.display = 'block';
+    } else {
+        bulkActionBar.style.display = 'none';
+    }
+    
+    // Aggiorna lo stato del checkbox "Seleziona tutto"
+    if (selectedCheckboxes.length === allCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (selectedCheckboxes.length > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+}
+
+function getSelectedLinkIds() {
+    const selectedCheckboxes = document.querySelectorAll('[data-link-checkbox]:checked');
+    return Array.from(selectedCheckboxes).map(cb => cb.value);
+}
+
+// Azioni bulk
+function bulkDelete() {
+    const selectedIds = getSelectedLinkIds();
+    if (selectedIds.length === 0) {
+        alert('Seleziona almeno un link da eliminare');
+        return;
+    }
+    
+    if (!confirm(`Sei sicuro di voler eliminare ${selectedIds.length} link selezionati? Questa azione non può essere annullata.`)) {
+        return;
+    }
+    
+    fetch('/api/candidates/shares/bulk-delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ link_ids: selectedIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Errore: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore nell\'eliminazione dei link');
+    });
+}
+
+function bulkExtendExpiry() {
+    const selectedIds = getSelectedLinkIds();
+    if (selectedIds.length === 0) {
+        alert('Seleziona almeno un link per estendere la scadenza');
+        return;
+    }
+    
+    const days = prompt('Per quanti giorni vuoi estendere la scadenza dei link selezionati?', '7');
+    if (!days || isNaN(days) || days <= 0) {
+        return;
+    }
+    
+    fetch('/api/candidates/shares/bulk-extend', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ link_ids: selectedIds, days: parseInt(days) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Errore: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore nell\'estensione della scadenza');
+    });
+}
+
+function bulkToggleProtection() {
+    const selectedIds = getSelectedLinkIds();
+    if (selectedIds.length === 0) {
+        alert('Seleziona almeno un link per modificare la protezione');
+        return;
+    }
+    
+    const action = confirm('Vuoi aggiungere o rimuovere la protezione password?\n\nOK = Aggiungi password\nAnnulla = Rimuovi password');
+    let password = null;
+    
+    if (action) {
+        password = prompt('Inserisci la password per proteggere i link selezionati:');
+        if (!password || password.trim() === '') {
+            return;
+        }
+    }
+    
+    fetch('/api/candidates/shares/bulk-protection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            link_ids: selectedIds, 
+            action: action ? 'add' : 'remove',
+            password: password 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Errore: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore nella modifica della protezione');
+    });
+}
+
+function bulkExport() {
+    const selectedIds = getSelectedLinkIds();
+    if (selectedIds.length === 0) {
+        alert('Seleziona almeno un link da esportare');
+        return;
+    }
+    
+    // Crea un CSV con le informazioni dei link selezionati
+    const csvData = [];
+    csvData.push(['ID', 'Token', 'Titolo', 'Creato', 'Scadenza', 'Accessi', 'URL']);
+    
+    selectedIds.forEach(linkId => {
+        const card = document.querySelector(`[data-link-checkbox][value="${linkId}"]`).closest('.share-link-card');
+        const cardText = card.textContent;
+        
+        // Estrai le informazioni dalla card (semplificato)
+        const token = cardText.match(/Token: (\w+)/)?.[1] || '';
+        const created = card.querySelector('[data-created]')?.getAttribute('data-created') || '';
+        const accessed = card.querySelector('[data-accessed]')?.getAttribute('data-accessed') || '0';
+        const url = `${window.location.origin}/shared/${token}`;
+        
+        csvData.push([linkId, token, `Link #${linkId}`, created, '', accessed, url]);
+    });
+    
+    // Crea e scarica il file CSV
+    const csvContent = csvData.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `shared_links_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 </script>
 {% endblock %}

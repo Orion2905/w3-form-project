@@ -17,6 +17,12 @@
         <span class="sidebar-text">Elenco Candidati</span>
       </a>
     </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2 {% if 'shares' in request.endpoint and 'manage' in request.endpoint %}active{% endif %}" href="/candidati/shares/manage">
+        <span class="sidebar-icon me-2"><i class="bi bi-share"></i></span>
+        <span class="sidebar-text">Link Condivisi</span>
+      </a>
+    </li>
     {% if not current_user.is_ospite() %}
     <li class="nav-item mb-2">
       <a class="nav-link d-flex align-items-center px-3 py-2 {% if 'form' in request.endpoint %}active{% endif %}" href="/forms">

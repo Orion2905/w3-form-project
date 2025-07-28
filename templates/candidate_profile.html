@@ -73,13 +73,20 @@
           <h5 class="card-title">{{ candidate.first_name }} {{ candidate.last_name }}</h5>
           {% if candidate.form %}
             <div class="mb-2">
+              <small class="text-muted d-block">Form compilato</small>
               <span class="badge bg-info">{{ candidate.form.name }}</span>
             </div>
             {% if candidate.form.category %}
-              <div class="d-flex flex-wrap justify-content-center gap-1">
-                <span class="badge bg-primary">{{ candidate.form.category }}</span>
+              <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
+                <div class="text-center">
+                  <small class="text-muted d-block">Categoria</small>
+                  <span class="badge bg-primary">{{ candidate.form.category }}</span>
+                </div>
                 {% if candidate.form.subcategory %}
-                  <span class="badge bg-secondary">{{ candidate.form.subcategory }}</span>
+                  <div class="text-center">
+                    <small class="text-muted d-block">Evento</small>
+                    <span class="badge bg-secondary">{{ candidate.form.subcategory }}</span>
+                  </div>
                 {% endif %}
               </div>
             {% endif %}
@@ -630,9 +637,15 @@
                   <label class="form-label">Genere</label>
                   <select class="form-select" name="gender">
                     <option value="">Seleziona...</option>
-                    <option value="Maschio" {{ 'selected' if candidate.gender == 'Maschio' }}>Maschio</option>
-                    <option value="Femmina" {{ 'selected' if candidate.gender == 'Femmina' }}>Femmina</option>
-                    <option value="Altro" {{ 'selected' if candidate.gender == 'Altro' }}>Altro</option>
+                    {% if dropdown_options.get('gender') %}
+                      {% for option in dropdown_options.gender %}
+                        <option value="{{ option }}" {{ 'selected' if candidate.gender == option }}>{{ option }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="Maschio" {{ 'selected' if candidate.gender == 'Maschio' }}>Maschio</option>
+                      <option value="Femmina" {{ 'selected' if candidate.gender == 'Femmina' }}>Femmina</option>
+                      <option value="Altro" {{ 'selected' if candidate.gender == 'Altro' }}>Altro</option>
+                    {% endif %}
                   </select>
                 </div>
                 <div class="col-sm-6">
@@ -652,16 +665,31 @@
                   <label class="form-label">Stato civile</label>
                   <select class="form-select" name="marital_status">
                     <option value="">Seleziona...</option>
-                    <option value="Single" {{ 'selected' if candidate.marital_status == 'Single' }}>Single</option>
-                    <option value="Fidanzato/a" {{ 'selected' if candidate.marital_status == 'Fidanzato/a' }}>Fidanzato/a</option>
-                    <option value="Sposato/a" {{ 'selected' if candidate.marital_status == 'Sposato/a' }}>Sposato/a</option>
-                    <option value="Divorziato/a" {{ 'selected' if candidate.marital_status == 'Divorziato/a' }}>Divorziato/a</option>
-                    <option value="Vedovo/a" {{ 'selected' if candidate.marital_status == 'Vedovo/a' }}>Vedovo/a</option>
+                    {% if dropdown_options.get('marital_status') %}
+                      {% for option in dropdown_options.marital_status %}
+                        <option value="{{ option }}" {{ 'selected' if candidate.marital_status == option }}>{{ option }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="Single" {{ 'selected' if candidate.marital_status == 'Single' }}>Single</option>
+                      <option value="Fidanzato/a" {{ 'selected' if candidate.marital_status == 'Fidanzato/a' }}>Fidanzato/a</option>
+                      <option value="Sposato/a" {{ 'selected' if candidate.marital_status == 'Sposato/a' }}>Sposato/a</option>
+                      <option value="Divorziato/a" {{ 'selected' if candidate.marital_status == 'Divorziato/a' }}>Divorziato/a</option>
+                      <option value="Vedovo/a" {{ 'selected' if candidate.marital_status == 'Vedovo/a' }}>Vedovo/a</option>
+                    {% endif %}
                   </select>
                 </div>
                 <div class="col-sm-6">
                   <label class="form-label">Come sei arrivato a noi</label>
-                  <input type="text" class="form-control" name="come_sei_arrivato" value="{{ candidate.come_sei_arrivato or '' }}">
+                  <select class="form-select" name="come_sei_arrivato">
+                    <option value="">Seleziona...</option>
+                    {% if dropdown_options.get('come_sei_arrivato') %}
+                      {% for option in dropdown_options.come_sei_arrivato %}
+                        <option value="{{ option }}" {{ 'selected' if candidate.come_sei_arrivato == option }}>{{ option }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="{{ candidate.come_sei_arrivato }}" {{ 'selected' if candidate.come_sei_arrivato }}>{{ candidate.come_sei_arrivato }}</option>
+                    {% endif %}
+                  </select>
                 </div>
                 <div class="col-sm-3">
                   <label class="form-label">Altezza (cm)</label>
@@ -871,7 +899,7 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label">Altre esperienze</label>
-                  <textarea class="form-control" name="other_experience" rows="3">{{ candidate.other_experience or '' }}</textarea>
+                  <textarea class="form-control" name="other_experience" rows="2">{{ candidate.other_experience or '' }}</textarea>
                 </div>
               </div>
             </div>
@@ -903,6 +931,32 @@ function showImgModal(src) {
   new bootstrap.Modal(document.getElementById('imgModal')).show();
 }
 
+// Funzione per mostrare alert Bootstrap
+function showAlert(message, type = 'info') {
+  // Rimuovi eventuali alert esistenti
+  const existingAlerts = document.querySelectorAll('.alert-floating');
+  existingAlerts.forEach(alert => alert.remove());
+  
+  // Crea il nuovo alert
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-floating`;
+  alertDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Aggiungi al body
+  document.body.appendChild(alertDiv);
+  
+  // Rimuovi automaticamente dopo 5 secondi
+  setTimeout(() => {
+    if (alertDiv && alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 5000);
+}
+
 // Chiudi la modal immagine cliccando sull'immagine stessa
 document.addEventListener('DOMContentLoaded', function() {
   const imgModal = document.getElementById('imgModal');
@@ -916,13 +970,82 @@ document.addEventListener('DOMContentLoaded', function() {
   const editForm = document.getElementById('editCandidateForm');
   if (editForm) {
     editForm.addEventListener('submit', function(e) {
+      e.preventDefault(); // Impedisci submit normale
+      
       // Mostra un loading
       const submitBtn = this.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
       submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Salvando...';
       submitBtn.disabled = true;
       
-      // Il form si invia normalmente - non usiamo preventDefault()
+      // Prepara i dati del form
+      const formData = new FormData(this);
+      const candidateId = {{ candidate.id }};
+      
+      // Converti FormData in oggetto JSON per l'API
+      const payload = {};
+      for (let [key, value] of formData.entries()) {
+        payload[key] = value;
+      }
+      
+      console.log('=== INVIO MODIFICA CANDIDATO (PROFILO) ===');
+      console.log('Candidate ID:', candidateId);
+      console.log('Payload:', payload);
+      
+      // Invia richiesta AJAX all'API
+      fetch(`/api/candidates/${candidateId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(async response => {
+        console.log('=== RISPOSTA API DETTAGLIATA (PROFILO) ===');
+        console.log('Status:', response.status);
+        console.log('StatusText:', response.statusText);
+        console.log('Headers:', response.headers);
+        console.log('Response OK:', response.ok);
+        
+        const result = await response.json();
+        console.log('Result completo:', result);
+        console.log('Result.success:', result.success);
+        console.log('Result.error:', result.error);
+        console.log('Result.message:', result.message);
+        
+        if (response.ok && result.success) {
+          // Successo - mostra messaggio e ricarica la pagina
+          showAlert('Candidato aggiornato con successo!', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          // Errore dall'API
+          console.error('=== ERRORE DALL\'API (PROFILO) ===');
+          console.error('Response status:', response.status);
+          console.error('Response statusText:', response.statusText);
+          console.error('Result object:', result);
+          const errorMessage = result.error || 'Errore durante l\'aggiornamento del candidato';
+          console.error('Error message finale:', errorMessage);
+          showAlert(errorMessage, 'danger');
+          
+          // Ripristina il pulsante
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('=== ERRORE JAVASCRIPT (PROFILO) ===');
+        console.error('Tipo errore:', error.constructor.name);
+        console.error('Messaggio errore:', error.message);
+        console.error('Stack trace:', error.stack);
+        console.error('Errore completo:', error);
+        showAlert('Errore di connessione durante l\'aggiornamento del candidato', 'danger');
+        
+        // Ripristina il pulsante
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      });
     });
   }
 });

@@ -98,6 +98,8 @@ def get_available_export_fields():
             {'name': 'archived', 'label': 'Archiviato', 'checked': False},
             {'name': 'created_at', 'label': 'Data di Creazione', 'checked': False},
             {'name': 'form_name', 'label': 'Nome Form', 'checked': False},
+            {'name': 'form_category', 'label': 'Categoria Form', 'checked': False},
+            {'name': 'form_subcategory', 'label': 'Sottocategoria Form', 'checked': False},
             {'name': 'total_score', 'label': 'Punteggio Totale', 'checked': False},
         ]
     }
@@ -282,7 +284,15 @@ def edit_candidate(candidate_id):
         {'name': 'Modifica', 'url': None}
     ]
     
-    return render_template('edit_candidate.html', candidate=candidate, breadcrumbs=breadcrumbs)
+    # Ottieni le opzioni dropdown dal form del candidato
+    dropdown_options = {}
+    if candidate.form_id and candidate.form:
+        dropdown_options = candidate.form.dropdown_options or {}
+    
+    return render_template('edit_candidate.html', 
+                         candidate=candidate, 
+                         breadcrumbs=breadcrumbs,
+                         dropdown_options=dropdown_options)
 
 @main.route('/esporta/pdf')
 @login_required
@@ -612,67 +622,125 @@ def api_get_filter_options():
 @login_required
 @role_required('intervistatore')
 def api_update_candidate(candidate_id):
-    c = Candidate.query.get_or_404(candidate_id)
-    data = request.json
-    c.first_name = data.get('first_name', c.first_name)
-    c.last_name = data.get('last_name', c.last_name)
-    c.email = data.get('email', c.email)
-    c.phone_number = data.get('phone_number', c.phone_number)
-    c.come_sei_arrivato = data.get('come_sei_arrivato', c.come_sei_arrivato)
-    c.gender = data.get('gender', c.gender)
-    c.date_of_birth = data.get('date_of_birth', c.date_of_birth)
-    c.place_of_birth = data.get('place_of_birth', c.place_of_birth)
-    c.nationality = data.get('nationality', c.nationality)
-    c.marital_status = data.get('marital_status', c.marital_status)
-    c.height_cm = data.get('height_cm', c.height_cm)
-    c.weight_kg = data.get('weight_kg', c.weight_kg)
-    c.tshirt_size = data.get('tshirt_size', c.tshirt_size)
-    c.shoe_size_eu = data.get('shoe_size_eu', c.shoe_size_eu)
-    c.address = data.get('address', c.address)
-    c.city = data.get('city', c.city)
-    c.postal_code = data.get('postal_code', c.postal_code)
-    c.country_of_residence = data.get('country_of_residence', c.country_of_residence)
-    c.id_document = data.get('id_document', c.id_document)
-    c.id_number = data.get('id_number', c.id_number)
-    c.id_expiry_date = data.get('id_expiry_date', c.id_expiry_date)
-    c.id_country = data.get('id_country', c.id_country)
-    c.license_country = data.get('license_country', c.license_country)
-    c.license_number = data.get('license_number', c.license_number)
-    c.license_category = data.get('license_category', c.license_category)
-    c.license_issue_date = data.get('license_issue_date', c.license_issue_date)
-    c.license_expiry_date = data.get('license_expiry_date', c.license_expiry_date)
-    c.years_driving_experience = data.get('years_driving_experience', c.years_driving_experience)
-    c.auto_moto_munito = data.get('auto_moto_munito', c.auto_moto_munito)
-    c.occupation = data.get('occupation', c.occupation)
-    c.other_experience = data.get('other_experience', c.other_experience)
-    
-    # Gestione dei nuovi campi data per availability
-    availability_from = data.get('availability_from')
-    if availability_from:
-        try:
-            c.availability_from = datetime.strptime(availability_from, '%Y-%m-%d').date()
-        except:
-            c.availability_from = availability_from if isinstance(availability_from, date) else None
-    
-    availability_till = data.get('availability_till')
-    if availability_till:
-        try:
-            c.availability_till = datetime.strptime(availability_till, '%Y-%m-%d').date()
-        except:
-            c.availability_till = availability_till if isinstance(availability_till, date) else None
-    
-    c.city_availability = data.get('city_availability', c.city_availability)
-    c.additional_document = data.get('additional_document', c.additional_document)
-    c.codice_fiscale = data.get('codice_fiscale', c.codice_fiscale)
-    c.permesso_soggiorno = data.get('permesso_soggiorno', c.permesso_soggiorno)
-    c.language_1 = data.get('language_1', c.language_1)
-    c.proficiency_1 = data.get('proficiency_1', c.proficiency_1)
-    c.language_2 = data.get('language_2', c.language_2)
-    c.proficiency_2 = data.get('proficiency_2', c.proficiency_2)
-    c.language_3 = data.get('language_3', c.language_3)
-    c.proficiency_3 = data.get('proficiency_3', c.proficiency_3)
-    db.session.commit()
-    return jsonify({'success': True})
+    try:
+        c = Candidate.query.get_or_404(candidate_id)
+        data = request.json
+        
+        if not data:
+            return jsonify({'success': False, 'error': 'Nessun dato ricevuto'}), 400
+        
+        c.first_name = data.get('first_name', c.first_name)
+        c.last_name = data.get('last_name', c.last_name)
+        c.email = data.get('email', c.email)
+        c.phone_number = data.get('phone_number', c.phone_number)
+        c.come_sei_arrivato = data.get('come_sei_arrivato', c.come_sei_arrivato)
+        c.gender = data.get('gender', c.gender)
+        
+        # Gestione data di nascita
+        date_of_birth = data.get('date_of_birth')
+        if date_of_birth:
+            try:
+                c.date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                current_app.logger.warning(f"Errore parsing date_of_birth {date_of_birth}")
+                c.date_of_birth = c.date_of_birth  # Mantieni il valore esistente
+        
+        c.place_of_birth = data.get('place_of_birth', c.place_of_birth)
+        c.nationality = data.get('nationality', c.nationality)
+        c.marital_status = data.get('marital_status', c.marital_status)
+        c.height_cm = data.get('height_cm', c.height_cm)
+        c.weight_kg = data.get('weight_kg', c.weight_kg)
+        c.tshirt_size = data.get('tshirt_size', c.tshirt_size)
+        c.shoe_size_eu = data.get('shoe_size_eu', c.shoe_size_eu)
+        c.address = data.get('address', c.address)
+        c.city = data.get('city', c.city)
+        c.postal_code = data.get('postal_code', c.postal_code)
+        c.country_of_residence = data.get('country_of_residence', c.country_of_residence)
+        c.id_document = data.get('id_document', c.id_document)
+        c.id_number = data.get('id_number', c.id_number)
+        
+        # Gestione data scadenza documento
+        id_expiry_date = data.get('id_expiry_date')
+        if id_expiry_date:
+            try:
+                c.id_expiry_date = datetime.strptime(id_expiry_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                current_app.logger.warning(f"Errore parsing id_expiry_date {id_expiry_date}")
+                c.id_expiry_date = c.id_expiry_date  # Mantieni il valore esistente
+        
+        c.id_country = data.get('id_country', c.id_country)
+        c.license_country = data.get('license_country', c.license_country)
+        c.license_number = data.get('license_number', c.license_number)
+        c.license_category = data.get('license_category', c.license_category)
+        
+        # Gestione data rilascio patente
+        license_issue_date = data.get('license_issue_date')
+        if license_issue_date:
+            try:
+                c.license_issue_date = datetime.strptime(license_issue_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                current_app.logger.warning(f"Errore parsing license_issue_date {license_issue_date}")
+                c.license_issue_date = c.license_issue_date  # Mantieni il valore esistente
+        
+        # Gestione data scadenza patente
+        license_expiry_date = data.get('license_expiry_date')
+        if license_expiry_date:
+            try:
+                c.license_expiry_date = datetime.strptime(license_expiry_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                current_app.logger.warning(f"Errore parsing license_expiry_date {license_expiry_date}")
+                c.license_expiry_date = c.license_expiry_date  # Mantieni il valore esistente
+        
+        c.years_driving_experience = data.get('years_driving_experience', c.years_driving_experience)
+        
+        # Gestione speciale per auto_moto_munito - conversione da stringa a booleano
+        auto_moto_value = data.get('auto_moto_munito')
+        if auto_moto_value is not None:
+            if isinstance(auto_moto_value, str):
+                # Converte stringa in booleano
+                c.auto_moto_munito = auto_moto_value.lower() in ['true', '1', 'yes', 'si', 'sì']
+            else:
+                c.auto_moto_munito = bool(auto_moto_value)
+        
+        c.occupation = data.get('occupation', c.occupation)
+        c.other_experience = data.get('other_experience', c.other_experience)
+        
+        # Gestione dei nuovi campi data per availability
+        availability_from = data.get('availability_from')
+        if availability_from:
+            try:
+                c.availability_from = datetime.strptime(availability_from, '%Y-%m-%d').date()
+            except Exception as e:
+                current_app.logger.warning(f"Errore parsing availability_from {availability_from}: {str(e)}")
+                c.availability_from = availability_from if isinstance(availability_from, date) else None
+        
+        availability_till = data.get('availability_till')
+        if availability_till:
+            try:
+                c.availability_till = datetime.strptime(availability_till, '%Y-%m-%d').date()
+            except Exception as e:
+                current_app.logger.warning(f"Errore parsing availability_till {availability_till}: {str(e)}")
+                c.availability_till = availability_till if isinstance(availability_till, date) else None
+        
+        c.city_availability = data.get('city_availability', c.city_availability)
+        c.additional_document = data.get('additional_document', c.additional_document)
+        c.codice_fiscale = data.get('codice_fiscale', c.codice_fiscale)
+        c.permesso_soggiorno = data.get('permesso_soggiorno', c.permesso_soggiorno)
+        c.language_1 = data.get('language_1', c.language_1)
+        c.proficiency_1 = data.get('proficiency_1', c.proficiency_1)
+        c.language_2 = data.get('language_2', c.language_2)
+        c.proficiency_2 = data.get('proficiency_2', c.proficiency_2)
+        c.language_3 = data.get('language_3', c.language_3)
+        c.proficiency_3 = data.get('proficiency_3', c.proficiency_3)
+        
+        db.session.commit()
+        current_app.logger.info(f"Candidato {candidate_id} aggiornato con successo")
+        return jsonify({'success': True, 'message': 'Candidato aggiornato con successo'})
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Errore aggiornamento candidato {candidate_id}: {str(e)}")
+        return jsonify({'success': False, 'error': f'Errore durante l\'aggiornamento: {str(e)}'}), 500
 
 @main.route('/api/candidates/<int:candidate_id>/archive', methods=['POST'])
 @login_required
@@ -1110,7 +1178,15 @@ def candidate_profile(candidate_id):
         {'name': f'{candidate.first_name} {candidate.last_name}', 'url': None}
     ]
     
-    return render_template('candidate_profile.html', candidate=candidate, breadcrumbs=breadcrumbs)
+    # Ottieni le opzioni dropdown dal form del candidato
+    dropdown_options = {}
+    if candidate.form_id and candidate.form:
+        dropdown_options = candidate.form.dropdown_options or {}
+    
+    return render_template('candidate_profile.html', 
+                         candidate=candidate, 
+                         breadcrumbs=breadcrumbs,
+                         dropdown_options=dropdown_options)
 
 @main.route('/api/candidates/<int:candidate_id>/scores', methods=['POST'])
 @login_required
@@ -1412,6 +1488,8 @@ def export_candidates_csv():
             'archived': 'Archiviato',
             'created_at': 'Data di Creazione',
             'form_name': 'Nome Form',
+            'form_category': 'Categoria Form',
+            'form_subcategory': 'Sottocategoria Form',
             'total_score': 'Punteggio Totale',
         }
         
@@ -1541,6 +1619,10 @@ def export_candidates_csv():
                     row.append(candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else '')
                 elif field == 'form_name':
                     row.append(candidate.form.name if candidate.form else '')
+                elif field == 'form_category':
+                    row.append(candidate.form.category if candidate.form else '')
+                elif field == 'form_subcategory':
+                    row.append(candidate.form.subcategory if candidate.form else '')
                 elif field == 'total_score':
                     row.append(f"{candidate.get_total_score():.1f}")
                 else:
@@ -1601,6 +1683,8 @@ def export_candidates_pdf():
             'archived': 'Archiviato',  # archived
             'created_at': 'Data di Creazione',  # created_at
             'form_name': 'Nome Form',  # tramite relazione form
+            'form_category': 'Categoria Form',  # tramite relazione form
+            'form_subcategory': 'Sottocategoria Form',  # tramite relazione form
             'total_score': 'Punteggio Totale',
         }
         
@@ -1663,6 +1747,10 @@ def export_candidates_pdf():
                     candidate_data[field] = candidate.created_at.strftime('%d/%m/%Y %H:%M') if candidate.created_at else ''
                 elif field == 'form_name':
                     candidate_data[field] = candidate.form.name if candidate.form else ''
+                elif field == 'form_category':
+                    candidate_data[field] = candidate.form.category if candidate.form else ''
+                elif field == 'form_subcategory':
+                    candidate_data[field] = candidate.form.subcategory if candidate.form else ''
                 elif field == 'total_score':
                     candidate_data[field] = f"{candidate.get_total_score():.1f}"
                 else:
@@ -2702,3 +2790,243 @@ def delete_shared_link(share_id):
     
     flash('Link condiviso eliminato con successo', 'success')
     return redirect(url_for('main.manage_shared_links'))
+
+
+@main.route('/api/candidates/shares/<int:share_id>/extend', methods=['POST'])
+@login_required
+def api_extend_shared_link(share_id):
+    """
+    Estende la scadenza di un singolo link condiviso
+    """
+    try:
+        from w3form.models import ShareLink
+        from datetime import datetime, timedelta
+        
+        data = request.get_json()
+        days = data.get('days', 7)
+        
+        if not isinstance(days, int) or days <= 0:
+            return jsonify({'success': False, 'error': 'Numero di giorni non valido'})
+        
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova e verifica il link
+        share_link = ShareLink.query.filter(
+            ShareLink.id == share_id,
+            ShareLink.created_by == user_email
+        ).first()
+        
+        if not share_link:
+            return jsonify({'success': False, 'error': 'Link non trovato o non hai i permessi'})
+        
+        # Estende la scadenza
+        extension = timedelta(days=days)
+        if share_link.expires_at:
+            # Se il link ha già una scadenza, estendila
+            if share_link.expires_at < datetime.utcnow():
+                # Se è già scaduto, parte da ora
+                share_link.expires_at = datetime.utcnow() + extension
+            else:
+                # Se non è ancora scaduto, estende dalla scadenza attuale
+                share_link.expires_at = share_link.expires_at + extension
+        else:
+            # Se non ha scadenza, impostala da ora
+            share_link.expires_at = datetime.utcnow() + extension
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Scadenza estesa di {days} giorni'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/api/candidates/shares/bulk-delete', methods=['POST'])
+@login_required
+def api_bulk_delete_shared_links():
+    """
+    Elimina multipli link condivisi
+    """
+    try:
+        from w3form.models import ShareLink
+        
+        data = request.get_json()
+        link_ids = data.get('link_ids', [])
+        
+        if not link_ids:
+            return jsonify({'success': False, 'error': 'Nessun link selezionato'})
+        
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova e verifica i link
+        share_links = ShareLink.query.filter(
+            ShareLink.id.in_(link_ids),
+            ShareLink.created_by == user_email
+        ).all()
+        
+        if len(share_links) != len(link_ids):
+            return jsonify({'success': False, 'error': 'Alcuni link non sono stati trovati o non hai i permessi'})
+        
+        # Elimina i link
+        for link in share_links:
+            db.session.delete(link)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{len(share_links)} link eliminati con successo'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/api/candidates/shares/bulk-extend', methods=['POST'])
+@login_required
+def api_bulk_extend_shared_links():
+    """
+    Estende la scadenza di multipli link condivisi
+    """
+    try:
+        from w3form.models import ShareLink
+        from datetime import datetime, timedelta
+        
+        data = request.get_json()
+        link_ids = data.get('link_ids', [])
+        days = data.get('days', 7)
+        
+        if not link_ids:
+            return jsonify({'success': False, 'error': 'Nessun link selezionato'})
+        
+        if not isinstance(days, int) or days <= 0:
+            return jsonify({'success': False, 'error': 'Numero di giorni non valido'})
+        
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova e verifica i link
+        share_links = ShareLink.query.filter(
+            ShareLink.id.in_(link_ids),
+            ShareLink.created_by == user_email
+        ).all()
+        
+        if len(share_links) != len(link_ids):
+            return jsonify({'success': False, 'error': 'Alcuni link non sono stati trovati o non hai i permessi'})
+        
+        # Estende la scadenza
+        extension = timedelta(days=days)
+        for link in share_links:
+            if link.expires_at:
+                # Se il link ha già una scadenza, estendila
+                if link.expires_at < datetime.utcnow():
+                    # Se è già scaduto, parte da ora
+                    link.expires_at = datetime.utcnow() + extension
+                else:
+                    # Se non è ancora scaduto, estende dalla scadenza attuale
+                    link.expires_at = link.expires_at + extension
+            else:
+                # Se non ha scadenza, impostala da ora
+                link.expires_at = datetime.utcnow() + extension
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Scadenza estesa di {days} giorni per {len(share_links)} link'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/api/candidates/shares/bulk-protection', methods=['POST'])
+@login_required
+def api_bulk_protection_shared_links():
+    """
+    Modifica la protezione password di multipli link condivisi
+    """
+    try:
+        from w3form.models import ShareLink
+        
+        data = request.get_json()
+        link_ids = data.get('link_ids', [])
+        action = data.get('action', 'add')  # 'add' o 'remove'
+        password = data.get('password', '')
+        
+        if not link_ids:
+            return jsonify({'success': False, 'error': 'Nessun link selezionato'})
+        
+        if action == 'add' and not password:
+            return jsonify({'success': False, 'error': 'Password richiesta per proteggere i link'})
+        
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova e verifica i link
+        share_links = ShareLink.query.filter(
+            ShareLink.id.in_(link_ids),
+            ShareLink.created_by == user_email
+        ).all()
+        
+        if len(share_links) != len(link_ids):
+            return jsonify({'success': False, 'error': 'Alcuni link non sono stati trovati o non hai i permessi'})
+        
+        # Modifica la protezione
+        for link in share_links:
+            if action == 'add':
+                link.set_password(password)
+            else:
+                link.set_password(None)
+        
+        db.session.commit()
+        
+        action_text = 'aggiunta' if action == 'add' else 'rimossa'
+        return jsonify({
+            'success': True, 
+            'message': f'Protezione password {action_text} per {len(share_links)} link'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/api/candidates/shares/cleanup', methods=['POST'])
+@login_required
+def api_cleanup_expired_links():
+    """
+    Elimina tutti i link scaduti dell'utente
+    """
+    try:
+        from w3form.models import ShareLink
+        from datetime import datetime
+        
+        user_email = current_user.email if hasattr(current_user, 'email') else 'user'
+        
+        # Trova tutti i link scaduti dell'utente
+        expired_links = ShareLink.query.filter(
+            ShareLink.created_by == user_email,
+            ShareLink.expires_at < datetime.utcnow()
+        ).all()
+        
+        count = len(expired_links)
+        
+        # Elimina i link scaduti
+        for link in expired_links:
+            db.session.delete(link)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{count} link scaduti eliminati con successo'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})

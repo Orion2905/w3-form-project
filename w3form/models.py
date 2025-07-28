@@ -510,8 +510,10 @@ class ShareLink(db.Model):
         """
         Recupera i dati dei candidati secondo i filtri e campi specificati
         """
-        from .models import Candidate  # Import locale per evitare riferimenti circolari
+        from .models import Candidate, DynamicForm  # Import locale per evitare riferimenti circolari
         from w3form.azure_utils import get_secure_image_url
+        from datetime import datetime, date
+        from sqlalchemy import or_
         
         # Query base
         query = Candidate.query
@@ -519,17 +521,152 @@ class ShareLink(db.Model):
         # Filtro archiviati
         query = query.filter(Candidate.archived == self.archived)
         
+        # Variabile per filtri post-query
+        score_ranges_to_filter = None
+        
         # Applica filtri se scope è 'filtered'
         if self.scope == 'filtered' and self.filters:
+            print(f"DEBUG: Applicando filtri: {self.filters}")  # Debug
+            
+            # Verifica se abbiamo bisogno del JOIN con DynamicForm
+            form_filters = ['form_name', 'form_category', 'form_subcategory']
+            needs_form_join = any(filter_key in form_filters for filter_key in self.filters.keys())
+            
+            if needs_form_join:
+                query = query.join(DynamicForm, Candidate.form_id == DynamicForm.id)
+            
             for filter_key, filter_value in self.filters.items():
-                if filter_value and hasattr(Candidate, filter_key):
+                if not filter_value:
+                    continue
+                    
+                # Gestione ricerca globale
+                if filter_key == 'search':
+                    search_term = f'%{filter_value}%'
+                    search_conditions = []
+                    # Cerca in tutti i campi stringa principali
+                    string_fields = ['first_name', 'last_name', 'email', 'phone_number', 'city', 
+                                   'nationality', 'occupation', 'come_sei_arrivato']
+                    for field in string_fields:
+                        if hasattr(Candidate, field):
+                            column = getattr(Candidate, field)
+                            search_conditions.append(column.ilike(search_term))
+                    if search_conditions:
+                        query = query.filter(or_(*search_conditions))
+                
+                # Gestione filtri per form (senza JOIN aggiuntivi)
+                elif filter_key == 'form_name':
+                    query = query.filter(DynamicForm.name.ilike(f'%{filter_value}%'))
+                elif filter_key == 'form_category':
+                    query = query.filter(DynamicForm.category == filter_value)
+                elif filter_key == 'form_subcategory':
+                    query = query.filter(DynamicForm.subcategory == filter_value)
+                
+                # Gestione filtri range età
+                elif filter_key == 'age_min':
+                    try:
+                        min_age = int(filter_value)
+                        cutoff_date = date.today().replace(year=date.today().year - min_age)
+                        query = query.filter(Candidate.date_of_birth <= cutoff_date)
+                    except (ValueError, TypeError):
+                        pass
+                elif filter_key == 'age_max':
+                    try:
+                        max_age = int(filter_value)
+                        cutoff_date = date.today().replace(year=date.today().year - max_age)
+                        query = query.filter(Candidate.date_of_birth >= cutoff_date)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Gestione filtri range altezza
+                elif filter_key == 'height_min':
+                    try:
+                        query = query.filter(Candidate.height_cm >= int(filter_value))
+                    except (ValueError, TypeError):
+                        pass
+                elif filter_key == 'height_max':
+                    try:
+                        query = query.filter(Candidate.height_cm <= int(filter_value))
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Gestione filtri range peso
+                elif filter_key == 'weight_min':
+                    try:
+                        query = query.filter(Candidate.weight_kg >= int(filter_value))
+                    except (ValueError, TypeError):
+                        pass
+                elif filter_key == 'weight_max':
+                    try:
+                        query = query.filter(Candidate.weight_kg <= int(filter_value))
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Gestione filtri per punteggi
+                elif filter_key == 'score_ranges' and isinstance(filter_value, list):
+                    # Per i filtri di punteggio, dobbiamo filtrare dopo la query
+                    # perché il calcolo del punteggio totale è complesso
+                    # Salviamo i range per il filtraggio post-query
+                    score_ranges_to_filter = filter_value
+                
+                # Gestione filtri per array (checkbox multipli)
+                elif isinstance(filter_value, list) and filter_value:
+                    print(f"DEBUG: Processando filtro array {filter_key}: {filter_value}")  # Debug
+                    if hasattr(Candidate, filter_key):
+                        column = getattr(Candidate, filter_key)
+                        # Crea condizioni OR per i valori nell'array
+                        conditions = []
+                        for value in filter_value:
+                            if isinstance(value, str):
+                                conditions.append(column.ilike(f'%{value}%'))
+                            else:
+                                conditions.append(column == value)
+                        if conditions:
+                            print(f"DEBUG: Applicando {len(conditions)} condizioni per {filter_key}")  # Debug
+                            query = query.filter(or_(*conditions))
+                    else:
+                        print(f"DEBUG: Campo {filter_key} non trovato nel modello Candidate")  # Debug
+                
+                # Gestione filtri standard per campo esatto
+                elif hasattr(Candidate, filter_key):
                     column = getattr(Candidate, filter_key)
                     if isinstance(filter_value, str):
-                        query = query.filter(column.ilike(f'%{filter_value}%'))
+                        # Per i filtri di testo, usa LIKE per matching parziale
+                        if filter_key in ['city', 'nationality', 'occupation', 'come_sei_arrivato']:
+                            query = query.filter(column.ilike(f'%{filter_value}%'))
+                        else:
+                            # Per altri campi stringa, match esatto
+                            query = query.filter(column == filter_value)
                     else:
                         query = query.filter(column == filter_value)
         
         candidates = query.all()
+        
+        # Applica filtri post-query per i punteggi se necessario
+        if score_ranges_to_filter:
+            filtered_candidates = []
+            for candidate in candidates:
+                total_score = candidate.get_total_score()
+                should_include = False
+                
+                for score_range in score_ranges_to_filter:
+                    if score_range == 'no-score':
+                        # Candidati senza punteggi
+                        if total_score == 0:
+                            should_include = True
+                            break
+                    elif '-' in score_range:
+                        try:
+                            min_score, max_score = map(float, score_range.split('-'))
+                            if min_score <= total_score <= max_score:
+                                should_include = True
+                                break
+                        except (ValueError, TypeError):
+                            continue
+                
+                if should_include:
+                    filtered_candidates.append(candidate)
+            
+            candidates = filtered_candidates
         
         # Filtra solo i campi richiesti
         result = []
@@ -548,6 +685,18 @@ class ShareLink(db.Model):
                             candidate_data[field] = None
                     else:
                         candidate_data[field] = None
+                elif field == 'total_score':
+                    # Gestione speciale per il punteggio totale
+                    candidate_data[field] = candidate.get_total_score()
+                elif field == 'form_name':
+                    # Gestione speciale per il nome del form
+                    candidate_data[field] = candidate.form.name if candidate.form else None
+                elif field == 'form_category':
+                    # Gestione speciale per la categoria del form (azienda)
+                    candidate_data[field] = candidate.form.category if candidate.form else None
+                elif field == 'form_subcategory':
+                    # Gestione speciale per la sottocategoria del form (evento)
+                    candidate_data[field] = candidate.form.subcategory if candidate.form else None
                 elif hasattr(candidate, field):
                     value = getattr(candidate, field)
                     # Converti datetime e date in stringhe
