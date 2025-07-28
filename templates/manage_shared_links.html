@@ -41,6 +41,35 @@
     border-color: #6c757d;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
 }
+
+/* Stili per il modal di protezione */
+.protection-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.protection-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.protection-option.selected {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.protection-option input[type="radio"]:checked + label .card-title {
+    color: #0d6efd;
+}
+
+#passwordMatch.text-success {
+    color: #198754 !important;
+}
+
+#passwordMatch.text-danger {
+    color: #dc3545 !important;
+}
 </style>
 
 <div class="row">
@@ -76,7 +105,15 @@
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <h3 class="text-success">{{ (share_links|rejectattr('expires_at')|list|length) + (share_links|selectattr('expires_at')|rejectattr('is_expired')|list|length) }}</h3>
+                        <h3 class="text-success">
+                            {% set active_count = 0 %}
+                            {% for link in share_links %}
+                                {% if not link.expires_at or not link.is_expired() %}
+                                    {% set active_count = active_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ active_count }}
+                        </h3>
                         <p class="text-muted mb-0">Link Attivi</p>
                     </div>
                 </div>
@@ -84,7 +121,15 @@
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <h3 class="text-warning">{{ share_links|selectattr('expires_at')|select('is_expired')|list|length }}</h3>
+                        <h3 class="text-warning">
+                            {% set expired_count = 0 %}
+                            {% for link in share_links %}
+                                {% if link.expires_at and link.is_expired() %}
+                                    {% set expired_count = expired_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ expired_count }}
+                        </h3>
                         <p class="text-muted mb-0">Link Scaduti</p>
                     </div>
                 </div>
@@ -147,7 +192,7 @@
                         <span id="selectedCount">0</span> elementi selezionati
                     </div>
                     <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-warning bulk-action-btn" onclick="bulkExtendExpiry()">
+                        <button type="button" class="btn btn-outline-warning bulk-action-btn" id="extendExpiryBtn">
                             <i class="bi bi-clock-history me-1"></i>
                             Estendi Scadenza
                         </button>
@@ -359,6 +404,343 @@
     </div>
 </div>
 
+<!-- Modal per cambiare protezione -->
+<div class="modal fade" id="changeProtectionModal" tabindex="-1" aria-labelledby="changeProtectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeProtectionModalLabel">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    Cambia Protezione Link Condivisi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong id="selectedLinksCount">0</strong> link selezionati per la modifica della protezione
+                </div>
+
+                <!-- Opzioni di protezione -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100 protection-option" data-action="remove">
+                            <div class="card-body text-center">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="protectionAction" id="removeProtection" value="remove">
+                                    <label class="form-check-label" for="removeProtection">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-unlock text-success me-2"></i>
+                                            Rimuovi Protezione
+                                        </h5>
+                                    </label>
+                                </div>
+                                <p class="card-text text-muted">
+                                    I link selezionati diventeranno pubblici e non richiederanno più una password per l'accesso.
+                                </p>
+                                <div class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Accesso libero per tutti
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100 protection-option" data-action="add">
+                            <div class="card-body text-center">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="protectionAction" id="addProtection" value="add">
+                                    <label class="form-check-label" for="addProtection">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-lock text-warning me-2"></i>
+                                            Aggiungi Protezione
+                                        </h5>
+                                    </label>
+                                </div>
+                                <p class="card-text text-muted">
+                                    I link selezionati richiederanno una password per l'accesso.
+                                </p>
+                                <div class="text-warning">
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    Solo utenti autorizzati
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo password (visibile solo quando si aggiunge protezione) -->
+                <div id="passwordSection" class="mt-4" style="display: none;">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning bg-opacity-10">
+                            <h6 class="mb-0">
+                                <i class="bi bi-key me-2"></i>
+                                Imposta Password
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="newPassword" class="form-label">Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="newPassword" 
+                                               placeholder="Inserisci la password..." required>
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        La password deve essere di almeno 4 caratteri
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirmPassword" class="form-label">Conferma Password *</label>
+                                    <input type="password" class="form-control" id="confirmPassword" 
+                                           placeholder="Conferma la password..." required>
+                                    <div id="passwordMatch" class="form-text"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 p-3 bg-light rounded">
+                                <h6 class="text-muted mb-2">
+                                    <i class="bi bi-lightbulb me-2"></i>
+                                    Suggerimenti per la sicurezza:
+                                </h6>
+                                <ul class="text-muted small mb-0">
+                                    <li>Usa una password facile da ricordare ma difficile da indovinare</li>
+                                    <li>Evita password troppo comuni come "password123"</li>
+                                    <li>Condividi la password solo con persone autorizzate</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anteprima azioni -->
+                <div class="mt-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h6 class="mb-0">
+                                <i class="bi bi-eye me-2"></i>
+                                Anteprima Modifiche
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="actionPreview" class="text-muted">
+                                Seleziona un'azione per vedere l'anteprima delle modifiche
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Annulla
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmProtectionChange" disabled>
+                    <i class="bi bi-shield-check me-2"></i>
+                    Applica Modifiche
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per estendere scadenza -->
+<div class="modal fade" id="extendExpiryModal" tabindex="-1" aria-labelledby="extendExpiryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="extendExpiryModalLabel">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Estendi Scadenza Link Condivisi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong id="selectedLinksCountExpiry">0</strong> link selezionati per l'estensione della scadenza
+                </div>
+
+                <!-- Opzioni di estensione -->
+                <div class="mb-4">
+                    <h6 class="mb-3">
+                        <i class="bi bi-calendar-plus me-2"></i>
+                        Scegli il periodo di estensione
+                    </h6>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card h-100 expiry-option" data-days="7">
+                                <div class="card-body text-center">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="expiryExtension" id="extend7days" value="7">
+                                        <label class="form-check-label" for="extend7days">
+                                            <h5 class="card-title text-primary">
+                                                <i class="bi bi-calendar-week me-2"></i>
+                                                7 Giorni
+                                            </h5>
+                                        </label>
+                                    </div>
+                                    <p class="card-text text-muted">
+                                        Estensione rapida per progetti a breve termine
+                                    </p>
+                                    <div class="text-primary">
+                                        <i class="bi bi-clock me-1"></i>
+                                        +1 settimana
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 expiry-option" data-days="30">
+                                <div class="card-body text-center">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="expiryExtension" id="extend30days" value="30">
+                                        <label class="form-check-label" for="extend30days">
+                                            <h5 class="card-title text-success">
+                                                <i class="bi bi-calendar-month me-2"></i>
+                                                30 Giorni
+                                            </h5>
+                                        </label>
+                                    </div>
+                                    <p class="card-text text-muted">
+                                        Estensione standard per la maggior parte dei progetti
+                                    </p>
+                                    <div class="text-success">
+                                        <i class="bi bi-calendar-check me-1"></i>
+                                        +1 mese
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 expiry-option" data-days="90">
+                                <div class="card-body text-center">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="radio" name="expiryExtension" id="extend90days" value="90">
+                                        <label class="form-check-label" for="extend90days">
+                                            <h5 class="card-title text-warning">
+                                                <i class="bi bi-calendar-range me-2"></i>
+                                                90 Giorni
+                                            </h5>
+                                        </label>
+                                    </div>
+                                    <p class="card-text text-muted">
+                                        Estensione estesa per progetti a lungo termine
+                                    </p>
+                                    <div class="text-warning">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        +3 mesi
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opzione personalizzata -->
+                <div class="mb-4">
+                    <div class="card border-info">
+                        <div class="card-header bg-info bg-opacity-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="expiryExtension" id="customExtend" value="custom">
+                                <label class="form-check-label" for="customExtend">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-sliders me-2"></i>
+                                        Estensione Personalizzata
+                                    </h6>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="card-body" id="customExpirySection" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="customDays" class="form-label">Numero di giorni</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="customDays" 
+                                               placeholder="Inserisci giorni..." min="1" max="365">
+                                        <span class="input-group-text">giorni</span>
+                                    </div>
+                                    <div class="form-text">
+                                        Inserisci un valore tra 1 e 365 giorni
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Data di scadenza</label>
+                                    <div class="form-control-plaintext" id="calculatedExpiry">
+                                        Seleziona il numero di giorni
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informazioni sui link -->
+                <div class="mb-4">
+                    <div class="card border-secondary">
+                        <div class="card-header bg-secondary bg-opacity-10">
+                            <h6 class="mb-0">
+                                <i class="bi bi-info-square me-2"></i>
+                                Informazioni sui Link Selezionati
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="h5 mb-1 text-primary" id="activeLinksCount">0</div>
+                                    <div class="small text-muted">Link Attivi</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="h5 mb-1 text-warning" id="expiredLinksCount">0</div>
+                                    <div class="small text-muted">Link Scaduti</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="h5 mb-1 text-info" id="noExpiryLinksCount">0</div>
+                                    <div class="small text-muted">Senza Scadenza</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anteprima azioni -->
+                <div class="mt-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary bg-opacity-10">
+                            <h6 class="mb-0">
+                                <i class="bi bi-eye me-2"></i>
+                                Anteprima Modifiche
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="expiryActionPreview" class="text-muted">
+                                Seleziona un periodo di estensione per vedere l'anteprima delle modifiche
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Annulla
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmExpiryExtension" disabled>
+                    <i class="bi bi-calendar-plus me-2"></i>
+                    Estendi Scadenza
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function copyShareUrl(url) {
     navigator.clipboard.writeText(url).then(function() {
@@ -535,6 +917,31 @@ function updateBulkActionBar() {
     }
 }
 
+function showAlert(message, type = 'info') {
+    // Rimuovi eventuali alert esistenti
+    const existingAlerts = document.querySelectorAll('.alert-floating');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Crea il nuovo alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-floating`;
+    alertDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Aggiungi al body
+    document.body.appendChild(alertDiv);
+    
+    // Rimuovi automaticamente dopo 5 secondi
+    setTimeout(() => {
+        if (alertDiv && alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
 function getSelectedLinkIds() {
     const selectedCheckboxes = document.querySelectorAll('[data-link-checkbox]:checked');
     return Array.from(selectedCheckboxes).map(cb => cb.value);
@@ -615,40 +1022,22 @@ function bulkToggleProtection() {
         return;
     }
     
-    const action = confirm('Vuoi aggiungere o rimuovere la protezione password?\n\nOK = Aggiungi password\nAnnulla = Rimuovi password');
-    let password = null;
+    // Aggiorna il conteggio nel modal
+    document.getElementById('selectedLinksCount').textContent = selectedIds.length;
     
-    if (action) {
-        password = prompt('Inserisci la password per proteggere i link selezionati:');
-        if (!password || password.trim() === '') {
-            return;
-        }
-    }
+    // Reset del modal
+    document.querySelectorAll('input[name="protectionAction"]').forEach(radio => radio.checked = false);
+    document.getElementById('passwordSection').style.display = 'none';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('passwordMatch').textContent = '';
+    document.getElementById('actionPreview').textContent = 'Seleziona un\'azione per vedere l\'anteprima delle modifiche';
+    document.getElementById('confirmProtectionChange').disabled = true;
+    document.querySelectorAll('.protection-option').forEach(card => card.classList.remove('selected'));
     
-    fetch('/api/candidates/shares/bulk-protection', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            link_ids: selectedIds, 
-            action: action ? 'add' : 'remove',
-            password: password 
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert('Errore: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Errore nella modifica della protezione');
-    });
+    // Mostra il modal
+    const modal = new bootstrap.Modal(document.getElementById('changeProtectionModal'));
+    modal.show();
 }
 
 function bulkExport() {
@@ -688,6 +1077,497 @@ function bulkExport() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+}
+
+// Event listeners per il modal di protezione
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestione pulsante estendi scadenza
+    const extendExpiryBtn = document.getElementById('extendExpiryBtn');
+    const extendExpiryModal = new bootstrap.Modal(document.getElementById('extendExpiryModal'));
+    
+    // Pulsante estendi scadenza
+    if (extendExpiryBtn) {
+        extendExpiryBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const selectedIds = getSelectedLinkIds();
+            
+            if (selectedIds.length === 0) {
+                showAlert('Seleziona almeno un link per estendere la scadenza', 'warning');
+                return;
+            }
+            
+            // Aggiorna contatore nel modal
+            updateExpiryModalInfo(selectedIds);
+            
+            // Mostra il modal
+            extendExpiryModal.show();
+        });
+    }
+    
+    // Gestione selezione periodo di estensione
+    const expiryOptions = document.querySelectorAll('.expiry-option');
+    const expiryRadios = document.querySelectorAll('input[name="expiryExtension"]');
+    const customExpirySection = document.getElementById('customExpirySection');
+    const customDaysInput = document.getElementById('customDays');
+    const calculatedExpiryDiv = document.getElementById('calculatedExpiry');
+    const confirmExpiryBtn = document.getElementById('confirmExpiryExtension');
+    const expiryActionPreview = document.getElementById('expiryActionPreview');
+    
+    // Click sulle card
+    expiryOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            updateExpirySelection();
+        });
+    });
+    
+    // Change sui radio button
+    expiryRadios.forEach(radio => {
+        radio.addEventListener('change', updateExpirySelection);
+    });
+    
+    // Input giorni personalizzati
+    if (customDaysInput) {
+        customDaysInput.addEventListener('input', function() {
+            updateCalculatedExpiry();
+            updateExpiryPreview();
+            updateExpiryConfirmButton(); // Aggiungi questa chiamata
+        });
+    }
+    
+    function updateExpirySelection() {
+        const selectedValue = document.querySelector('input[name="expiryExtension"]:checked')?.value;
+        
+        // Rimuovi selezione precedente
+        expiryOptions.forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Aggiungi selezione alla card corrente
+        if (selectedValue && selectedValue !== 'custom') {
+            const selectedOption = document.querySelector(`.expiry-option[data-days="${selectedValue}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+        }
+        
+        // Mostra/nascondi sezione personalizzata
+        if (customExpirySection) {
+            customExpirySection.style.display = selectedValue === 'custom' ? 'block' : 'none';
+        }
+        
+        // Aggiorna l'anteprima
+        updateExpiryPreview();
+        
+        // Abilita/disabilita pulsante conferma
+        updateExpiryConfirmButton();
+    }
+    
+    function updateCalculatedExpiry() {
+        const days = parseInt(customDaysInput.value);
+        
+        if (isNaN(days) || days < 1) {
+            calculatedExpiryDiv.textContent = 'Inserisci un numero valido';
+            calculatedExpiryDiv.className = 'form-control-plaintext text-muted';
+            return;
+        }
+        
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        
+        calculatedExpiryDiv.textContent = futureDate.toLocaleDateString('it-IT');
+        calculatedExpiryDiv.className = 'form-control-plaintext text-success fw-bold';
+    }
+    
+    function updateExpiryPreview() {
+        const selectedValue = document.querySelector('input[name="expiryExtension"]:checked')?.value;
+        const selectedIds = getSelectedLinkIds();
+        
+        if (!selectedValue) {
+            expiryActionPreview.innerHTML = '<em class="text-muted">Seleziona un periodo di estensione per vedere l\'anteprima delle modifiche</em>';
+            return;
+        }
+        
+        let days;
+        let description;
+        
+        if (selectedValue === 'custom') {
+            days = parseInt(customDaysInput.value);
+            if (isNaN(days) || days < 1) {
+                expiryActionPreview.innerHTML = '<em class="text-warning">Inserisci un numero di giorni valido</em>';
+                return;
+            }
+            description = `${days} giorni`;
+        } else {
+            days = parseInt(selectedValue);
+            switch (days) {
+                case 7:
+                    description = '1 settimana';
+                    break;
+                case 30:
+                    description = '1 mese';
+                    break;
+                case 90:
+                    description = '3 mesi';
+                    break;
+                default:
+                    description = `${days} giorni`;
+            }
+        }
+        
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        
+        expiryActionPreview.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="bi bi-calendar-plus text-primary me-3"></i>
+                <div>
+                    <strong>Estensione di ${description}</strong><br>
+                    <small class="text-muted">
+                        Nuova scadenza: <span class="text-success fw-bold">${futureDate.toLocaleDateString('it-IT')}</span><br>
+                        Verranno aggiornati <strong>${selectedIds.length}</strong> link selezionati
+                    </small>
+                </div>
+            </div>
+        `;
+    }
+    
+    function updateExpiryConfirmButton() {
+        const selectedValue = document.querySelector('input[name="expiryExtension"]:checked')?.value;
+        let isValid = false;
+        
+        if (selectedValue === 'custom') {
+            const days = parseInt(customDaysInput.value);
+            isValid = !isNaN(days) && days >= 1 && days <= 365;
+        } else if (selectedValue) {
+            isValid = true;
+        }
+        
+        if (confirmExpiryBtn) {
+            confirmExpiryBtn.disabled = !isValid;
+        }
+    }
+    
+    function updateExpiryModalInfo(selectedIds) {
+        // Aggiorna contatore
+        const selectedLinksCountExpiry = document.getElementById('selectedLinksCountExpiry');
+        if (selectedLinksCountExpiry) {
+            selectedLinksCountExpiry.textContent = selectedIds.length;
+        }
+        
+        // Calcola statistiche sui link
+        let activeCount = 0;
+        let expiredCount = 0;
+        let noExpiryCount = 0;
+        
+        selectedIds.forEach(id => {
+            const checkbox = document.querySelector(`[data-link-checkbox][value="${id}"]`);
+            if (checkbox) {
+                const card = checkbox.closest('.share-link-card');
+                if (card) {
+                    const expiryText = card.textContent;
+                    if (expiryText.includes('Mai') || expiryText.includes('Nessuna scadenza')) {
+                        noExpiryCount++;
+                    } else if (expiryText.includes('Scaduto')) {
+                        expiredCount++;
+                    } else {
+                        activeCount++;
+                    }
+                }
+            }
+        });
+        
+        // Aggiorna contatori
+        const activeLinksCount = document.getElementById('activeLinksCount');
+        const expiredLinksCount = document.getElementById('expiredLinksCount');
+        const noExpiryLinksCount = document.getElementById('noExpiryLinksCount');
+        
+        if (activeLinksCount) activeLinksCount.textContent = activeCount;
+        if (expiredLinksCount) expiredLinksCount.textContent = expiredCount;
+        if (noExpiryLinksCount) noExpiryLinksCount.textContent = noExpiryCount;
+    }
+    
+    // Conferma estensione scadenza
+    if (confirmExpiryBtn) {
+        confirmExpiryBtn.addEventListener('click', function() {
+            const selectedValue = document.querySelector('input[name="expiryExtension"]:checked')?.value;
+            const selectedIds = getSelectedLinkIds();
+            
+            if (!selectedValue || selectedIds.length === 0) {
+                return;
+            }
+            
+            let days;
+            if (selectedValue === 'custom') {
+                days = parseInt(customDaysInput.value);
+                if (isNaN(days) || days < 1 || days > 365) {
+                    alert('Inserisci un numero di giorni valido (1-365)');
+                    return;
+                }
+            } else {
+                days = parseInt(selectedValue);
+            }
+            
+            // Disabilita pulsante e mostra loading
+            this.disabled = true;
+            this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Estendendo...';
+            
+            // Chiamata API
+            fetch('/api/candidates/shares/bulk-extend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ link_ids: selectedIds, days: days })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Chiudi modal e mostra toast di successo
+                    extendExpiryModal.hide();
+                    
+                    // Crea toast di successo personalizzato
+                    const toast = document.createElement('div');
+                    toast.className = 'toast show';
+                    toast.setAttribute('role', 'alert');
+                    toast.innerHTML = `
+                        <div class="toast-header">
+                            <i class="bi bi-clock-history text-success me-2"></i>
+                            <strong class="me-auto">Scadenza Estesa</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${data.message}
+                        </div>
+                    `;
+                    
+                    document.querySelector('.toast-container').appendChild(toast);
+                    
+                    // Ricarica la pagina dopo un momento
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert('Errore: ' + data.error);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Estendi Scadenza';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Errore nell\'estensione della scadenza');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Estendi Scadenza';
+            });
+        });
+    }
+    
+    // Reset del modal quando viene chiuso
+    document.getElementById('extendExpiryModal').addEventListener('hidden.bs.modal', function() {
+        // Reset selezioni
+        document.querySelectorAll('input[name="expiryExtension"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        if (customDaysInput) customDaysInput.value = '';
+        if (customExpirySection) customExpirySection.style.display = 'none';
+        if (calculatedExpiryDiv) {
+            calculatedExpiryDiv.textContent = 'Seleziona il numero di giorni';
+            calculatedExpiryDiv.className = 'form-control-plaintext';
+        }
+        
+        expiryOptions.forEach(option => option.classList.remove('selected'));
+        
+        if (expiryActionPreview) {
+            expiryActionPreview.innerHTML = '<em class="text-muted">Seleziona un periodo di estensione per vedere l\'anteprima delle modifiche</em>';
+        }
+        
+        if (confirmExpiryBtn) {
+            confirmExpiryBtn.disabled = true;
+            confirmExpiryBtn.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Estendi Scadenza';
+        }
+    });
+
+    // Gestione selezione delle opzioni di protezione
+    document.querySelectorAll('.protection-option').forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Aggiorna aspetto visivo
+            document.querySelectorAll('.protection-option').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Mostra/nasconde sezione password
+            const passwordSection = document.getElementById('passwordSection');
+            const actionPreview = document.getElementById('actionPreview');
+            const selectedCount = document.getElementById('selectedLinksCount').textContent;
+            
+            if (radio.value === 'add') {
+                passwordSection.style.display = 'block';
+                actionPreview.innerHTML = `
+                    <div class="text-warning">
+                        <i class="bi bi-lock me-2"></i>
+                        <strong>${selectedCount}</strong> link saranno protetti con password
+                    </div>
+                    <div class="small text-muted mt-1">
+                        Gli utenti dovranno inserire la password per accedere ai link
+                    </div>
+                `;
+            } else {
+                passwordSection.style.display = 'none';
+                actionPreview.innerHTML = `
+                    <div class="text-success">
+                        <i class="bi bi-unlock me-2"></i>
+                        <strong>${selectedCount}</strong> link diventeranno pubblici
+                    </div>
+                    <div class="small text-muted mt-1">
+                        Gli utenti potranno accedere ai link senza password
+                    </div>
+                `;
+            }
+            
+            validateProtectionForm();
+        });
+    });
+    
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordField = document.getElementById('newPassword');
+        const icon = this.querySelector('i');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            passwordField.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    });
+    
+    // Validazione password in tempo reale
+    document.getElementById('newPassword').addEventListener('input', validatePasswords);
+    document.getElementById('confirmPassword').addEventListener('input', validatePasswords);
+    
+    // Conferma modifiche
+    document.getElementById('confirmProtectionChange').addEventListener('click', function() {
+        const selectedAction = document.querySelector('input[name="protectionAction"]:checked');
+        if (!selectedAction) return;
+        
+        const selectedIds = getSelectedLinkIds();
+        let password = null;
+        
+        if (selectedAction.value === 'add') {
+            password = document.getElementById('newPassword').value;
+            if (!password || password.trim().length < 4) {
+                alert('La password deve essere di almeno 4 caratteri');
+                return;
+            }
+            
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (password !== confirmPassword) {
+                alert('Le password non corrispondono');
+                return;
+            }
+        }
+        
+        // Disabilita il pulsante e mostra loading
+        this.disabled = true;
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Applicando...';
+        
+        // Chiamata API
+        fetch('/api/candidates/shares/bulk-protection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                link_ids: selectedIds, 
+                action: selectedAction.value,
+                password: password 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Chiudi modal e mostra toast di successo
+                bootstrap.Modal.getInstance(document.getElementById('changeProtectionModal')).hide();
+                
+                // Crea toast di successo personalizzato
+                const toast = document.createElement('div');
+                toast.className = 'toast show';
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong class="me-auto">Protezione Aggiornata</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${data.message}
+                    </div>
+                `;
+                
+                document.querySelector('.toast-container').appendChild(toast);
+                
+                // Ricarica la pagina dopo un momento
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                alert('Errore: ' + data.error);
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Errore nella modifica della protezione');
+            this.disabled = false;
+            this.innerHTML = originalText;
+        });
+    });
+});
+
+function validatePasswords() {
+    const password = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const matchDiv = document.getElementById('passwordMatch');
+    
+    if (!confirmPassword) {
+        matchDiv.textContent = '';
+        matchDiv.className = 'form-text';
+    } else if (password === confirmPassword) {
+        matchDiv.textContent = '✓ Le password corrispondono';
+        matchDiv.className = 'form-text text-success';
+    } else {
+        matchDiv.textContent = '✗ Le password non corrispondono';
+        matchDiv.className = 'form-text text-danger';
+    }
+    
+    validateProtectionForm();
+}
+
+function validateProtectionForm() {
+    const selectedAction = document.querySelector('input[name="protectionAction"]:checked');
+    const confirmBtn = document.getElementById('confirmProtectionChange');
+    
+    if (!selectedAction) {
+        confirmBtn.disabled = true;
+        return;
+    }
+    
+    if (selectedAction.value === 'add') {
+        const password = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        confirmBtn.disabled = !password || password.length < 4 || password !== confirmPassword;
+    } else {
+        confirmBtn.disabled = false;
     }
 }
 </script>
