@@ -16,9 +16,10 @@ from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import joinedload
 from w3form import db
 from w3form.models import (
-    User, Candidate, DynamicForm, Score, ScoreCategory, SystemSettings, FormFieldConfiguration
+    User, Candidate, DynamicForm, Score, ScoreCategory, SystemSettings, FormFieldConfiguration, FeatureFlag
 )
 from w3form.decorators import role_required, developer_required, view_only_required
+from w3form.feature_flags import is_feature_enabled, init_default_features
 from w3form.azure_utils import get_secure_image_url, get_secure_document_url
 import requests, time
 from requests.auth import HTTPBasicAuth
@@ -2384,8 +2385,12 @@ def api_delete_user(user_id):
 def developer_panel():
     """Pannello di controllo per sviluppatori - gestione impostazioni globali del sistema"""
     from .models import SystemSettings
+    from w3form.feature_flags import get_all_features_status
     
     try:
+        # Inizializza le feature flags di default se non esistono
+        init_default_features()
+        
         # Recupera le impostazioni correnti con conversione esplicita
         test_mode_raw = SystemSettings.get_setting('global_form_test_mode', False)
         
@@ -2394,15 +2399,21 @@ def developer_panel():
             test_mode = test_mode_raw.lower() in ('true', '1', 'yes', 'on')
         else:
             test_mode = bool(test_mode_raw)
+        
+        # Recupera lo stato delle feature flags
+        features = get_all_features_status()
             
         print(f"DEBUG: test_mode convertito = {test_mode} (tipo: {type(test_mode)})")
+        print(f"DEBUG: features caricate = {len(features)} feature")
     except Exception as e:
-        print(f"DEBUG: Errore recupero test_mode: {e}")
+        print(f"DEBUG: Errore recupero test_mode/features: {e}")
         test_mode = False
+        features = {}
     
     return render_template('developer_panel.html', 
                          title='Pannello Sviluppatore',
-                         test_mode=test_mode)
+                         test_mode=test_mode,
+                         features=features)
 
 
 @main.route('/api/developer/settings', methods=['GET'])
@@ -2554,6 +2565,14 @@ def export_candidates():
 @role_required('intervistatore')
 def get_form_fields_config(form_id):
     """Ottiene la configurazione dei campi per un form specifico"""
+    # Verifica che la funzionalità sia abilitata
+    if not is_feature_enabled('form_field_toggle'):
+        return jsonify({
+            'success': False,
+            'error': 'Funzionalità di configurazione campi non disponibile',
+            'feature_required': 'form_field_toggle'
+        }), 403
+    
     try:
         # Verifica che il form esista
         form = DynamicForm.query.get_or_404(form_id)
@@ -2596,6 +2615,16 @@ def get_form_fields_config(form_id):
 @role_required('intervistatore')
 def update_form_fields_config(form_id):
     """Aggiorna la configurazione dei campi per un form specifico"""
+    from w3form.feature_flags import feature_required
+    
+    # Verifica che la funzionalità sia abilitata
+    if not is_feature_enabled('form_field_toggle'):
+        return jsonify({
+            'success': False,
+            'error': 'Funzionalità di configurazione campi non disponibile',
+            'feature_required': 'form_field_toggle'
+        }), 403
+    
     try:
         # Verifica che il form esista
         form = DynamicForm.query.get_or_404(form_id)
@@ -3030,3 +3059,91 @@ def api_cleanup_expired_links():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
+
+
+# === FEATURE FLAGS MANAGEMENT ===
+
+@main.route('/api/developer/features', methods=['GET'])
+@login_required
+@developer_required
+def get_feature_flags():
+    """API per recuperare tutte le feature flags"""
+    from w3form.feature_flags import get_all_features_status
+    
+    try:
+        features = get_all_features_status()
+        return jsonify({
+            'success': True,
+            'features': features
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nel recupero delle feature flags: {str(e)}'
+        }), 500
+
+
+@main.route('/api/developer/features/<feature_key>/toggle', methods=['POST'])
+@login_required
+@developer_required
+def toggle_feature_flag(feature_key):
+    """API per attivare/disattivare una feature flag"""
+    from w3form.feature_flags import toggle_feature, AVAILABLE_FEATURES
+    
+    try:
+        if feature_key not in AVAILABLE_FEATURES:
+            return jsonify({
+                'success': False,
+                'error': 'Feature non riconosciuta'
+            }), 400
+        
+        new_state = toggle_feature(feature_key)
+        action = 'attivata' if new_state else 'disattivata'
+        feature_name = AVAILABLE_FEATURES[feature_key]['name']
+        
+        return jsonify({
+            'success': True,
+            'message': f'Funzionalità "{feature_name}" {action}',
+            'feature_key': feature_key,
+            'enabled': new_state,
+            'changed_by': current_user.username,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nel toggle della feature: {str(e)}'
+        }), 500
+
+
+@main.route('/api/developer/features/<feature_key>', methods=['GET'])
+@login_required
+@developer_required
+def get_feature_flag_status(feature_key):
+    """API per recuperare lo stato di una singola feature flag"""
+    from w3form.feature_flags import is_feature_enabled, AVAILABLE_FEATURES
+    
+    try:
+        if feature_key not in AVAILABLE_FEATURES:
+            return jsonify({
+                'success': False,
+                'error': 'Feature non riconosciuta'
+            }), 400
+        
+        is_enabled = is_feature_enabled(feature_key)
+        feature_info = AVAILABLE_FEATURES[feature_key]
+        
+        return jsonify({
+            'success': True,
+            'feature_key': feature_key,
+            'enabled': is_enabled,
+            'name': feature_info['name'],
+            'description': feature_info['description']
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Errore nel recupero della feature: {str(e)}'
+        }), 500

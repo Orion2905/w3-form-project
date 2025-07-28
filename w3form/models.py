@@ -712,4 +712,49 @@ class ShareLink(db.Model):
         return f"<ShareLink {self.token} expires={self.expires_at}>"
 
 
+class FeatureFlag(db.Model):
+    """Modello per gestire le funzionalità attivabili/disattivabili dal developer"""
+    id = db.Column(db.Integer, primary_key=True)
+    feature_key = db.Column(db.String(64), unique=True, nullable=False)  # chiave unica della funzionalità
+    feature_name = db.Column(db.String(128), nullable=False)  # nome leggibile della funzionalità
+    description = db.Column(db.Text, nullable=True)  # descrizione dettagliata
+    is_enabled = db.Column(db.Boolean, default=True, nullable=False)  # se la funzionalità è attiva
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<FeatureFlag {self.feature_key}: {'enabled' if self.is_enabled else 'disabled'}>"
+
+    @staticmethod
+    def is_feature_enabled(feature_key):
+        """Controlla se una funzionalità è abilitata"""
+        feature = FeatureFlag.query.filter_by(feature_key=feature_key).first()
+        return feature.is_enabled if feature else True  # default enabled se non configurata
+
+    @staticmethod
+    def get_all_features():
+        """Ottieni tutte le feature flags"""
+        return FeatureFlag.query.all()
+
+    @staticmethod
+    def create_or_update_feature(feature_key, feature_name, description=None, is_enabled=True):
+        """Crea o aggiorna una feature flag"""
+        feature = FeatureFlag.query.filter_by(feature_key=feature_key).first()
+        if feature:
+            feature.feature_name = feature_name
+            feature.description = description
+            feature.is_enabled = is_enabled
+            feature.updated_at = datetime.utcnow()
+        else:
+            feature = FeatureFlag(
+                feature_key=feature_key,
+                feature_name=feature_name,
+                description=description,
+                is_enabled=is_enabled
+            )
+            db.session.add(feature)
+        db.session.commit()
+        return feature
+
+
 

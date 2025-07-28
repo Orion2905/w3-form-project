@@ -43,6 +43,26 @@ def create_app():
             return get_secure_image_url(blob_url)
         else:
             return get_secure_document_url(blob_url)
+    
+    @app.template_global('is_feature_enabled')
+    def is_feature_enabled_template(feature_key):
+        """
+        Funzione template globale per verificare se una feature è abilitata
+        Usage: {% if is_feature_enabled('form_field_toggle') %} ... {% endif %}
+        """
+        from w3form.feature_flags import is_feature_enabled
+        return is_feature_enabled(feature_key)
+    
+    @app.template_global('feature_locked_icon')
+    def feature_locked_icon(feature_key, classes=''):
+        """
+        Genera un'icona di lucchetto se la feature è disabilitata
+        Usage: {{ feature_locked_icon('form_field_toggle', 'text-warning ms-2') }}
+        """
+        from w3form.feature_flags import is_feature_enabled
+        if not is_feature_enabled(feature_key):
+            return f'<i class="bi bi-lock-fill {classes}" title="Funzionalità disattivata dal developer"></i>'
+        return ''
 
     # Importa e registra i blueprint
     from w3form.routes import main

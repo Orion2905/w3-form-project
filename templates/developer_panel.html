@@ -22,6 +22,12 @@
       </a>
     </li>
     <li class="nav-item mb-2">
+      <a class="nav-link d-flex align-items-center px-3 py-2" href="#feature-flags" onclick="scrollToSection('feature-flags')">
+        <span class="sidebar-icon me-2"><i class="bi bi-toggles2"></i></span>
+        <span class="sidebar-text">Funzionalità</span>
+      </a>
+    </li>
+    <li class="nav-item mb-2">
       <a class="nav-link d-flex align-items-center px-3 py-2" href="#system-info" onclick="scrollToSection('system-info')">
         <span class="sidebar-icon me-2"><i class="bi bi-info-circle"></i></span>
         <span class="sidebar-text">Info Sistema</span>
@@ -121,6 +127,43 @@
                             {{ 'Disattiva' if (test_mode == True or test_mode == 'true' or test_mode == 'True') else 'Attiva' }} Test Mode
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sezione Feature Flags -->
+<div class="row mb-4" id="feature-flags">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-toggles2"></i>
+                    Controllo Funzionalità
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Attiva o disattiva specifiche funzionalità del sistema. Le funzionalità disattivate mostreranno un'icona lucchetto nell'interfaccia.
+                </p>
+                
+                <div id="feature-flags-list">
+                    <!-- Le feature flags verranno caricate dinamicamente qui -->
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Caricamento...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-end">
+                    <button class="btn btn-outline-info me-2" id="refreshFeaturesBtn">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Ricarica Funzionalità
+                    </button>
                 </div>
             </div>
         </div>
@@ -365,6 +408,107 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // === GESTIONE FEATURE FLAGS ===
+    
+    function loadFeatureFlags() {
+        $.ajax({
+            url: '/api/developer/features',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    renderFeatureFlags(response.features);
+                } else {
+                    showError('Errore nel caricamento delle funzionalità: ' + response.error);
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Errore di connessione';
+                showError('Errore nel caricamento delle funzionalità: ' + error);
+            }
+        });
+    }
+    
+    function renderFeatureFlags(features) {
+        const container = $('#feature-flags-list');
+        container.empty();
+        
+        if (Object.keys(features).length === 0) {
+            container.html('<p class="text-muted text-center">Nessuna funzionalità configurata</p>');
+            return;
+        }
+        
+        const row = $('<div class="row g-3"></div>');
+        
+        Object.entries(features).forEach(([key, feature]) => {
+            const isEnabled = feature.enabled;
+            const cardClass = isEnabled ? 'border-success' : 'border-warning';
+            const badgeClass = isEnabled ? 'bg-success' : 'bg-warning';
+            const iconClass = isEnabled ? 'bi-unlock-fill text-success' : 'bi-lock-fill text-warning';
+            
+            const featureCard = $(`
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 ${cardClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">
+                                    <i class="bi ${iconClass} me-2"></i>
+                                    ${feature.name}
+                                </h6>
+                                <span class="badge ${badgeClass}">
+                                    ${isEnabled ? 'Attiva' : 'Disattiva'}
+                                </span>
+                            </div>
+                            <p class="card-text text-muted small">${feature.description}</p>
+                            <div class="d-grid">
+                                <button class="btn ${isEnabled ? 'btn-outline-warning' : 'btn-outline-success'} btn-sm toggle-feature-btn" 
+                                        data-feature-key="${key}">
+                                    <i class="bi ${isEnabled ? 'bi-toggle-on' : 'bi-toggle-off'} me-2"></i>
+                                    ${isEnabled ? 'Disattiva' : 'Attiva'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            row.append(featureCard);
+        });
+        
+        container.append(row);
+    }
+    
+    function toggleFeature(featureKey) {
+        $.ajax({
+            url: `/api/developer/features/${featureKey}/toggle`,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    showSuccess(response.message);
+                    loadFeatureFlags(); // Ricarica la lista
+                } else {
+                    showError('Errore nel toggle della funzionalità: ' + response.error);
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Errore di connessione';
+                showError('Errore nel toggle della funzionalità: ' + error);
+            }
+        });
+    }
+    
+    // Event listeners per feature flags
+    $(document).on('click', '.toggle-feature-btn', function() {
+        const featureKey = $(this).data('feature-key');
+        toggleFeature(featureKey);
+    });
+    
+    $('#refreshFeaturesBtn').click(function() {
+        loadFeatureFlags();
+    });
+    
+    // Carica le feature flags all'avvio
+    loadFeatureFlags();
     
     // === FUNZIONI UTILITY ===
     
