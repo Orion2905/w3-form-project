@@ -741,6 +741,165 @@
     </div>
 </div>
 
+<!-- Modal per eliminazione link -->
+<div class="modal fade" id="deleteLinksModal" tabindex="-1" aria-labelledby="deleteLinksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger bg-opacity-10">
+                <h5 class="modal-title text-danger" id="deleteLinksModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Elimina Link Condivisi
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Alert di warning -->
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Attenzione!</strong> Stai per eliminare <strong id="selectedLinksCountDelete">0</strong> link condivisi.
+                        <br><small>Questa azione è <strong>irreversibile</strong> e non può essere annullata.</small>
+                    </div>
+                </div>
+
+                <!-- Conseguenze dell'eliminazione -->
+                <div class="mb-4">
+                    <h6 class="text-danger mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Cosa succederà:
+                    </h6>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card border-warning h-100">
+                                <div class="card-body text-center">
+                                    <div class="text-warning mb-2">
+                                        <i class="bi bi-link-45deg" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title text-warning">Link Inaccessibili</h6>
+                                    <p class="card-text small text-muted">
+                                        I link diventeranno immediatamente inaccessibili a tutti gli utenti esterni
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-danger h-100">
+                                <div class="card-body text-center">
+                                    <div class="text-danger mb-2">
+                                        <i class="bi bi-database-x" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title text-danger">Dati Eliminati</h6>
+                                    <p class="card-text small text-muted">
+                                        Tutte le statistiche di accesso e i dati del link verranno persi definitivamente
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informazioni sui link da eliminare -->
+                <div class="mb-4">
+                    <div class="card border-info">
+                        <div class="card-header bg-info bg-opacity-10">
+                            <h6 class="mb-0">
+                                <i class="bi bi-list-ul me-2"></i>
+                                Dettagli Link Selezionati
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="h5 mb-1 text-primary" id="deleteActiveLinksCount">0</div>
+                                    <div class="small text-muted">Link Attivi</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="h5 mb-1 text-warning" id="deleteExpiredLinksCount">0</div>
+                                    <div class="small text-muted">Link Scaduti</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="h5 mb-1 text-success" id="deleteProtectedLinksCount">0</div>
+                                    <div class="small text-muted">Link Protetti</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="h5 mb-1 text-info" id="deleteAccessedLinksCount">0</div>
+                                    <div class="small text-muted">Con Accessi</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conferma di eliminazione -->
+                <div class="mb-4">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger bg-opacity-10">
+                            <h6 class="mb-0 text-danger">
+                                <i class="bi bi-shield-exclamation me-2"></i>
+                                Conferma Eliminazione
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDeletionCheckbox">
+                                <label class="form-check-label fw-bold" for="confirmDeletionCheckbox">
+                                    Confermo di voler eliminare definitivamente i link selezionati
+                                </label>
+                            </div>
+                            <div class="form-text text-danger">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                Spunta questa casella per confermare che comprendi le conseguenze dell'eliminazione
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggerimenti alternativi -->
+                <div class="card border-success">
+                    <div class="card-header bg-success bg-opacity-10">
+                        <h6 class="mb-0 text-success">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Alternative all'eliminazione
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-clock-history text-warning me-2"></i>
+                                    <small>Impostare una scadenza invece di eliminare</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-shield-lock text-info me-2"></i>
+                                    <small>Aggiungere protezione con password</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Annulla
+                </button>
+                <button type="button" class="btn btn-outline-warning me-2" id="suggestAlternatives">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Usa Alternative
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeletion" disabled>
+                    <i class="bi bi-trash me-2"></i>
+                    Elimina Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function copyShareUrl(url) {
     navigator.clipboard.writeText(url).then(function() {
@@ -917,6 +1076,85 @@ function updateBulkActionBar() {
     }
 }
 
+// Gestione del modal di eliminazione
+function showDeleteModal() {
+    console.log('=== SHOW DELETE MODAL CHIAMATA ===');
+    const selectedCheckboxes = document.querySelectorAll('[data-link-checkbox]:checked');
+    console.log('Checkbox selezionati:', selectedCheckboxes.length);
+    
+    if (selectedCheckboxes.length === 0) {
+        console.log('Nessun checkbox selezionato, mostro alert');
+        showAlert('Seleziona almeno un link da eliminare', 'warning');
+        return;
+    }
+
+    console.log('Procedo con il modal di eliminazione');
+    // Calcola statistiche per il modal
+    const deleteStats = calculateDeleteStats(selectedCheckboxes);
+    console.log('Delete stats:', deleteStats);
+    
+    // Aggiorna il modal con le informazioni
+    document.getElementById('selectedLinksCountDelete').textContent = selectedCheckboxes.length;
+    document.getElementById('deleteActiveLinksCount').textContent = deleteStats.active;
+    document.getElementById('deleteExpiredLinksCount').textContent = deleteStats.expired;
+    document.getElementById('deleteProtectedLinksCount').textContent = deleteStats.protected;
+    document.getElementById('deleteAccessedLinksCount').textContent = deleteStats.accessed;
+    
+    // Reset della checkbox di conferma
+    const confirmCheckbox = document.getElementById('confirmDeletionCheckbox');
+    const confirmBtn = document.getElementById('confirmDeletion');
+    confirmCheckbox.checked = false;
+    confirmBtn.disabled = true;
+    
+    console.log('Mostro il modal di eliminazione');
+    // Mostra il modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteLinksModal'));
+    modal.show();
+}
+
+function calculateDeleteStats(checkboxes) {
+    const stats = {
+        active: 0,
+        expired: 0,
+        protected: 0,
+        accessed: 0
+    };
+
+    checkboxes.forEach(checkbox => {
+        const card = checkbox.closest('.share-link-card');
+        if (!card) {
+            console.warn('Card non trovata per checkbox:', checkbox);
+            return;
+        }
+        
+        const statusBadge = card.querySelector('.badge');
+        const passwordIcon = card.querySelector('.bi-shield-lock');
+        const accessCountElement = card.querySelector('[data-accessed]');
+        const accessCount = accessCountElement ? accessCountElement.getAttribute('data-accessed') : '0';
+
+        // Conta link attivi/scaduti
+        if (statusBadge) {
+            if (statusBadge.classList.contains('bg-success')) {
+                stats.active++;
+            } else if (statusBadge.classList.contains('bg-danger')) {
+                stats.expired++;
+            }
+        }
+
+        // Conta link protetti
+        if (passwordIcon) {
+            stats.protected++;
+        }
+
+        // Conta link con accessi
+        if (accessCount && parseInt(accessCount) > 0) {
+            stats.accessed++;
+        }
+    });
+
+    return stats;
+}
+
 function showAlert(message, type = 'info') {
     // Rimuovi eventuali alert esistenti
     const existingAlerts = document.querySelectorAll('.alert-floating');
@@ -949,36 +1187,9 @@ function getSelectedLinkIds() {
 
 // Azioni bulk
 function bulkDelete() {
-    const selectedIds = getSelectedLinkIds();
-    if (selectedIds.length === 0) {
-        alert('Seleziona almeno un link da eliminare');
-        return;
-    }
-    
-    if (!confirm(`Sei sicuro di voler eliminare ${selectedIds.length} link selezionati? Questa azione non può essere annullata.`)) {
-        return;
-    }
-    
-    fetch('/api/candidates/shares/bulk-delete', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ link_ids: selectedIds })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert('Errore: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Errore nell\'eliminazione dei link');
-    });
+    console.log('=== BULK DELETE CHIAMATA ===');
+    // Mostra il modal di eliminazione invece di usare confirm()
+    showDeleteModal();
 }
 
 function bulkExtendExpiry() {
@@ -1570,5 +1781,90 @@ function validateProtectionForm() {
         confirmBtn.disabled = false;
     }
 }
+
+// Event listeners per il modal di eliminazione
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestione checkbox di conferma eliminazione
+    const confirmDeletionCheckbox = document.getElementById('confirmDeletionCheckbox');
+    const confirmDeletionBtn = document.getElementById('confirmDeletion');
+    
+    if (confirmDeletionCheckbox) {
+        confirmDeletionCheckbox.addEventListener('change', function() {
+            const confirmBtn = document.getElementById('confirmDeletion');
+            confirmBtn.disabled = !this.checked;
+        });
+    }
+
+    // Gestione click su "Usa Alternative"
+    const suggestAlternativesBtn = document.getElementById('suggestAlternatives');
+    if (suggestAlternativesBtn) {
+        suggestAlternativesBtn.addEventListener('click', function() {
+            // Chiudi modal di eliminazione
+            const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteLinksModal'));
+            deleteModal.hide();
+            
+            // Mostra suggerimento
+            showAlert('Prova ad usare le funzioni "Cambia Protezione" o "Estendi Scadenza" invece di eliminare i link', 'info');
+        });
+    }
+
+    // Gestione conferma eliminazione
+    const confirmDeletionButton = document.getElementById('confirmDeletion');
+    if (confirmDeletionButton) {
+        confirmDeletionButton.addEventListener('click', function() {
+            const selectedCheckboxes = document.querySelectorAll('[data-link-checkbox]:checked');
+            const linkIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (linkIds.length === 0) {
+                showAlert('Nessun link selezionato', 'warning');
+                return;
+            }
+
+            // Disabilita il pulsante durante l'operazione
+            this.disabled = true;
+            this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Eliminazione...';
+
+            // Invia richiesta di eliminazione
+            fetch('/api/candidates/shares/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    link_ids: linkIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    
+                    // Chiudi il modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteLinksModal'));
+                    modal.hide();
+                    
+                    // Ricarica la pagina dopo un breve delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showAlert(data.error || 'Errore durante l\'eliminazione dei link', 'danger');
+                    
+                    // Riabilita il pulsante
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-trash me-2"></i>Elimina Definitivamente';
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                showAlert('Errore di connessione durante l\'eliminazione', 'danger');
+                
+                // Riabilita il pulsante
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-trash me-2"></i>Elimina Definitivamente';
+            });
+        });
+    }
+});
 </script>
 {% endblock %}
