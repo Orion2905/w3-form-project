@@ -45,7 +45,20 @@
           <td class="text-truncate" style="max-width: 300px;">{{ form.description }}</td>
           <td>
             <a href="/forms/modifica/{{ form.id }}" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil"></i> Modifica</a>
-            <a href="/forms/elimina/{{ form.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Sei sicuro di voler eliminare questo form?');"><i class="bi bi-trash"></i> Elimina</a>
+            
+            {% if is_feature_enabled('form_duplication') %}
+            <button type="button" class="btn btn-outline-info btn-sm me-1" onclick="showDuplicateModal('{{ form.id }}', '{{ form.name|e }}')">
+              <i class="bi bi-copy"></i> Duplica
+            </button>
+            {% else %}
+            <button class="btn btn-outline-info btn-sm me-1" disabled title="Funzionalità disattivata">
+              {{ feature_locked_icon() }} <i class="bi bi-copy"></i> Duplica
+            </button>
+            {% endif %}
+            
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDeleteModal('{{ form.id }}', '{{ form.name|e }}')">
+              <i class="bi bi-trash"></i> Elimina
+            </button>
           </td>
         </tr>
         {% endfor %}
@@ -53,6 +66,118 @@
     </table>
   </div>
 </div>
+
+<!-- Modale per Duplicazione -->
+<div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="duplicateModalLabel">
+          <i class="bi bi-copy me-2"></i>Duplica Form
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-copy text-info" style="font-size: 3rem;"></i>
+        </div>
+        <p class="text-center">Sei sicuro di voler duplicare il form:</p>
+        <div class="text-center">
+          <strong class="text-primary" id="duplicateFormName"></strong>
+        </div>
+        <div class="mt-3 p-3 bg-light rounded">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Il form duplicato sarà creato con il nome "(Copia)" e sarà disattivato per default.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Annulla
+        </button>
+        <form method="POST" id="duplicateForm" class="d-inline">
+          <button type="submit" class="btn btn-info">
+            <i class="bi bi-copy me-1"></i>Duplica Form
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale per Eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="bi bi-trash me-2"></i>Elimina Form
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+        </div>
+        <p class="text-center">Sei sicuro di voler eliminare definitivamente il form:</p>
+        <div class="text-center">
+          <strong class="text-danger" id="deleteFormName"></strong>
+        </div>
+        <div class="mt-3 p-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded">
+          <small class="text-danger">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            <strong>Attenzione:</strong> Questa azione non può essere annullata. Tutti i candidati associati a questo form saranno eliminati.
+          </small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>Annulla
+        </button>
+        <a href="#" id="deleteFormLink" class="btn btn-danger">
+          <i class="bi bi-trash me-1"></i>Elimina Definitivamente
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showDuplicateModal(formId, formName) {
+  document.getElementById('duplicateFormName').textContent = formName;
+  document.getElementById('duplicateForm').action = '/forms/duplica/' + formId;
+  new bootstrap.Modal(document.getElementById('duplicateModal')).show();
+}
+
+function showDeleteModal(formId, formName) {
+  document.getElementById('deleteFormName').textContent = formName;
+  document.getElementById('deleteFormLink').href = '/forms/elimina/' + formId;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Aggiungi animazioni ai modali
+document.getElementById('duplicateModal').addEventListener('show.bs.modal', function () {
+  this.querySelector('.modal-content').style.transform = 'scale(0.8)';
+  this.querySelector('.modal-content').style.opacity = '0';
+  setTimeout(() => {
+    this.querySelector('.modal-content').style.transition = 'all 0.2s ease-out';
+    this.querySelector('.modal-content').style.transform = 'scale(1)';
+    this.querySelector('.modal-content').style.opacity = '1';
+  }, 10);
+});
+
+document.getElementById('deleteModal').addEventListener('show.bs.modal', function () {
+  this.querySelector('.modal-content').style.transform = 'scale(0.8)';
+  this.querySelector('.modal-content').style.opacity = '0';
+  setTimeout(() => {
+    this.querySelector('.modal-content').style.transition = 'all 0.2s ease-out';
+    this.querySelector('.modal-content').style.transform = 'scale(1)';
+    this.querySelector('.modal-content').style.opacity = '1';
+  }, 10);
+});
+</script>
+
 <style>
 #forms-table tbody tr.form-row:nth-child(even) {
   background-color: var(--row-alt-bg, #f8f9fa);

@@ -19,7 +19,7 @@ from w3form.models import (
     User, Candidate, DynamicForm, Score, ScoreCategory, SystemSettings, FormFieldConfiguration, FeatureFlag
 )
 from w3form.decorators import role_required, developer_required, view_only_required
-from w3form.feature_flags import is_feature_enabled, init_default_features
+from w3form.feature_flags import is_feature_enabled, init_default_features, feature_required
 from w3form.azure_utils import get_secure_image_url, get_secure_document_url
 import requests, time
 from requests.auth import HTTPBasicAuth
@@ -420,6 +420,83 @@ def get_form_field_visibility(slug):
             'success': False,
             'error': f'Errore nel caricamento configurazione: {str(e)}'
         }), 500
+
+@main.route('/forms/elimina/<int:form_id>', methods=['GET'])
+def delete_dynamic_form(form_id):
+    """Elimina un form esistente"""
+    try:
+        # Ottieni il form da eliminare
+        form = DynamicForm.query.get_or_404(form_id)
+        form_name = form.name
+        
+        # Elimina il form (cascade eliminerà automaticamente i candidati associati)
+        db.session.delete(form)
+        db.session.commit()
+        
+        flash(f'Form "{form_name}" eliminato con successo!', 'success')
+        return redirect(url_for('main.list_dynamic_forms'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Errore durante l\'eliminazione del form: {str(e)}', 'danger')
+        return redirect(url_for('main.list_dynamic_forms'))
+
+@main.route('/forms/duplica/<int:form_id>', methods=['POST'])
+@feature_required('form_duplication')
+def duplicate_dynamic_form(form_id):
+    """Duplica un form esistente"""
+    try:
+        # Ottieni il form originale
+        original_form = DynamicForm.query.get_or_404(form_id)
+        
+        # Crea un nuovo slug univoco
+        base_slug = f"{original_form.slug}-copia"
+        new_slug = base_slug
+        counter = 1
+        while DynamicForm.query.filter_by(slug=new_slug).first():
+            new_slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        # Crea il form duplicato
+        duplicated_form = DynamicForm(
+            name=f"{original_form.name} (Copia)",
+            slug=new_slug,
+            description=original_form.description,
+            category=original_form.category,
+            subcategory=original_form.subcategory,
+            dropdown_options=original_form.dropdown_options.copy() if original_form.dropdown_options else {},
+            is_active=False,  # Il form duplicato è disattivo per default
+            active_from=original_form.active_from,
+            active_until=original_form.active_until,
+            privacy_policy_enabled=original_form.privacy_policy_enabled,
+            privacy_policy_url=original_form.privacy_policy_url,
+            privacy_policy_text=original_form.privacy_policy_text,
+            privacy_policy_new_tab=original_form.privacy_policy_new_tab
+        )
+        
+        db.session.add(duplicated_form)
+        db.session.commit()
+        
+        # Duplica anche la configurazione dei campi se presente
+        original_fields_config = FormFieldConfiguration.query.filter_by(form_id=form_id).all()
+        for config in original_fields_config:
+            new_config = FormFieldConfiguration(
+                form_id=duplicated_form.id,
+                field_name=config.field_name,
+                is_visible=config.is_visible,
+                is_required=config.is_required
+            )
+            db.session.add(new_config)
+        
+        db.session.commit()
+        
+        flash(f'Form "{original_form.name}" duplicato con successo come "{duplicated_form.name}"!', 'success')
+        return redirect(url_for('main.list_dynamic_forms'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Errore durante la duplicazione del form: {str(e)}', 'danger')
+        return redirect(url_for('main.list_dynamic_forms'))
 
 @main.route('/forms/modifica/<int:form_id>', methods=['GET', 'POST'])
 def edit_dynamic_form(form_id):

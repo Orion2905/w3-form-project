@@ -13,6 +13,11 @@ AVAILABLE_FEATURES = {
         'description': 'Permette di attivare o disattivare specifici campi nei form dinamici',
         'default': True
     },
+    'form_duplication': {
+        'name': 'Duplicazione Form',
+        'description': 'Permette di duplicare form dinamici esistenti con tutte le loro configurazioni',
+        'default': True
+    },
     'bulk_operations': {
         'name': 'Operazioni di Massa',
         'description': 'Permette operazioni bulk su candidati (eliminazione, modifica, esportazione)',
