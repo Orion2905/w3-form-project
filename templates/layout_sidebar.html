@@ -2,7 +2,7 @@
 {% block sidebar %}
 <nav id="sidebar" class="sidebar border-end d-flex flex-column align-items-center">
   <div class="sidebar-logo my-3">
-    <img src="https://placehold.co/48x48?text=W3" alt="Logo" width="48" height="48" style="border-radius:12px;">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="W3 Form Logo" width="48" height="48">
   </div>
   <ul class="nav flex-column py-4 w-100 px-2">
     <li class="nav-item mb-2">

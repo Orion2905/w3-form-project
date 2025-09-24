@@ -1,13 +1,23 @@
 {% extends 'layout_full.html' %}
 {% set show_sidebar_toggle = False %}
 {% block main_content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
-  <div class="card p-5 text-center shadow-lg">
-    <div class="mb-4">
-      <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+  <div class="card p-4 text-center shadow-lg" style="max-width: 500px; width: 90%;">
+    <div class="mb-3">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="W3 Form Logo" width="70" height="70" class="mb-2">
+      <br>
+      <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
     </div>
     <h2 class="mb-3">Candidatura inviata con successo!</h2>
-    <p class="mb-4">Grazie per aver inviato la tua candidatura.<br>Ti ricontatteremo al più presto.</p>
+    <p class="mb-2">Grazie per la tua candidatura!<br>
+    La esamineremo al più presto e la terremo in considerazione per future opportunità lavorative o eventi.<br>
+    Potresti essere ricontattato dai nostri uffici.</p>
+    
+    <p class="mb-4 text-muted" style="color: #6c757d !important; font-size: 0.9em;">
+    Thank you for your application!<br>
+    We will review it as soon as possible and keep it in consideration for future job opportunities or events.<br>
+    You may be contacted by our offices.
+    </p>
     {% if current_user.is_authenticated and current_user.role in ['admin', 'intervistatore'] %}
       <a href="/" class="btn btn-primary">Torna alla Home</a>
     {% endif %}

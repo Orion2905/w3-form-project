@@ -620,6 +620,77 @@
     margin-bottom: 1rem;
   }
 }
+
+/* Stili per la gestione colonne */
+.column-item {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  cursor: move;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.column-item:hover {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.column-item.selected {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.column-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.column-item .drag-handle {
+  color: #6c757d;
+  margin-right: 0.5rem;
+  cursor: grab;
+}
+
+.column-item .drag-handle:active {
+  cursor: grabbing;
+}
+
+.column-item .column-checkbox {
+  margin-right: 0.75rem;
+}
+
+.column-item .column-label {
+  flex-grow: 1;
+  font-weight: 500;
+}
+
+.column-item .column-key {
+  font-size: 0.8em;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+[data-bs-theme="dark"] .column-item {
+  background-color: #343a40;
+  border-color: #495057;
+  color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .column-item:hover {
+  background-color: #495057;
+}
+
+[data-bs-theme="dark"] .column-item.selected {
+  background-color: #1e4d5b;
+  border-color: #5bc0de;
+  }
+}
 </style>
 
 {% block content %}
@@ -645,6 +716,11 @@
           </li>
         </ul>
       </div>
+      
+      <!-- Pulsante gestione colonne -->
+      <button type="button" class="btn btn-outline-primary" onclick="openColumnModal()">
+        <i class="bi bi-layout-three-columns"></i> <span class="d-none d-sm-inline">Gestisci Colonne</span>
+      </button>
       
       <!-- Pulsante condivisione -->
       <button type="button" class="btn btn-info" onclick="openShareModal()">
@@ -1065,72 +1141,8 @@
     
     <table class="table table-striped table-hover align-middle table-sticky-columns" id="candidatesTable">
       <thead class="table-light">
-        <tr>
-          {% set columns = [
-            ('first_name', 'Nome'),
-            ('last_name', 'Cognome'),
-            ('email', 'Email'),
-            ('phone_number', 'Telefono'),
-            ('come_sei_arrivato', 'Come sei arrivato a noi'),
-            ('gender', 'Genere'),
-            ('date_of_birth', 'Data di nascita'),
-            ('place_of_birth', 'Luogo di nascita'),
-            ('nationality', 'Nazionalità'),
-            ('marital_status', 'Stato civile'),
-            ('height_cm', 'Altezza (cm)'),
-            ('weight_kg', 'Peso (kg)'),
-            ('tshirt_size', 'Taglia T-shirt'),
-            ('shoe_size_eu', 'Numero scarpe'),
-            ('address', 'Indirizzo'),
-            ('city', 'Città'),
-            ('postal_code', 'CAP'),
-            ('country_of_residence', 'Paese residenza'),
-            ('id_document', 'ID documento'),
-            ('id_number', 'Numero documento'),
-            ('id_expiry_date', 'Scadenza documento'),
-            ('id_country', 'Paese documento'),
-            ('additional_document', 'Additional Document'),
-            ('codice_fiscale', 'Codice Fiscale'),
-            ('permesso_soggiorno', 'Permesso Soggiorno'),
-            ('license_country', 'Patente paese'),
-            ('license_number', 'Patente numero'),
-            ('license_category', 'Drive License'),
-            ('license_issue_date', 'Rilascio patente'),
-            ('license_expiry_date', 'Scadenza patente'),
-            ('years_driving_experience', 'Anni guida'),
-            ('auto_moto_munito', 'Auto/Moto munito'),
-            ('occupation', 'Occupazione'),
-            ('other_experience', 'Altre esperienze'),
-            ('availability_from', 'Disponibilità Da'),
-            ('availability_till', 'Disponibilità Fino A'),
-            ('city_availability', 'City/Cities of Availability'),
-            ('language_1', 'Lingua 1'),
-            ('proficiency_1', 'Livello 1'),
-            ('language_2', 'Lingua 2'),
-            ('proficiency_2', 'Livello 2'),
-            ('language_3', 'Lingua 3'),
-            ('proficiency_3', 'Livello 3'),
-            ('form_name', 'Form'),
-            ('form_category', 'Categoria Form'),
-            ('form_subcategory', 'Sottocategoria Form'),
-            ('created_at', 'Creato il'),
-            ('total_score', 'Punteggio')
-          ] %}
-          {% for key, label in columns %}
-          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            <button class="btn btn-link p-0 sort-btn" data-sort="{{ key }}" title="{{ label }}">
-              <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">{{ label }}</span>
-              <i class="bi bi-arrow-down-up ms-1"></i>
-            </button>
-          </th>
-          {% endfor %}
-          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Curriculum</span>
-          </th>
-          <th style="max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">Foto</span>
-          </th>
-          <th>Azioni</th>
+        <tr id="tableHeader">
+          <!-- Colonne dinamiche popolate via JS -->
         </tr>
       </thead>
       <tbody>
@@ -1402,12 +1414,176 @@
     </div>
   </div>
 </div>
+
+<!-- Modal per gestione colonne -->
+<div class="modal fade" id="columnModal" tabindex="-1" aria-labelledby="columnModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="columnModalLabel">
+          <i class="bi bi-layout-three-columns"></i> Gestisci Colonne Tabella
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i>
+              <strong>Istruzioni:</strong> Seleziona le colonne da mostrare e trascinale per riordinarle. Le modifiche vengono salvate automaticamente.
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <h6>Colonne disponibili:</h6>
+            <div class="d-flex gap-2 mb-3">
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllColumns()">
+                <i class="bi bi-check-all"></i> Seleziona tutte
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-warning" onclick="selectDefaultColumns()">
+                <i class="bi bi-arrow-clockwise"></i> Solo principali
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllColumns()">
+                <i class="bi bi-x-circle"></i> Deseleziona tutte
+              </button>
+            </div>
+            <div id="columnList" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+              <!-- Popolato dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg"></i> Chiudi
+        </button>
+        <button type="button" class="btn btn-primary" onclick="applyColumnChanges()">
+          <i class="bi bi-check-lg"></i> Applica modifiche
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>
 let allCandidates = [];
 let filteredCandidates = [];
 let currentSort = { key: null, asc: true };
+
+// Configurazione colonne
+const ALL_COLUMNS = [
+  { key: 'first_name', label: 'Nome', default: true },
+  { key: 'last_name', label: 'Cognome', default: true },
+  { key: 'email', label: 'Email', default: true },
+  { key: 'phone_number', label: 'Telefono', default: true },
+  { key: 'come_sei_arrivato', label: 'Come sei arrivato a noi', default: false },
+  { key: 'gender', label: 'Genere', default: false },
+  { key: 'date_of_birth', label: 'Data di nascita', default: false },
+  { key: 'place_of_birth', label: 'Luogo di nascita', default: false },
+  { key: 'nationality', label: 'Nazionalità', default: false },
+  { key: 'marital_status', label: 'Stato civile', default: false },
+  { key: 'height_cm', label: 'Altezza (cm)', default: false },
+  { key: 'weight_kg', label: 'Peso (kg)', default: false },
+  { key: 'tshirt_size', label: 'Taglia T-shirt', default: false },
+  { key: 'shoe_size_eu', label: 'Numero scarpe', default: false },
+  { key: 'address', label: 'Indirizzo', default: false },
+  { key: 'city', label: 'Città', default: false },
+  { key: 'postal_code', label: 'CAP', default: false },
+  { key: 'country_of_residence', label: 'Paese residenza', default: false },
+  { key: 'id_document', label: 'ID documento', default: false },
+  { key: 'id_number', label: 'Numero documento', default: false },
+  { key: 'id_expiry_date', label: 'Scadenza documento', default: false },
+  { key: 'id_country', label: 'Paese documento', default: false },
+  { key: 'additional_document', label: 'Additional Document', default: false },
+  { key: 'codice_fiscale', label: 'Codice Fiscale', default: false },
+  { key: 'permesso_soggiorno', label: 'Permesso Soggiorno', default: false },
+  { key: 'license_country', label: 'Patente paese', default: false },
+  { key: 'license_number', label: 'Patente numero', default: false },
+  { key: 'license_category', label: 'Drive License', default: false },
+  { key: 'license_issue_date', label: 'Rilascio patente', default: false },
+  { key: 'license_expiry_date', label: 'Scadenza patente', default: false },
+  { key: 'years_driving_experience', label: 'Anni guida', default: false },
+  { key: 'auto_moto_munito', label: 'Auto/Moto munito', default: false },
+  { key: 'occupation', label: 'Occupazione', default: false },
+  { key: 'other_experience', label: 'Altre esperienze', default: false },
+  { key: 'availability_from', label: 'Disponibilità Da', default: false },
+  { key: 'availability_till', label: 'Disponibilità Fino A', default: false },
+  { key: 'city_availability', label: 'City/Cities of Availability', default: false },
+  { key: 'language_1', label: 'Lingua 1', default: false },
+  { key: 'proficiency_1', label: 'Livello 1', default: false },
+  { key: 'language_2', label: 'Lingua 2', default: false },
+  { key: 'proficiency_2', label: 'Livello 2', default: false },
+  { key: 'language_3', label: 'Lingua 3', default: false },
+  { key: 'proficiency_3', label: 'Livello 3', default: false },
+  { key: 'form_name', label: 'Form', default: true },
+  { key: 'form_category', label: 'Categoria Form', default: false },
+  { key: 'form_subcategory', label: 'Sottocategoria Form', default: false },
+  { key: 'created_at', label: 'Creato il', default: true },
+  { key: 'total_score', label: 'Punteggio', default: true },
+  { key: 'curriculum', label: 'Curriculum', default: true, special: true },
+  { key: 'photo', label: 'Foto', default: true, special: true },
+  { key: 'actions', label: 'Azioni', default: true, special: true, fixed: true }
+];
+
+let visibleColumns = [];
+
+// Funzioni per gestione colonne
+function getColumnConfig() {
+  const saved = localStorage.getItem('candidatesTableColumns');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Errore nel caricamento configurazione colonne:', e);
+    }
+  }
+  // Configurazione di default: solo colonne principali
+  return ALL_COLUMNS.filter(col => col.default).map(col => col.key);
+}
+
+function saveColumnConfig(columnOrder) {
+  localStorage.setItem('candidatesTableColumns', JSON.stringify(columnOrder));
+}
+
+function initializeColumns() {
+  const columnOrder = getColumnConfig();
+  visibleColumns = columnOrder.map(key => ALL_COLUMNS.find(col => col.key === key)).filter(col => col);
+  updateTableHeader();
+}
+
+function updateTableHeader() {
+  const header = document.getElementById('tableHeader');
+  header.innerHTML = '';
+  
+  visibleColumns.forEach(column => {
+    const th = document.createElement('th');
+    th.style.maxWidth = '120px';
+    th.style.whiteSpace = 'nowrap';
+    th.style.overflow = 'hidden';
+    th.style.textOverflow = 'ellipsis';
+    
+    if (column.special) {
+      // Colonne speciali (Curriculum, Foto, Azioni)
+      th.innerHTML = `<span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>`;
+    } else {
+      // Colonne normali con ordinamento
+      th.innerHTML = `
+        <button class="btn btn-link p-0 sort-btn" data-sort="${column.key}" title="${column.label}">
+          <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>
+          <i class="bi bi-arrow-down-up ms-1"></i>
+        </button>
+      `;
+    }
+    
+    header.appendChild(th);
+  });
+  
+  // Riattiva gli event listener per l'ordinamento
+  attachSortListeners();
+}
 
 // Carica le opzioni per i filtri dropdown
 async function loadFilterOptions() {
@@ -1677,103 +1853,90 @@ function renderTable(data) {
     return;
   }
   tbody.innerHTML = '';
+  
   data.forEach(c => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.first_name||''}</td>
-      <td>${c.last_name||''}</td>
-      <td>${c.email||''}</td>
-      <td>${c.phone_number||''}</td>
-      <td>${c.come_sei_arrivato||''}</td>
-      <td>${c.gender||''}</td>
-      <td>${c.date_of_birth||''}</td>
-      <td>${c.place_of_birth||''}</td>
-      <td>${c.nationality||''}</td>
-      <td>${c.marital_status||''}</td>
-      <td>${c.height_cm||''}</td>
-      <td>${c.weight_kg||''}</td>
-      <td>${c.tshirt_size||''}</td>
-      <td>${c.shoe_size_eu||''}</td>
-      <td>${c.address||''}</td>
-      <td>${c.city||''}</td>
-      <td>${c.postal_code||''}</td>
-      <td>${c.country_of_residence||''}</td>
-      <td>${c.id_document||''}</td>
-      <td>${c.id_number||''}</td>
-      <td>${c.id_expiry_date||''}</td>
-      <td>${c.id_country||''}</td>
-      <td>${c.additional_document||''}</td>
-      <td>${c.codice_fiscale||''}</td>
-      <td>${c.permesso_soggiorno||''}</td>
-      <td>${c.license_country||''}</td>
-      <td>${c.license_number||''}</td>
-      <td>${c.license_category||''}</td>
-      <td>${c.license_issue_date||''}</td>
-      <td>${c.license_expiry_date||''}</td>
-      <td>${c.years_driving_experience||''}</td>
-      <td>${c.auto_moto_munito||''}</td>
-      <td>${c.occupation||''}</td>
-      <td>${c.other_experience||''}</td>
-      <td>${c.availability_from||''}</td>
-      <td>${c.availability_till||''}</td>
-      <td>${c.city_availability||''}</td>
-      <td>${c.language_1||''}</td>
-      <td>${c.proficiency_1||''}</td>
-      <td>${c.language_2||''}</td>
-      <td>${c.proficiency_2||''}</td>
-      <td>${c.language_3||''}</td>
-      <td>${c.proficiency_3||''}</td>
-      <td>
-        ${c.form_name ? `<span class="badge bg-info">${c.form_name}</span>` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${c.form_category ? `<span class="badge bg-primary">${c.form_category}</span>` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT') : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${(c.scores_count && c.scores_count > 0) ? 
-          `<div class="text-center">
-            <span class="badge bg-${(parseFloat(c.total_score) || 0) >= 80 ? 'success' : (parseFloat(c.total_score) || 0) >= 60 ? 'warning' : (parseFloat(c.total_score) || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
-            <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
-          </div>` : 
-          '<span class="text-muted">Non valutato</span>'
-        }
-      </td>
-      <td>
-        ${c.curriculum_file ? `
-          <div class="btn-group btn-group-sm" role="group">
-            <a href="/curriculum/view/${c.curriculum_file.split('/').pop()}" class="btn btn-outline-info" title="Visualizza PDF">
-              <i class='bi bi-eye'></i>
-            </a>
-            <a href="${c.curriculum_file}" download class="btn btn-outline-success" title="Scarica PDF">
-              <i class='bi bi-download'></i>
-            </a>
-          </div>
-        ` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        ${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}
-      </td>
-      <td>
-        <div class="btn-group" role="group">
-          <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
-          {% if not current_user.is_ospite() %}
-          <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
-          ${getArchiveButton(c)}
-          {% endif %}
-        </div>
-      </td>
-    `;
+    
+    // Genera le celle in base alle colonne visibili
+    visibleColumns.forEach(column => {
+      const td = document.createElement('td');
+      
+      switch(column.key) {
+        case 'curriculum':
+          td.innerHTML = c.curriculum_file ? `
+            <div class="btn-group btn-group-sm" role="group">
+              <a href="/curriculum/view/${c.curriculum_file.split('/').pop()}" class="btn btn-outline-info" title="Visualizza PDF">
+                <i class='bi bi-eye'></i>
+              </a>
+              <a href="${c.curriculum_file}" download class="btn btn-outline-success" title="Scarica PDF">
+                <i class='bi bi-download'></i>
+              </a>
+            </div>
+          ` : '<span class="text-muted">-</span>';
+          break;
+          
+        case 'photo':
+          td.innerHTML = c.profile_photo ? 
+            `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : 
+            '<span class="text-muted">-</span>';
+          break;
+          
+        case 'actions':
+          td.innerHTML = `
+            <div class="btn-group" role="group">
+              <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
+              {% if not current_user.is_ospite() %}
+              <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
+              ${getArchiveButton(c)}
+              {% endif %}
+            </div>
+          `;
+          break;
+          
+        case 'form_name':
+          td.innerHTML = c.form_name ? `<span class="badge bg-info">${c.form_name}</span>` : '<span class="text-muted">-</span>';
+          break;
+          
+        case 'form_category':
+          td.innerHTML = c.form_category ? `<span class="badge bg-primary">${c.form_category}</span>` : '<span class="text-muted">-</span>';
+          break;
+          
+        case 'form_subcategory':
+          td.innerHTML = c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>';
+          break;
+          
+        case 'created_at':
+          td.innerHTML = c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT') : '<span class="text-muted">-</span>';
+          break;
+          
+        case 'total_score':
+          td.innerHTML = (c.scores_count && c.scores_count > 0) ? 
+            `<div class="text-center">
+              <span class="badge bg-${(parseFloat(c.total_score) || 0) >= 80 ? 'success' : (parseFloat(c.total_score) || 0) >= 60 ? 'warning' : (parseFloat(c.total_score) || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
+              <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
+            </div>` : 
+            '<span class="text-muted">Non valutato</span>';
+          break;
+          
+        default:
+          // Colonne standard
+          td.textContent = c[column.key] || '';
+          break;
+      }
+      
+      tr.appendChild(td);
+    });
+    
     tbody.appendChild(tr);
   });
   
   // Aggiorna la scrollbar dopo aver renderizzato la tabella
   updateScrollbarAfterTableChange();
+}
+
+// Wrapper function per compatibilità
+function renderCandidatesTable(data) {
+  renderTable(data);
 }
 function applyFiltersAndSort() {
   showFilterSpinner();
@@ -2361,18 +2524,21 @@ function clearAllInFilter(fieldName) {
 
 // Variabile globale per tenere traccia del preset attivo
 let currentFilterPreset = null;
-document.querySelectorAll('.sort-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const key = this.getAttribute('data-sort');
-    if(currentSort.key === key) {
-      currentSort.asc = !currentSort.asc;
-    } else {
-      currentSort.key = key;
-      currentSort.asc = true;
-    }
-    applyFiltersAndSort();
+
+function attachSortListeners() {
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const key = this.getAttribute('data-sort');
+      if(currentSort.key === key) {
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.key = key;
+        currentSort.asc = true;
+      }
+      applyFiltersAndSort();
+    });
   });
-});
+}
 function openEdit(id) {
   const c = allCandidates.find(x=>x.id===id);
   if(!c) return;
@@ -3766,5 +3932,188 @@ function initTableUsabilityFeatures() {
     </div>
   </div>
 </div>
+
+// ===== FUNZIONI PER GESTIONE COLONNE =====
+
+function openColumnModal() {
+  populateColumnModal();
+  const modal = new bootstrap.Modal(document.getElementById('columnModal'));
+  modal.show();
+}
+
+function populateColumnModal() {
+  const columnList = document.getElementById('columnList');
+  columnList.innerHTML = '';
+  
+  const currentOrder = visibleColumns.map(col => col.key);
+  
+  // Aggiungi le colonne nell'ordine attuale
+  visibleColumns.forEach(column => {
+    const columnItem = createColumnItem(column, true);
+    columnList.appendChild(columnItem);
+  });
+  
+  // Aggiungi le colonne non visibili
+  ALL_COLUMNS.filter(col => !currentOrder.includes(col.key) && !col.fixed).forEach(column => {
+    const columnItem = createColumnItem(column, false);
+    columnList.appendChild(columnItem);
+  });
+  
+  // Abilita il drag and drop
+  enableDragAndDrop(columnList);
+}
+
+function createColumnItem(column, isSelected) {
+  const div = document.createElement('div');
+  div.className = `column-item ${isSelected ? 'selected' : ''}`;
+  div.draggable = !column.fixed;
+  div.dataset.columnKey = column.key;
+  
+  div.innerHTML = `
+    ${!column.fixed ? '<i class="bi bi-grip-vertical drag-handle"></i>' : ''}
+    <input type="checkbox" class="form-check-input column-checkbox" ${isSelected ? 'checked' : ''} ${column.fixed ? 'disabled' : ''}>
+    <span class="column-label">${column.label}</span>
+    <span class="column-key">${column.key}</span>
+  `;
+  
+  // Event listener per checkbox
+  const checkbox = div.querySelector('.column-checkbox');
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      div.classList.add('selected');
+    } else {
+      div.classList.remove('selected');
+    }
+  });
+  
+  return div;
+}
+
+function enableDragAndDrop(container) {
+  let draggedElement = null;
+  
+  container.addEventListener('dragstart', function(e) {
+    if (e.target.classList.contains('column-item') && e.target.draggable) {
+      draggedElement = e.target;
+      e.target.classList.add('dragging');
+    }
+  });
+  
+  container.addEventListener('dragend', function(e) {
+    if (e.target.classList.contains('column-item')) {
+      e.target.classList.remove('dragging');
+      draggedElement = null;
+    }
+  });
+  
+  container.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(container, e.clientY);
+    if (afterElement == null) {
+      container.appendChild(draggedElement);
+    } else {
+      container.insertBefore(draggedElement, afterElement);
+    }
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function selectAllColumns() {
+  const checkboxes = document.querySelectorAll('#columnList .column-checkbox:not(:disabled)');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = true;
+    checkbox.closest('.column-item').classList.add('selected');
+  });
+}
+
+function deselectAllColumns() {
+  const checkboxes = document.querySelectorAll('#columnList .column-checkbox:not(:disabled)');
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = false;
+    checkbox.closest('.column-item').classList.remove('selected');
+  });
+}
+
+function selectDefaultColumns() {
+  const allItems = document.querySelectorAll('#columnList .column-item');
+  allItems.forEach(item => {
+    const columnKey = item.dataset.columnKey;
+    const column = ALL_COLUMNS.find(col => col.key === columnKey);
+    const checkbox = item.querySelector('.column-checkbox');
+    
+    if (!checkbox.disabled) {
+      if (column && column.default) {
+        checkbox.checked = true;
+        item.classList.add('selected');
+      } else {
+        checkbox.checked = false;
+        item.classList.remove('selected');
+      }
+    }
+  });
+}
+
+function applyColumnChanges() {
+  const columnItems = document.querySelectorAll('#columnList .column-item');
+  const newColumnOrder = [];
+  
+  columnItems.forEach(item => {
+    const checkbox = item.querySelector('.column-checkbox');
+    if (checkbox.checked) {
+      newColumnOrder.push(item.dataset.columnKey);
+    }
+  });
+  
+  // Aggiorna la configurazione
+  visibleColumns = newColumnOrder.map(key => ALL_COLUMNS.find(col => col.key === key)).filter(col => col);
+  
+  // Salva la configurazione
+  saveColumnConfig(newColumnOrder);
+  
+  // Aggiorna la tabella
+  updateTableHeader();
+  renderCandidatesTable(filteredCandidates);
+  
+  // Chiudi il modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('columnModal'));
+  modal.hide();
+  
+  // Mostra messaggio di conferma
+  const alert = document.createElement('div');
+  alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+  alert.style.top = '20px';
+  alert.style.right = '20px';
+  alert.style.zIndex = '9999';
+  alert.innerHTML = `
+    <i class="bi bi-check-circle"></i> Configurazione colonne salvata!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(alert);
+  
+  setTimeout(() => {
+    if (alert.parentNode) {
+      alert.parentNode.removeChild(alert);
+    }
+  }, 3000);
+}
+
+// Inizializzazione
+document.addEventListener('DOMContentLoaded', function() {
+  initializeColumns();
+});
 
 {% endblock %}
