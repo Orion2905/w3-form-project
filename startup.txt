@@ -1,5 +1,21 @@
 #!/bin/bash
-echo "Starting Azure Web App..."
+echo "=== Azure Web App Startup ==="
+echo "Current directory: $(pwd)"
+echo "Python version: $(python --version)"
+echo "Flask app: $FLASK_APP"
+
+# Set Flask environment
 export FLASK_APP=app.py
-python -m flask db upgrade
-gunicorn --bind=0.0.0.0:$PORT --timeout=120 app:app
+export FLASK_ENV=production
+
+# Run database migrations with error handling
+echo "Running database migrations..."
+python -m flask db upgrade || {
+    echo "Migration failed, attempting to initialize..."
+    python -m flask db init
+    python -m flask db migrate -m "Initial migration"
+    python -m flask db upgrade
+}
+
+echo "Starting Gunicorn server..."
+exec gunicorn --bind=0.0.0.0:$PORT --timeout=120 --workers=1 --preload app:app
