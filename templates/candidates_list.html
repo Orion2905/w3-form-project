@@ -53,8 +53,6 @@
 .table-responsive {
   /* Scroll sempre visibile */
   overflow-x: auto !important;
-  overflow-y: auto !important;
-  max-height: 70vh;
   scrollbar-width: thin;
   scrollbar-color: #6c757d #f8f9fa;
 }
@@ -749,8 +747,9 @@
 </style>
 
 {% block content %}
-<div class="container-fluid my-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{% if archived %}Candidati Archiviati{% else %}Elenco Candidati{% endif %}</h2>
     <div class="d-flex gap-2">
       <!-- Pulsanti di esportazione -->
@@ -1515,6 +1514,7 @@
       </div>
     </div>
   </div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -2136,12 +2136,14 @@ function generateCellHTML(key, candidate) {
     case 'last_name': return `<td>${c.last_name||''}</td>`;
     case 'email': return `<td>${c.email||''}</td>`;
     case 'phone_number': return `<td>${c.phone_number||''}</td>`;
+    case 'instagram': return `<td>${c.instagram ? `<a href="https://instagram.com/${c.instagram.replace('@', '')}" target="_blank">@${c.instagram.replace('@', '')}</a>` : ''}</td>`;
     case 'come_sei_arrivato': return `<td>${c.come_sei_arrivato||''}</td>`;
     case 'gender': return `<td>${c.gender||''}</td>`;
     case 'date_of_birth': return `<td>${c.date_of_birth||''}</td>`;
     case 'place_of_birth': return `<td>${c.place_of_birth||''}</td>`;
     case 'nationality': return `<td>${c.nationality||''}</td>`;
     case 'marital_status': return `<td>${c.marital_status||''}</td>`;
+    case 'has_children': return `<td>${c.has_children === 1 || c.has_children === '1' ? 'Sì' : c.has_children === 0 || c.has_children === '0' ? 'No' : (c.has_children || '')}</td>`;
     case 'height_cm': return `<td>${c.height_cm||''}</td>`;
     case 'weight_kg': return `<td>${c.weight_kg||''}</td>`;
     case 'tshirt_size': return `<td>${c.tshirt_size||''}</td>`;
@@ -2150,6 +2152,10 @@ function generateCellHTML(key, candidate) {
     case 'city': return `<td>${c.city||''}</td>`;
     case 'postal_code': return `<td>${c.postal_code||''}</td>`;
     case 'country_of_residence': return `<td>${c.country_of_residence||''}</td>`;
+    case 'domicile_address': return `<td>${c.domicile_address||''}</td>`;
+    case 'domicile_city': return `<td>${c.domicile_city||''}</td>`;
+    case 'domicile_postal_code': return `<td>${c.domicile_postal_code||''}</td>`;
+    case 'domicile_country': return `<td>${c.domicile_country||''}</td>`;
     case 'id_document': return `<td>${c.id_document||''}</td>`;
     case 'id_number': return `<td>${c.id_number||''}</td>`;
     case 'id_expiry_date': return `<td>${c.id_expiry_date||''}</td>`;
@@ -2157,18 +2163,24 @@ function generateCellHTML(key, candidate) {
 
     case 'codice_fiscale': return `<td>${c.codice_fiscale||''}</td>`;
     case 'permesso_soggiorno': return `<td>${c.permesso_soggiorno||''}</td>`;
+    case 'permesso_expiry_date': return `<td>${c.permesso_expiry_date||''}</td>`;
     case 'license_country': return `<td>${c.license_country||''}</td>`;
     case 'license_number': return `<td>${c.license_number||''}</td>`;
     case 'license_category': return `<td>${c.license_category||''}</td>`;
     case 'license_issue_date': return `<td>${c.license_issue_date||''}</td>`;
     case 'license_expiry_date': return `<td>${c.license_expiry_date||''}</td>`;
     case 'years_driving_experience': return `<td>${c.years_driving_experience||''}</td>`;
-    case 'auto_moto_munito': return `<td>${c.auto_moto_munito||''}</td>`;
+    case 'auto_moto_munito': return `<td>${c.auto_moto_munito === 1 || c.auto_moto_munito === '1' ? 'Sì' : c.auto_moto_munito === 0 || c.auto_moto_munito === '0' ? 'No' : (c.auto_moto_munito || '')}</td>`;
+    case 'transmission_type': return `<td>${c.transmission_type||''}</td>`;
+    case 'international_license': return `<td>${c.international_license === 1 || c.international_license === '1' ? 'Sì' : c.international_license === 0 || c.international_license === '0' ? 'No' : (c.international_license || '')}</td>`;
+    case 'international_license_number': return `<td>${c.international_license_number||''}</td>`;
+    case 'international_license_expiry': return `<td>${c.international_license_expiry||''}</td>`;
     case 'occupation': return `<td>${c.occupation||''}</td>`;
     case 'other_experience': return `<td>${c.other_experience||''}</td>`;
     case 'availability_from': return `<td>${c.availability_from||''}</td>`;
     case 'availability_till': return `<td>${c.availability_till||''}</td>`;
     case 'city_availability': return `<td>${c.city_availability||''}</td>`;
+    case 'work_away_from_domicile': return `<td>${c.work_away_from_domicile === 1 || c.work_away_from_domicile === '1' ? 'Sì' : c.work_away_from_domicile === 0 || c.work_away_from_domicile === '0' ? 'No' : (c.work_away_from_domicile || '')}</td>`;
     case 'language_1': return `<td>${c.language_1||''}</td>`;
     case 'proficiency_1': return `<td>${c.proficiency_1||''}</td>`;
     case 'language_2': return `<td>${c.language_2||''}</td>`;

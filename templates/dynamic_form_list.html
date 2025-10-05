@@ -1,6 +1,6 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
-<div class="container-fluid mt-3" style="width: 100%; max-width: none; padding: 0 0.75rem;">
+<div class="container-fluid mt-3" style="width: 100% !important; max-width: none !important; padding: 0 0.75rem; margin: 0 !important;">
   <!-- Header con titolo e statistiche -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -23,7 +23,7 @@
   </div>
 
   <!-- Barra di ricerca e azioni -->
-  <div class="card mb-4 border-0 shadow-sm">
+  <div class="card mb-4 border-0 shadow-sm" style="width: 100% !important; margin: 0 0 1rem 0 !important;">
     <div class="card-body p-3">
       <div class="row align-items-center">
         <div class="col-md-8">
@@ -51,9 +51,9 @@
   </div>
 
   <!-- Tabella migliorata -->
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0" id="forms-table">
+  <div class="card border-0 shadow-sm" style="width: 100% !important; margin: 0 !important;">
+    <div class="table-responsive" style="width: 100% !important; max-width: 100% !important;">
+      <table class="table table-hover align-middle mb-0" id="forms-table" style="width: 100% !important; table-layout: fixed !important;">
         <thead class="table-header">
           <tr>
             <th class="border-0 py-3" style="width: 5%;">
@@ -468,6 +468,8 @@ document.addEventListener('DOMContentLoaded', function() {
 /* === RIMOZIONE MARGINI EXTRA === */
 .table-responsive {
   margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
   padding: 0 !important;
   border-radius: 0.375rem;
 }
@@ -481,6 +483,11 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* === HEADER TABLE === */
+#forms-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
 #forms-table .table-header {
   background-color: var(--forms-header-bg) !important;
   border-bottom: 2px solid var(--forms-border);
@@ -848,9 +855,8 @@ body .container-fluid .card,
 body .container-fluid .table-responsive,
 body .container-fluid #forms-table {
   width: 100% !important;
-  max-width: 100% !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
 }
+
+
 </style>
 {% endblock %}

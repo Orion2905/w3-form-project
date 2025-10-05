@@ -48,6 +48,7 @@ def get_available_export_fields():
             {'name': 'nationality', 'label': 'Nazionalità', 'checked': False},
             {'name': 'gender', 'label': 'Genere', 'checked': False},
             {'name': 'marital_status', 'label': 'Stato Civile', 'checked': False},
+            {'name': 'has_children', 'label': 'Figli', 'checked': False},
             {'name': 'height_cm', 'label': 'Altezza (cm)', 'checked': False},
             {'name': 'weight_kg', 'label': 'Peso (kg)', 'checked': False},
             {'name': 'tshirt_size', 'label': 'Taglia T-Shirt', 'checked': False},
@@ -56,10 +57,17 @@ def get_available_export_fields():
         'Contatti': [
             {'name': 'email', 'label': 'Email', 'checked': True},
             {'name': 'phone_number', 'label': 'Telefono', 'checked': True},
+            {'name': 'instagram', 'label': 'Instagram', 'checked': False},
             {'name': 'address', 'label': 'Indirizzo', 'checked': False},
             {'name': 'city', 'label': 'Città', 'checked': False},
             {'name': 'postal_code', 'label': 'CAP', 'checked': False},
             {'name': 'country_of_residence', 'label': 'Paese di Residenza', 'checked': False},
+        ],
+        'Domicilio': [
+            {'name': 'domicile_address', 'label': 'Indirizzo Domicilio', 'checked': False},
+            {'name': 'domicile_city', 'label': 'Città Domicilio', 'checked': False},
+            {'name': 'domicile_postal_code', 'label': 'CAP Domicilio', 'checked': False},
+            {'name': 'domicile_country', 'label': 'Paese Domicilio', 'checked': False},
         ],
         'Documenti': [
             {'name': 'id_document', 'label': 'Tipo Documento', 'checked': False},
@@ -68,6 +76,7 @@ def get_available_export_fields():
             {'name': 'id_country', 'label': 'Paese Documento', 'checked': False},
             {'name': 'codice_fiscale', 'label': 'Codice Fiscale', 'checked': False},
             {'name': 'permesso_soggiorno', 'label': 'Permesso di Soggiorno', 'checked': False},
+            {'name': 'permesso_expiry_date', 'label': 'Scadenza Permesso Soggiorno', 'checked': False},
         ],
         'Patente': [
             {'name': 'license_country', 'label': 'Paese Patente', 'checked': False},
@@ -77,6 +86,10 @@ def get_available_export_fields():
             {'name': 'license_expiry_date', 'label': 'Scadenza Patente', 'checked': False},
             {'name': 'years_driving_experience', 'label': 'Anni Esperienza Guida', 'checked': False},
             {'name': 'auto_moto_munito', 'label': 'Auto/Moto Munito', 'checked': False},
+            {'name': 'transmission_type', 'label': 'Utilizzo Cambio', 'checked': False},
+            {'name': 'international_license', 'label': 'Patente Internazionale', 'checked': False},
+            {'name': 'international_license_number', 'label': 'Numero Patente Internazionale', 'checked': False},
+            {'name': 'international_license_expiry', 'label': 'Scadenza Patente Internazionale', 'checked': False},
         ],
         'Informazioni Professionali': [
             {'name': 'occupation', 'label': 'Occupazione', 'checked': True},
@@ -84,6 +97,7 @@ def get_available_export_fields():
             {'name': 'availability_from', 'label': 'Disponibilità Da', 'checked': False},
             {'name': 'availability_till', 'label': 'Disponibilità Fino', 'checked': False},
             {'name': 'city_availability', 'label': 'Città Disponibilità', 'checked': False},
+            {'name': 'work_away_from_domicile', 'label': 'Lavoro Fuori Domicilio', 'checked': False},
             {'name': 'come_sei_arrivato', 'label': 'Come sei arrivato', 'checked': False},
         ],
         'Lingue': [
@@ -368,7 +382,7 @@ def list_dynamic_forms():
     ]
     return render_template('dynamic_form_list.html', forms=forms, breadcrumbs=breadcrumbs)
 
-@main.route('/form/<slug>', methods=['GET'])
+@main.route('/form/<slug>', methods=['GET', 'POST'])
 def public_dynamic_form(slug):
     form = DynamicForm.query.filter_by(slug=slug).first_or_404()
     now = datetime.utcnow()
@@ -382,11 +396,182 @@ def public_dynamic_form(slug):
     # Ottieni la configurazione dei campi per questo form
     fields_config = FormFieldConfiguration.get_form_configuration(form.id)
     
+    if request.method == 'GET':
+        return render_template('dynamic_form_public.html', 
+                             form=form, 
+                             dropdown_options=dropdown_options,
+                             test_mode=test_mode,
+                             fields_config=fields_config)
+    
+    # Handle POST - form submission
     return render_template('dynamic_form_public.html', 
                          form=form, 
                          dropdown_options=dropdown_options,
                          test_mode=test_mode,
                          fields_config=fields_config)
+
+
+def filter_visible_fields_for_form(form_data, form_id):
+    """
+    Filtra i dati del form mantenendo solo i campi visibili secondo la configurazione.
+    """
+    try:
+        # Recupera la configurazione dei campi per questo form
+        field_config = FormFieldConfiguration.get_form_configuration(form_id)
+        
+        # Se non c'è configurazione, restituisci tutti i dati (fallback)
+        if not field_config:
+            print(f"⚠️ Nessuna configurazione trovata per form {form_id}, usando tutti i campi")
+            return dict(form_data)
+        
+        # Campi che devono sempre essere inclusi indipendentemente dalla configurazione
+        essential_fields = [
+            'form_id', 'gdpr_consent', 'first_name', 'last_name', 'email'
+        ]
+        
+        # Filtra solo i campi visibili
+        filtered_data = {}
+        visible_fields = []
+        
+        # Prima aggiungi i campi essenziali se presenti
+        for field in essential_fields:
+            if field in form_data:
+                filtered_data[field] = form_data.get(field)
+                if field not in visible_fields:
+                    visible_fields.append(field)
+                print(f"✅ Campo essenziale incluso: {field}")
+        
+        # Poi aggiungi i campi configurati come visibili
+        for field_name, config in field_config.items():
+            if config.is_visible:  # Accesso diretto alla proprietà dell'oggetto
+                if field_name in form_data and field_name not in filtered_data:
+                    filtered_data[field_name] = form_data.get(field_name)
+                    visible_fields.append(field_name)
+        
+        print(f"✅ Campi visibili filtrati ({len(visible_fields)}): {visible_fields}")
+        print(f"📊 Campi totali ricevuti: {len(form_data)}, Campi filtrati: {len(filtered_data)}")
+        
+        return filtered_data
+        
+    except Exception as e:
+        print(f"❌ Errore nel filtraggio campi: {e}")
+        # In caso di errore, restituisci tutti i dati per sicurezza
+        return dict(form_data)
+
+
+@main.route('/api/public/form/<slug>/submit', methods=['POST'])
+def submit_public_form(slug):
+    """Public endpoint for form submission without authentication"""
+    try:
+        form = DynamicForm.query.filter_by(slug=slug).first_or_404()
+        now = datetime.utcnow()
+        if not form.is_active or (form.active_from and now < form.active_from) or (form.active_until and now > form.active_until):
+            return jsonify({'success': False, 'error': 'Form non attivo'}), 400
+        
+        original_data = request.form
+        files = request.files
+        
+        # Filtra i dati mantenendo solo i campi visibili per questo form
+        data = filter_visible_fields_for_form(original_data, form.id)
+        
+        # Process boolean fields
+        auto_moto_munito = data.get('auto_moto_munito')
+        if auto_moto_munito is not None:
+            auto_moto_munito = str(auto_moto_munito).lower() in ['1', 'true', 'on']
+        
+        has_children = data.get('has_children')
+        if has_children is not None:
+            has_children = str(has_children).lower() in ['1', 'true', 'on']
+        
+        work_away_from_domicile = data.get('work_away_from_domicile')
+        if work_away_from_domicile is not None:
+            work_away_from_domicile = str(work_away_from_domicile).lower() in ['1', 'true', 'on']
+        
+        international_license = data.get('international_license')
+        if international_license is not None:
+            international_license = str(international_license).lower() in ['1', 'true', 'on']
+        
+        # Create candidate with all new fields
+        candidate = Candidate(
+            first_name=data.get('first_name'),
+            last_name=data.get('last_name'),
+            gender=data.get('gender'),
+            date_of_birth=datetime.strptime(data.get('date_of_birth'), '%Y-%m-%d').date() if data.get('date_of_birth') else None,
+            place_of_birth=data.get('place_of_birth'),
+            nationality=data.get('nationality'),
+            marital_status=data.get('marital_status'),
+            has_children=has_children,
+            instagram=data.get('instagram'),
+            height_cm=int(data.get('height_cm')) if data.get('height_cm') else None,
+            weight_kg=int(data.get('weight_kg')) if data.get('weight_kg') else None,
+            tshirt_size=data.get('tshirt_size'),
+            shoe_size_eu=int(data.get('shoe_size_eu')) if data.get('shoe_size_eu') else None,
+            phone_number=data.get('phone_number'),
+            email=data.get('email'),
+            address=data.get('address'),
+            city=data.get('city'),
+            postal_code=data.get('postal_code'),
+            country_of_residence=data.get('country_of_residence'),
+            
+            # Domicile fields
+            domicile_address=data.get('domicile_address'),
+            domicile_city=data.get('domicile_city'),
+            domicile_postal_code=data.get('domicile_postal_code'),
+            domicile_country=data.get('domicile_country'),
+            
+            # Document fields
+            id_document=data.get('id_document'),
+            id_number=data.get('id_number'),
+            id_expiry_date=datetime.strptime(data.get('id_expiry_date'), '%Y-%m-%d').date() if data.get('id_expiry_date') else None,
+            id_country=data.get('id_country'),
+            codice_fiscale=data.get('codice_fiscale'),
+            permesso_soggiorno=data.get('permesso_soggiorno'),
+            permesso_expiry_date=datetime.strptime(data.get('permesso_expiry_date'), '%Y-%m-%d').date() if data.get('permesso_expiry_date') else None,
+            
+            # License fields
+            license_country=data.get('license_country'),
+            license_number=data.get('license_number'),
+            license_category=data.get('license_category'),
+            license_issue_date=datetime.strptime(data.get('license_issue_date'), '%Y-%m-%d').date() if data.get('license_issue_date') else None,
+            license_expiry_date=datetime.strptime(data.get('license_expiry_date'), '%Y-%m-%d').date() if data.get('license_expiry_date') else None,
+            years_driving_experience=int(data.get('years_driving_experience')) if data.get('years_driving_experience') else None,
+            auto_moto_munito=auto_moto_munito,
+            transmission_type=data.get('transmission_type'),
+            
+            # International license fields
+            international_license=international_license,
+            international_license_number=data.get('international_license_number'),
+            international_license_expiry=datetime.strptime(data.get('international_license_expiry'), '%Y-%m-%d').date() if data.get('international_license_expiry') else None,
+            
+            # Work and availability
+            occupation=data.get('occupation'),
+            other_experience=data.get('other_experience'),
+            availability_from=datetime.strptime(data.get('availability_from'), '%Y-%m-%d').date() if data.get('availability_from') else None,
+            availability_till=datetime.strptime(data.get('availability_till'), '%Y-%m-%d').date() if data.get('availability_till') else None,
+            city_availability=data.get('city_availability'),
+            work_away_from_domicile=work_away_from_domicile,
+            
+            # Languages
+            language_1=data.get('language_1'),
+            proficiency_1=data.get('proficiency_1'),
+            language_2=data.get('language_2'),
+            proficiency_2=data.get('proficiency_2'),
+            language_3=data.get('language_3'),
+            proficiency_3=data.get('proficiency_3'),
+            
+            come_sei_arrivato=data.get('come_sei_arrivato'),
+            form_id=form.id
+        )
+        
+        db.session.add(candidate)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Candidatura inviata con successo'})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in public form submission: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 
 @main.route('/api/form/<slug>/field-visibility', methods=['GET'])

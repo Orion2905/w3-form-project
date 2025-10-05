@@ -1947,7 +1947,7 @@ form.onsubmit = async function(e) {
       }
     }
     
-    const resp = await fetch('/api/candidates/upload', {
+    const resp = await fetch(`/api/public/form/${FORM_SLUG}/submit`, {
       method: 'POST',
       body: formData
     });

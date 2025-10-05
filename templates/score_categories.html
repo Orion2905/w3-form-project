@@ -2,124 +2,636 @@
 
 {% block title %}Gestione Categorie Punteggi{% endblock %}
 
+{% block head %}
 <style>
-/* Correzioni per mobile - evita sovrapposizione con navbar fissa */
-@media (max-width: 900px) {
-  .container-fluid {
-    padding-top: 1rem !important;
-    margin-top: 0 !important;
+/* === TEMA CHIARO/SCURO === */
+:root {
+  --categories-bg: #ffffff;
+  --categories-card-bg: #ffffff;
+  --categories-border: #dee2e6;
+  --categories-shadow: rgba(0, 0, 0, 0.1);
+  --categories-text: #212529;
+  --categories-text-muted: #6c757d;
+  --categories-header-bg: #f8f9fa;
+  --categories-hover: #f8f9fa;
+  --categories-code-bg: #f8f9fa;
+  --categories-code-text: #495057;
+  --categories-icon-bg: #e7f3ff;
+  --categories-icon-color: #0d6efd;
+}
+
+[data-theme="dark"] {
+  --categories-bg: #1a1a1a;
+  --categories-card-bg: #2d2d2d;
+  --categories-border: #404040;
+  --categories-shadow: rgba(0, 0, 0, 0.3);
+  --categories-text: #ffffff;
+  --categories-text-muted: #adb5bd;
+  --categories-header-bg: #343a40;
+  --categories-hover: #383838;
+  --categories-code-bg: #404040;
+  --categories-code-text: #e9ecef;
+  --categories-icon-bg: #1e3a5f;
+  --categories-icon-color: #6ea8fe;
+}
+
+/* === CARD CONTAINERS === */
+.card {
+  background-color: var(--categories-card-bg) !important;
+  border-color: var(--categories-border) !important;
+  box-shadow: 0 0.125rem 0.25rem var(--categories-shadow) !important;
+}
+
+.card-body {
+  background-color: var(--categories-card-bg) !important;
+  color: var(--categories-text) !important;
+}
+
+.card-header {
+  background-color: var(--categories-header-bg) !important;
+  color: var(--categories-text) !important;
+  border-bottom-color: var(--categories-border) !important;
+}
+
+.container-fluid {
+  background-color: var(--categories-bg) !important;
+  color: var(--categories-text) !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-bottom: 1rem !important;
+}
+
+/* === HEADER TABLE === */
+#categories-table .table-header {
+  background-color: var(--categories-header-bg) !important;
+  border-bottom: 2px solid var(--categories-border);
+}
+
+#categories-table .table-header th {
+  color: var(--categories-text) !important;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--categories-border);
+  background-color: var(--categories-header-bg) !important;
+}
+
+/* === OVERRIDE HEADER TEMA SCURO === */
+[data-theme="dark"] .table-header {
+  background-color: var(--categories-header-bg) !important;
+}
+
+[data-theme="dark"] .table-header th {
+  background-color: var(--categories-header-bg) !important;
+  color: var(--categories-text) !important;
+  border-color: var(--categories-border) !important;
+}
+
+/* === TABELLA === */
+#categories-table {
+  background-color: var(--categories-bg) !important;
+  color: var(--categories-text) !important;
+  width: 100% !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#categories-table tbody {
+  background-color: var(--categories-bg) !important;
+}
+
+.table-responsive {
+  background-color: var(--categories-bg) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+/* === OVERRIDE COMPLETO LARGHEZZA === */
+* {
+  box-sizing: border-box;
+}
+
+.row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.col-md-8, .col-md-4 {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+/* === RIGHE TABELLA === */
+#categories-table tbody tr.table-row-hover {
+  background-color: var(--categories-bg) !important;
+  border-bottom: 1px solid var(--categories-border);
+  transition: all 0.2s ease;
+}
+
+#categories-table tbody tr.table-row-hover:hover {
+  background-color: var(--categories-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--categories-shadow);
+}
+
+#categories-table tbody tr.table-row-hover td {
+  background-color: transparent !important;
+  color: var(--categories-text) !important;
+  vertical-align: middle;
+  padding: 1rem 0.75rem;
+}
+
+/* === ICONE E BADGE === */
+.category-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--categories-icon-bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.category-icon i {
+  color: var(--categories-icon-color);
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.badge.bg-primary-subtle {
+  background-color: var(--categories-icon-bg) !important;
+  color: var(--categories-icon-color) !important;
+}
+
+.badge.bg-secondary-subtle {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  color: var(--categories-text-muted) !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary-subtle {
+  background-color: rgba(173, 181, 189, 0.2) !important;
+  color: #adb5bd !important;
+}
+
+.badge.bg-info-subtle {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  color: #0dcaf0 !important;
+}
+
+.badge.bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  color: #ffc107 !important;
+}
+
+.badge.bg-success-subtle {
+  background-color: rgba(25, 135, 84, 0.1) !important;
+  color: #198754 !important;
+}
+
+.badge.bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  color: #dc3545 !important;
+}
+
+/* === BOTTONI === */
+.btn-sm.rounded-pill {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin: 1px;
+}
+
+.btn-sm.rounded-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--categories-shadow);
+}
+
+
+
+/* === BOTTONI TEMA SCURO === */
+[data-theme="dark"] .btn-outline-warning {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+[data-theme="dark"] .btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+
+[data-theme="dark"] .btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+[data-theme="dark"] .btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+  border-color: var(--categories-icon-color);
+  color: var(--categories-icon-color);
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+  background-color: var(--categories-icon-color);
+  color: #fff;
+}
+
+/* === CONTENITORE AZIONI === */
+.d-flex.gap-1.flex-wrap {
+  gap: 0.35rem !important;
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 180px;
+}
+
+/* === SEARCH BAR === */
+.input-group-text {
+  background-color: var(--categories-card-bg) !important;
+  border-color: var(--categories-border) !important;
+  color: var(--categories-text-muted) !important;
+}
+
+.form-control {
+  background-color: var(--categories-card-bg) !important;
+  border-color: var(--categories-border) !important;
+  color: var(--categories-text) !important;
+}
+
+.form-control::placeholder {
+  color: var(--categories-text-muted) !important;
+}
+
+.form-control:focus {
+  background-color: var(--categories-card-bg) !important;
+  border-color: var(--categories-icon-color) !important;
+  color: var(--categories-text) !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* === MESSAGGI VUOTI === */
+.text-center.py-5 {
+  background-color: var(--categories-card-bg);
+  color: var(--categories-text);
+  border-radius: 12px;
+  border: 1px solid var(--categories-border);
+}
+
+.text-center.py-5 .text-muted {
+  color: var(--categories-text-muted) !important;
+}
+
+/* === STATISTICHE === */
+.badge.fs-6 {
+  font-size: 1.1rem !important;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+/* === MODALS STYLING === */
+.modal-content {
+  background-color: var(--categories-card-bg) !important;
+  border: 1px solid var(--categories-border) !important;
+  color: var(--categories-text) !important;
+}
+
+.modal-header {
+  border-bottom-color: var(--categories-border) !important;
+}
+
+.modal-footer {
+  border-top-color: var(--categories-border) !important;
+}
+
+.bg-light {
+  background-color: var(--categories-header-bg) !important;
+}
+
+/* === ANIMAZIONI === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  /* Su mobile i bottoni vanno in colonna per evitare overflow */
-  .card-header {
-    flex-direction: column !important;
-    gap: 1rem !important;
-    text-align: center !important;
-  }
-  
-  .card-header h4 {
-    margin-bottom: 0 !important;
-  }
-  
-  /* Gestione tabella responsive */
-  .table-responsive {
-    font-size: 0.85rem;
-  }
-  
-  .table th, .table td {
-    padding: 0.5rem 0.25rem !important;
-    white-space: nowrap;
-  }
-  
-  /* Nascondi alcune colonne meno importanti su schermi molto piccoli */
-  @media (max-width: 576px) {
-    .table th:nth-child(2), 
-    .table td:nth-child(2),
-    .table th:nth-child(6), 
-    .table td:nth-child(6) {
-      display: none;
-    }
-  }
-  
-  /* Bottoni azioni più compatti */
-  .btn-sm {
-    padding: 0.25rem 0.4rem !important;
-    font-size: 0.75rem !important;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
+
+.card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+#categories-table tbody tr {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+#categories-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+#categories-table tbody tr:nth-child(2) { animation-delay: 0.15s; }
+#categories-table tbody tr:nth-child(3) { animation-delay: 0.2s; }
+#categories-table tbody tr:nth-child(4) { animation-delay: 0.25s; }
+#categories-table tbody tr:nth-child(5) { animation-delay: 0.3s; }
+
+/* === OVERRIDE BOOTSTRAP COMPLETO === */
+[data-theme="dark"] .table,
+[data-theme="dark"] .table-responsive,
+[data-theme="dark"] #categories-table,
+[data-theme="dark"] #categories-table tbody,
+[data-theme="dark"] #categories-table tbody tr,
+[data-theme="dark"] #categories-table tbody tr td {
+  background-color: var(--categories-bg) !important;
+  color: var(--categories-text) !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover td {
+  background-color: var(--categories-hover) !important;
+  color: var(--categories-text) !important;
+}
+
+/* === OVERRIDE SPECIFICI TEMA SCURO === */
+[data-theme="dark"] #categories-table tbody tr.table-row-hover {
+  background-color: var(--categories-bg) !important;
+  border-bottom-color: var(--categories-border) !important;
+}
+
+[data-theme="dark"] #categories-table tbody tr.table-row-hover td {
+  background-color: var(--categories-bg) !important;
+  color: var(--categories-text) !important;
+  border-color: var(--categories-border) !important;
+}
+
+[data-theme="dark"] #categories-table tbody tr.table-row-hover:hover {
+  background-color: var(--categories-hover) !important;
+}
+
+[data-theme="dark"] #categories-table tbody tr.table-row-hover:hover td {
+  background-color: var(--categories-hover) !important;
+  color: var(--categories-text) !important;
+}
+
+/* === TESTO CATEGORIE === */
+.category-name-text {
+  color: var(--categories-text) !important;
+}
+
+[data-theme="dark"] .category-name-text {
+  color: var(--categories-text) !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .btn-sm.rounded-pill {
+    width: 30px;
+    height: 30px;
+    margin: 0.5px;
+  }
+  
+  .category-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  #categories-table th,
+  #categories-table td {
+    padding: 0.75rem 0.25rem;
+  }
+  
+  .d-flex.gap-1.flex-wrap {
+    gap: 0.25rem !important;
+    min-width: 160px;
+  }
+}
+
+/* === SCROLLBAR PERSONALIZZATA === */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--categories-header-bg);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--categories-border);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--categories-text-muted);
+}
+
+/* === OVERRIDE LAYOUT SIDEBAR === */
+main, .main-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* === FORZA LARGHEZZA COMPLETA === */
+body .container-fluid,
+body .container-fluid .card,
+body .container-fluid .table-responsive,
+body .container-fluid #categories-table {
+  width: 100% !important;
+}
 </style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Gestione Categorie Punteggi</h4>
-                    <a href="{{ url_for('main.add_score_category') }}" class="btn btn-success">
-                        <i class="bi bi-plus"></i> Aggiungi Categoria
-                    </a>
-                </div>
-                
-                <div class="card-body">
-                    {% if categories %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Descrizione</th>
-                                        <th>Punteggio Max</th>
-                                        <th>Peso</th>
-                                        <th>Stato</th>
-                                        <th>Creata</th>
-                                        <th>Azioni</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for category in categories %}
-                                    <tr>
-                                        <td><strong>{{ category.name }}</strong></td>
-                                        <td>{{ category.description or '-' }}</td>
-                                        <td>{{ category.max_score }}</td>
-                                        <td>{{ category.weight }}</td>
-                                        <td>
-                                            {% if category.is_active %}
-                                                <span class="badge bg-success">Attiva</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Disattiva</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ category.created_at.strftime('%d/%m/%Y') }}</td>
-                                        <td>
-                                            <a href="{{ url_for('main.edit_score_category', category_id=category.id) }}" 
-                                               class="btn btn-sm btn-warning">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="POST" style="display: inline;" 
-                                                  action="{{ url_for('main.delete_score_category', category_id=category.id) }}"
-                                                  onsubmit="return confirm('Sei sicuro di voler eliminare questa categoria?')">
-                                                <button type="submit" class="btn btn-sm btn-danger">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> Nessuna categoria di punteggio configurata.
-                            <a href="{{ url_for('main.add_score_category') }}" class="btn btn-primary btn-sm ml-2">
-                                Aggiungi la prima categoria
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
+<div class="row">
+  <div class="col-12">
+    <!-- Header con titolo e statistiche -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="mb-1">
+          <i class="bi bi-star text-warning me-2"></i>
+          Gestione Categorie Punteggi
+        </h2>
+        <p class="text-muted mb-0">Configura le categorie di valutazione per i candidati</p>
+      </div>
+      <div class="d-none d-md-block">
+        <div class="d-flex gap-3">
+          <div class="text-center">
+            <div class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
+              {{ categories|length }}
             </div>
+            <small class="text-muted d-block mt-1">Categorie Totali</small>
+          </div>
+          {% set active_count = categories|selectattr('is_active')|list|length %}
+          <div class="text-center">
+            <div class="badge bg-success-subtle text-success fs-6 px-3 py-2">
+              {{ active_count }}
+            </div>
+            <small class="text-muted d-block mt-1">Attive</small>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Barra di ricerca e azioni -->
+    <div class="card mb-4 border-0 shadow-sm">
+      <div class="card-body p-3">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <form class="d-flex" method="get">
+              <div class="input-group">
+                <span class="input-group-text bg-transparent border-end-0">
+                  <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0 ps-0" name="q" 
+                       placeholder="Cerca per nome, descrizione..." 
+                       value="{{ request.args.get('q', '') }}">
+                <button class="btn btn-outline-primary" type="submit">
+                  <i class="bi bi-search me-1"></i>Cerca
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="col-md-4 text-end">
+            <a href="{{ url_for('main.add_score_category') }}" class="btn btn-success">
+              <i class="bi bi-plus-circle me-1"></i>Nuova Categoria
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tabella moderna -->
+    <div class="card border-0 shadow-sm">
+      {% if categories %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="categories-table">
+            <thead class="table-header">
+              <tr>
+                <th class="border-0 py-3" style="width: 5%;">
+                  <span class="text-muted">#</span>
+                </th>
+                <th class="border-0 py-3" style="width: 20%;">
+                  <span class="fw-semibold">Nome Categoria</span>
+                </th>
+                <th class="border-0 py-3" style="width: 25%;">
+                  <span class="fw-semibold">Descrizione</span>
+                </th>
+                <th class="border-0 py-3" style="width: 12%;">
+                  <span class="fw-semibold">Punteggio Max</span>
+                </th>
+                <th class="border-0 py-3" style="width: 10%;">
+                  <span class="fw-semibold">Peso</span>
+                </th>
+                <th class="border-0 py-3" style="width: 10%;">
+                  <span class="fw-semibold">Stato</span>
+                </th>
+                <th class="border-0 py-3" style="width: 12%;">
+                  <span class="fw-semibold">Creata</span>
+                </th>
+                <th class="border-0 py-3" style="width: 16%;">
+                  <span class="fw-semibold">Azioni</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for category in categories %}
+              <tr class="table-row-hover">
+                <td class="border-0 py-3">
+                  <div class="badge bg-warning-subtle text-warning rounded-pill">
+                    {{ loop.index }}
+                  </div>
+                </td>
+                <td class="border-0 py-3">
+                  <div class="d-flex align-items-center">
+                    <div class="category-icon me-2">
+                      <i class="bi bi-star-fill text-warning"></i>
+                    </div>
+                    <div>
+                      <div class="fw-semibold">{{ category.name }}</div>
+                      <small class="text-muted">Categoria punteggio</small>
+                    </div>
+                  </div>
+                </td>
+                <td class="border-0 py-3">
+                  <div class="text-truncate" style="max-width: 200px;" title="{{ category.description or 'Nessuna descrizione' }}">
+                    {{ category.description or '<span class="text-muted">—</span>' }}
+                  </div>
+                </td>
+                <td class="border-0 py-3">
+                  <span class="badge bg-primary-subtle text-primary px-2 py-1">
+                    {{ category.max_score }}
+                  </span>
+                </td>
+                <td class="border-0 py-3">
+                  <span class="badge bg-info-subtle text-info px-2 py-1">
+                    {{ category.weight }}x
+                  </span>
+                </td>
+                <td class="border-0 py-3">
+                  {% if category.is_active %}
+                    <span class="badge bg-success-subtle text-success">
+                      <i class="bi bi-check-circle me-1"></i>Attiva
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary">
+                      <i class="bi bi-pause-circle me-1"></i>Disattiva
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="border-0 py-3">
+                  <small class="text-muted">{{ category.created_at.strftime('%d/%m/%Y') }}</small>
+                </td>
+                <td class="border-0 py-3">
+                  <div class="d-flex gap-1 flex-wrap">
+                    <a href="{{ url_for('main.edit_score_category', category_id=category.id) }}" 
+                       class="btn btn-sm btn-outline-warning rounded-pill" 
+                       title="Modifica categoria"
+                       data-bs-toggle="tooltip">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="POST" style="display: inline;" 
+                          action="{{ url_for('main.delete_score_category', category_id=category.id) }}"
+                          onsubmit="return confirm('Sei sicuro di voler eliminare questa categoria?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" 
+                              title="Elimina categoria"
+                              data-bs-toggle="tooltip">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="card-body text-center py-5">
+          <div class="empty-state">
+            <i class="bi bi-star display-1 text-muted mb-3"></i>
+            <h5 class="text-muted mb-3">Nessuna categoria configurata</h5>
+            <p class="text-muted mb-4">Inizia creando la tua prima categoria di punteggio per valutare i candidati.</p>
+            <a href="{{ url_for('main.add_score_category') }}" class="btn btn-success">
+              <i class="bi bi-plus-circle me-2"></i>Crea Prima Categoria
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

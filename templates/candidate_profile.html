@@ -199,7 +199,7 @@
                 </div>
                 <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Figli</label>
-                  <p>{{ candidate.has_children or '-' }}</p>
+                  <p>{% if candidate.has_children == '1' or candidate.has_children == 1 %}Sì{% elif candidate.has_children == '0' or candidate.has_children == 0 %}No{% else %}{{ candidate.has_children or '-' }}{% endif %}</p>
                 </div>
                 <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Altezza (cm)</label>
