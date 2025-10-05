@@ -1388,10 +1388,7 @@
                   <label for="edit_id_country" class="form-label">Paese doc</label>
                   <input type="text" class="form-control" id="edit_id_country">
                 </div>
-                <div class="col-md-6">
-                  <label for="edit_additional_document" class="form-label">Documento aggiuntivo</label>
-                  <input type="text" class="form-control" id="edit_additional_document">
-                </div>
+
                 <div class="col-md-6">
                   <label for="edit_codice_fiscale" class="form-label">Codice Fiscale</label>
                   <input type="text" class="form-control" id="edit_codice_fiscale">
@@ -1561,7 +1558,7 @@ const ALL_COLUMNS = [
   { key: 'id_number', label: 'Numero documento', default: false },
   { key: 'id_expiry_date', label: 'Scadenza documento', default: false },
   { key: 'id_country', label: 'Paese documento', default: false },
-  { key: 'additional_document', label: 'Additional Document', default: false },
+
   { key: 'codice_fiscale', label: 'Codice Fiscale', default: false },
   { key: 'permesso_soggiorno', label: 'Permesso Soggiorno', default: false },
   { key: 'license_country', label: 'Patente paese', default: false },
@@ -2157,7 +2154,7 @@ function generateCellHTML(key, candidate) {
     case 'id_number': return `<td>${c.id_number||''}</td>`;
     case 'id_expiry_date': return `<td>${c.id_expiry_date||''}</td>`;
     case 'id_country': return `<td>${c.id_country||''}</td>`;
-    case 'additional_document': return `<td>${c.additional_document||''}</td>`;
+
     case 'codice_fiscale': return `<td>${c.codice_fiscale||''}</td>`;
     case 'permesso_soggiorno': return `<td>${c.permesso_soggiorno||''}</td>`;
     case 'license_country': return `<td>${c.license_country||''}</td>`;
@@ -2861,7 +2858,7 @@ function openEdit(id) {
   document.getElementById('edit_id_number').value = c.id_number||'';
   document.getElementById('edit_id_expiry_date').value = c.id_expiry_date||'';
   document.getElementById('edit_id_country').value = c.id_country||'';
-  document.getElementById('edit_additional_document').value = c.additional_document||'';
+
   document.getElementById('edit_codice_fiscale').value = c.codice_fiscale||'';
   document.getElementById('edit_permesso_soggiorno').value = c.permesso_soggiorno||'';
   document.getElementById('edit_license_country').value = c.license_country||'';
@@ -2910,7 +2907,6 @@ document.getElementById('editForm').onsubmit = async function(e) {
     id_number: document.getElementById('edit_id_number').value,
     id_expiry_date: document.getElementById('edit_id_expiry_date').value,
     id_country: document.getElementById('edit_id_country').value,
-    additional_document: document.getElementById('edit_additional_document').value,
     codice_fiscale: document.getElementById('edit_codice_fiscale').value,
     permesso_soggiorno: document.getElementById('edit_permesso_soggiorno').value,
     license_country: document.getElementById('edit_license_country').value,

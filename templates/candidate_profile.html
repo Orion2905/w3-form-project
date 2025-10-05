@@ -292,10 +292,7 @@
                   <label class="form-label text-muted">Permesso di soggiorno</label>
                   <p>{{ candidate.permesso_soggiorno or '-' }}</p>
                 </div>
-                <div class="col-12 candidate-profile-field">
-                  <label class="form-label text-muted">Documento aggiuntivo</label>
-                  <p>{{ candidate.additional_document or '-' }}</p>
-                </div>
+
               </div>
             </div>
           </div>
@@ -781,10 +778,7 @@
                   <label class="form-label">Permesso di soggiorno</label>
                   <input type="text" class="form-control" name="permesso_soggiorno" value="{{ candidate.permesso_soggiorno or '' }}">
                 </div>
-                <div class="col-12">
-                  <label class="form-label">Documento aggiuntivo</label>
-                  <textarea class="form-control" name="additional_document" rows="2">{{ candidate.additional_document or '' }}</textarea>
-                </div>
+
               </div>
             </div>
 
