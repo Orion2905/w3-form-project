@@ -131,6 +131,11 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
+          <button class="nav-link" id="domicilio-tab" data-bs-toggle="tab" data-bs-target="#domicilio" type="button" role="tab">
+            <i class="bi bi-house d-none d-sm-inline"></i> <span>Domicilio</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
           <button class="nav-link" id="documenti-tab" data-bs-toggle="tab" data-bs-target="#documenti" type="button" role="tab">
             <i class="bi bi-file-text d-none d-sm-inline"></i> <span>Documenti</span>
           </button>
@@ -193,8 +198,8 @@
                   <p>{{ candidate.marital_status or '-' }}</p>
                 </div>
                 <div class="col-sm-6 candidate-profile-field">
-                  <label class="form-label text-muted">Come sei arrivato a noi</label>
-                  <p>{{ candidate.come_sei_arrivato or '-' }}</p>
+                  <label class="form-label text-muted">Figli</label>
+                  <p>{{ candidate.has_children or '-' }}</p>
                 </div>
                 <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Altezza (cm)</label>
@@ -258,6 +263,54 @@
                   <label class="form-label text-muted">Paese di residenza</label>
                   <p>{{ candidate.country_of_residence or '-' }}</p>
                 </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Come sei arrivato a noi</label>
+                  <p>{{ candidate.come_sei_arrivato or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Instagram</label>
+                  <p>
+                    {% if candidate.instagram %}
+                      <a href="https://instagram.com/{{ candidate.instagram.lstrip('@') }}" target="_blank" class="text-decoration-none">
+                        <i class="bi bi-instagram text-danger"></i> {{ candidate.instagram }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Domicilio -->
+        <div class="tab-pane fade" id="domicilio" role="tabpanel">
+          <div class="card candidate-profile-card">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-12">
+                  <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Informazioni di Domicilio</strong> - Compila solo se diverso dalla residenza
+                  </div>
+                </div>
+                <div class="col-12 candidate-profile-field">
+                  <label class="form-label text-muted">Indirizzo Domicilio</label>
+                  <p>{{ candidate.domicile_address or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">Città Domicilio</label>
+                  <p>{{ candidate.domicile_city or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">CAP Domicilio</label>
+                  <p>{{ candidate.domicile_postal_code or '-' }}</p>
+                </div>
+                <div class="col-sm-4 candidate-profile-field">
+                  <label class="form-label text-muted">Paese Domicilio</label>
+                  <p>{{ candidate.domicile_country or '-' }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -291,6 +344,10 @@
                 <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Permesso di soggiorno</label>
                   <p>{{ candidate.permesso_soggiorno or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Scadenza permesso</label>
+                  <p>{{ candidate.permesso_expiry_date.strftime('%d/%m/%Y') if candidate.permesso_expiry_date else '-' }}</p>
                 </div>
 
               </div>
@@ -327,9 +384,25 @@
                   <label class="form-label text-muted">Data scadenza</label>
                   <p>{{ candidate.license_expiry_date.strftime('%d/%m/%Y') if candidate.license_expiry_date else '-' }}</p>
                 </div>
-                <div class="col-12 candidate-profile-field">
+                <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Auto/Moto munito</label>
                   <p>{% if candidate.auto_moto_munito == True %}Sì{% elif candidate.auto_moto_munito == False %}No{% else %}-{% endif %}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Utilizzo cambio</label>
+                  <p>{{ candidate.transmission_type or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Patente internazionale</label>
+                  <p>{% if candidate.international_license == True %}Sì{% elif candidate.international_license == False %}No{% else %}-{% endif %}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Numero patente internazionale</label>
+                  <p>{{ candidate.international_license_number or '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Scadenza patente internazionale</label>
+                  <p>{{ candidate.international_license_expiry.strftime('%d/%m/%Y') if candidate.international_license_expiry else '-' }}</p>
                 </div>
               </div>
             </div>
@@ -404,6 +477,10 @@
                 <div class="col-sm-6 candidate-profile-field">
                   <label class="form-label text-muted">Disponibile fino</label>
                   <p>{{ candidate.availability_till.strftime('%d/%m/%Y') if candidate.availability_till else '-' }}</p>
+                </div>
+                <div class="col-sm-6 candidate-profile-field">
+                  <label class="form-label text-muted">Lavoro fuori domicilio</label>
+                  <p>{{ candidate.work_away_from_domicile or '-' }}</p>
                 </div>
                 <div class="col-12 candidate-profile-field">
                   <label class="form-label text-muted">Altre esperienze</label>
@@ -597,6 +674,11 @@
               </button>
             </li>
             <li class="nav-item">
+              <button class="nav-link" id="edit-domicilio-tab" data-bs-toggle="tab" data-bs-target="#edit-domicilio" type="button">
+                Domicilio
+              </button>
+            </li>
+            <li class="nav-item">
               <button class="nav-link" id="edit-documenti-tab" data-bs-toggle="tab" data-bs-target="#edit-documenti" type="button">
                 Documenti
               </button>
@@ -676,6 +758,14 @@
                   </select>
                 </div>
                 <div class="col-sm-6">
+                  <label class="form-label">Figli</label>
+                  <select class="form-select" name="has_children">
+                    <option value="">Seleziona...</option>
+                    <option value="Sì" {{ 'selected' if candidate.has_children == 'Sì' }}>Sì</option>
+                    <option value="No" {{ 'selected' if candidate.has_children == 'No' }}>No</option>
+                  </select>
+                </div>
+                <div class="col-sm-6">
                   <label class="form-label">Come sei arrivato a noi</label>
                   <select class="form-select" name="come_sei_arrivato">
                     <option value="">Seleziona...</option>
@@ -741,6 +831,38 @@
                 <div class="col-sm-4">
                   <label class="form-label">Paese di residenza</label>
                   <input type="text" class="form-control" name="country_of_residence" value="{{ candidate.country_of_residence or '' }}">
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label">Instagram</label>
+                  <input type="text" class="form-control" name="instagram" value="{{ candidate.instagram or '' }}" placeholder="@nomeutente">
+                </div>
+              </div>
+            </div>
+
+            <!-- Domicilio -->
+            <div class="tab-pane fade" id="edit-domicilio">
+              <div class="row g-3">
+                <div class="col-12">
+                  <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Informazioni di Domicilio</strong> - Compila solo se diverso dalla residenza
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Indirizzo Domicilio</label>
+                  <input type="text" class="form-control" name="domicile_address" value="{{ candidate.domicile_address or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Città Domicilio</label>
+                  <input type="text" class="form-control" name="domicile_city" value="{{ candidate.domicile_city or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">CAP Domicilio</label>
+                  <input type="text" class="form-control" name="domicile_postal_code" value="{{ candidate.domicile_postal_code or '' }}">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label">Paese Domicilio</label>
+                  <input type="text" class="form-control" name="domicile_country" value="{{ candidate.domicile_country or '' }}">
                 </div>
               </div>
             </div>
