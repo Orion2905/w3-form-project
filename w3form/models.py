@@ -15,6 +15,7 @@ class Candidate(db.Model):
     place_of_birth = db.Column(db.String(64), nullable=False)
     nationality = db.Column(db.String(32), nullable=False)
     marital_status = db.Column(db.String(16), nullable=False)  # tendina: Celibe/Nubile, Sposato/a, etc.
+    has_children = db.Column(db.String(8))  # tendina: Sì/No
     height_cm = db.Column(db.Integer)
     weight_kg = db.Column(db.Integer)
     tshirt_size = db.Column(db.String(8))  # tendina: S/M/L/XL/XXL
@@ -25,24 +26,34 @@ class Candidate(db.Model):
     city = db.Column(db.String(64))
     postal_code = db.Column(db.String(16))
     country_of_residence = db.Column(db.String(32))
+    # Campi domicilio (se diverso dalla residenza)
+    domicile_address = db.Column(db.String(128))
+    domicile_city = db.Column(db.String(64))
+    domicile_postal_code = db.Column(db.String(16))
+    domicile_country = db.Column(db.String(32))
     id_document = db.Column(db.String(32))  # tendina: Carta identità, Passaporto, etc.
     id_number = db.Column(db.String(64))
     id_expiry_date = db.Column(db.Date)
     id_country = db.Column(db.String(32))
-    additional_document = db.Column(db.String(128))  # Documento aggiuntivo come testo libero
     codice_fiscale = db.Column(db.String(16))  # Codice fiscale italiano
     permesso_soggiorno = db.Column(db.String(64))  # Numero permesso di soggiorno
+    permesso_expiry_date = db.Column(db.Date)  # Data scadenza permesso di soggiorno
     license_country = db.Column(db.String(32))
     license_number = db.Column(db.String(64))
     license_category = db.Column(db.String(16))  # tendina: A/B/C/D/E
     license_issue_date = db.Column(db.Date)
     license_expiry_date = db.Column(db.Date)
+    international_license = db.Column(db.Boolean)  # Checkbox per patente internazionale
+    international_license_number = db.Column(db.String(64))  # Numero patente internazionale
+    international_license_expiry = db.Column(db.Date)  # Scadenza patente internazionale
     years_driving_experience = db.Column(db.Integer)
     auto_moto_munito = db.Column(db.Boolean)  # tendina: Sì/No
+    transmission_type = db.Column(db.String(32))  # Utilizzo cambio: Manuale/Automatico/Entrambe
     occupation = db.Column(db.String(64))
     other_experience = db.Column(db.Text)
     availability_from = db.Column(db.Date)  # Data di disponibilità da
     availability_till = db.Column(db.Date)  # Data di disponibilità fino a
+    work_away_from_domicile = db.Column(db.String(8))  # Disponibilità a lavorare fuori domicilio: Sì/No
     city_availability = db.Column(db.String(64))  # Città di disponibilità (una o più città)
     language_1 = db.Column(db.String(32))
     proficiency_1 = db.Column(db.String(16))  # tendina: Base/Intermedio/Avanzato/Madrelingua
@@ -51,6 +62,7 @@ class Candidate(db.Model):
     language_3 = db.Column(db.String(32))
     proficiency_3 = db.Column(db.String(16))
     come_sei_arrivato = db.Column(db.String(64))  # nuovo campo a tendina personalizzabile
+    instagram = db.Column(db.String(64))  # Profilo Instagram (opzionale)
     archived = db.Column(db.Boolean, default=False, nullable=False)  # Campo per archiviazione
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     form_id = db.Column(db.Integer, db.ForeignKey('dynamic_form.id', ondelete='CASCADE'), nullable=True)
@@ -399,10 +411,12 @@ class FormFieldConfiguration(db.Model):
             'date_of_birth': {'label': 'Data di Nascita', 'step': 1, 'section': 'Informazioni Personali'},
             'place_of_birth': {'label': 'Luogo di Nascita', 'step': 1, 'section': 'Informazioni Personali'},
             'nationality': {'label': 'Nazionalità', 'step': 1, 'section': 'Informazioni Personali'},
-            'marital_status': {'label': 'Stato Civile', 'step': 1, 'section': 'Stato Civile e Contatti'},
-            'phone_number': {'label': 'Numero di Telefono', 'step': 1, 'section': 'Stato Civile e Contatti'},
-            'email': {'label': 'Indirizzo Email', 'step': 1, 'section': 'Stato Civile e Contatti'},
-            'come_sei_arrivato': {'label': 'Come sei arrivato a noi', 'step': 1, 'section': 'Stato Civile e Contatti'},
+            'marital_status': {'label': 'Stato Civile', 'step': 1, 'section': 'Informazioni Personali'},
+            'has_children': {'label': 'Figli', 'step': 1, 'section': 'Informazioni Personali'},
+            'phone_number': {'label': 'Numero di Telefono', 'step': 1, 'section': 'Contatti'},
+            'email': {'label': 'Indirizzo Email', 'step': 1, 'section': 'Contatti'},
+            'come_sei_arrivato': {'label': 'Come sei arrivato a noi', 'step': 1, 'section': 'Contatti', 'required': False},
+            'instagram': {'label': 'Instagram', 'step': 1, 'section': 'Contatti', 'required': False},
             'height_cm': {'label': 'Altezza (cm)', 'step': 1, 'section': 'Caratteristiche Fisiche'},
             'weight_kg': {'label': 'Peso (kg)', 'step': 1, 'section': 'Caratteristiche Fisiche'},
             'tshirt_size': {'label': 'Taglia T-shirt', 'step': 1, 'section': 'Caratteristiche Fisiche'},
@@ -414,34 +428,43 @@ class FormFieldConfiguration(db.Model):
             'city': {'label': 'Città', 'step': 2, 'section': 'Informazioni di Residenza'},
             'postal_code': {'label': 'Codice Postale', 'step': 2, 'section': 'Informazioni di Residenza'},
             'country_of_residence': {'label': 'Paese di Residenza', 'step': 2, 'section': 'Informazioni di Residenza'},
+            'domicile_address': {'label': 'Indirizzo Domicilio', 'step': 2, 'section': 'Informazioni di Domicilio'},
+            'domicile_city': {'label': 'Città Domicilio', 'step': 2, 'section': 'Informazioni di Domicilio'},
+            'domicile_postal_code': {'label': 'Codice Postale Domicilio', 'step': 2, 'section': 'Informazioni di Domicilio'},
+            'domicile_country': {'label': 'Paese Domicilio', 'step': 2, 'section': 'Informazioni di Domicilio'},
             'id_document': {'label': 'Tipo Documento', 'step': 2, 'section': 'Documento d\'Identità'},
             'id_number': {'label': 'Numero Documento', 'step': 2, 'section': 'Documento d\'Identità'},
             'id_expiry_date': {'label': 'Scadenza Documento', 'step': 2, 'section': 'Documento d\'Identità'},
             'id_country': {'label': 'Paese Documento', 'step': 2, 'section': 'Documento d\'Identità'},
-            'additional_document': {'label': 'Documento Aggiuntivo', 'step': 2, 'section': 'Documento d\'Identità'},
-            'codice_fiscale': {'label': 'Codice Fiscale', 'step': 2, 'section': 'Documenti Fiscali e Legali'},
-            'permesso_soggiorno': {'label': 'Numero Permesso di Soggiorno', 'step': 2, 'section': 'Documenti Fiscali e Legali'},
+            'codice_fiscale': {'label': 'Codice Fiscale', 'step': 2, 'section': 'Documento d\'Identità'},
+            'permesso_soggiorno': {'label': 'Numero Permesso di Soggiorno', 'step': 2, 'section': 'Documenti Legali'},
+            'permesso_expiry_date': {'label': 'Scadenza Permesso di Soggiorno', 'step': 2, 'section': 'Documenti Legali'},
             'license_country': {'label': 'Paese Patente', 'step': 2, 'section': 'Patente di Guida'},
             'license_number': {'label': 'Numero Patente', 'step': 2, 'section': 'Patente di Guida'},
             'license_category': {'label': 'Categoria Patente', 'step': 2, 'section': 'Patente di Guida'},
             'license_issue_date': {'label': 'Data Rilascio Patente', 'step': 2, 'section': 'Patente di Guida'},
             'license_expiry_date': {'label': 'Scadenza Patente', 'step': 2, 'section': 'Patente di Guida'},
+            'international_license': {'label': 'Patente Internazionale', 'step': 2, 'section': 'Patente di Guida'},
+            'international_license_number': {'label': 'Numero Patente Internazionale', 'step': 2, 'section': 'Patente di Guida'},
+            'international_license_expiry': {'label': 'Scadenza Patente Internazionale', 'step': 2, 'section': 'Patente di Guida'},
             'years_driving_experience': {'label': 'Anni di Esperienza di Guida', 'step': 2, 'section': 'Esperienza di Guida'},
             'auto_moto_munito': {'label': 'Auto/Moto Munito', 'step': 2, 'section': 'Esperienza di Guida'},
-            'curriculum_file': {'label': 'Curriculum', 'step': 2, 'section': 'Upload Curriculum'},
+            'transmission_type': {'label': 'Utilizzo cambio', 'step': 2, 'section': 'Esperienza di Guida', 'required': False},
+            'curriculum_file': {'label': 'Curriculum', 'step': 2, 'section': 'Upload Curriculum', 'required': False},
             
             # Step 3: Esperienze e lingue
             'occupation': {'label': 'Occupazione', 'step': 3, 'section': 'Esperienza Lavorativa'},
             'other_experience': {'label': 'Altre Esperienze', 'step': 3, 'section': 'Esperienza Lavorativa'},
             'availability_from': {'label': 'Disponibilità Da', 'step': 3, 'section': 'Disponibilità Lavorativa'},
             'availability_till': {'label': 'Disponibilità Fino A', 'step': 3, 'section': 'Disponibilità Lavorativa'},
-            'other_location': {'label': 'Città di Disponibilità', 'step': 3, 'section': 'Disponibilità Lavorativa'},
-            'language_1': {'label': 'Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
-            'proficiency_1': {'label': 'Livello Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
-            'language_2': {'label': 'Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
-            'proficiency_2': {'label': 'Livello Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
-            'language_3': {'label': 'Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
-            'proficiency_3': {'label': 'Livello Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche'},
+            'work_away_from_domicile': {'label': 'Disp. lavorare fuori domicilio', 'step': 3, 'section': 'Disponibilità Lavorativa', 'required': False},
+
+            'language_1': {'label': 'Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
+            'proficiency_1': {'label': 'Livello Prima Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
+            'language_2': {'label': 'Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
+            'proficiency_2': {'label': 'Livello Seconda Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
+            'language_3': {'label': 'Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
+            'proficiency_3': {'label': 'Livello Terza Lingua', 'step': 3, 'section': 'Competenze Linguistiche', 'required': False},
             'gdpr_consent': {'label': 'Consenso al trattamento dei dati personali', 'step': 3, 'section': 'Consenso Privacy'},
         }
     

@@ -53,6 +53,8 @@
 .table-responsive {
   /* Scroll sempre visibile */
   overflow-x: auto !important;
+  overflow-y: auto !important;
+  max-height: 70vh;
   scrollbar-width: thin;
   scrollbar-color: #6c757d #f8f9fa;
 }
@@ -192,6 +194,130 @@
 .table th:nth-child(3),
 .table td:nth-child(3) {
   min-width: 200px;
+}
+
+/* Stili per la gestione delle colonne */
+.column-list {
+  min-height: 200px;
+  border: 1px dashed #dee2e6;
+  border-radius: 6px;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+.column-list-grid {
+  min-height: 120px;
+  border: 1px dashed #dee2e6;
+  border-radius: 6px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  /* Il layout flex sarà impostato via JavaScript */
+}
+
+[data-bs-theme="dark"] .column-list {
+  background-color: #2c3034;
+  border-color: #495057;
+}
+
+[data-bs-theme="dark"] .column-list-grid {
+  background-color: #2c3034;
+  border-color: #495057;
+}
+
+/* Responsive per schermi piccoli */
+@media (max-width: 768px) {
+  .column-list-grid {
+    column-width: 160px;
+    column-gap: 12px;
+    padding: 10px;
+  }
+}
+
+/* Responsive per schermi molto piccoli */
+@media (max-width: 576px) {
+  .column-list-grid {
+    column-width: 140px;
+    column-gap: 8px;
+    padding: 8px;
+  }
+  
+  .column-list-grid .column-item {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-height: 32px;
+  }
+}
+
+.column-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  margin: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: move;
+  transition: all 0.2s ease;
+  user-select: none;
+  font-size: 0.85rem;
+  min-height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+[data-bs-theme="dark"] .column-item {
+  background: #343a40;
+  border-color: #495057;
+  color: #f8f9fa;
+}
+
+.column-item:hover {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+[data-bs-theme="dark"] .column-item:hover {
+  background-color: #495057;
+}
+
+.column-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.column-item .drag-handle {
+  margin-right: 6px;
+  color: #6c757d;
+  cursor: move;
+  font-size: 0.9rem;
+}
+
+.column-item .column-name {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0; /* Consente al flex item di ridursi */
+}
+
+.column-item .visibility-toggle {
+  margin-left: 6px;
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.column-item .visibility-toggle:hover {
+  color: #495057;
+}
+
+.drop-zone {
+  border: 2px dashed #0d6efd;
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
 /* Stili per il filtro punteggi con checkbox multiple */
@@ -523,7 +649,7 @@
 /* Scrollbar orizzontale floating che segue l'utente */
 .floating-scrollbar {
   position: fixed;
-  bottom: 20px;
+  top: 50%;
   left: 50%;
   transform: translateX(-50%);
   width: 80%;
@@ -540,7 +666,7 @@
   /* Inizialmente nascosta */
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease, top 0.1s ease;
 }
 
 .floating-scrollbar.visible {
@@ -620,77 +746,6 @@
     margin-bottom: 1rem;
   }
 }
-
-/* Stili per la gestione colonne */
-.column-item {
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background-color: #f8f9fa;
-  cursor: move;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.column-item:hover {
-  background-color: #e9ecef;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.column-item.selected {
-  background-color: #d1ecf1;
-  border-color: #bee5eb;
-}
-
-.column-item.dragging {
-  opacity: 0.5;
-  transform: rotate(5deg);
-}
-
-.column-item .drag-handle {
-  color: #6c757d;
-  margin-right: 0.5rem;
-  cursor: grab;
-}
-
-.column-item .drag-handle:active {
-  cursor: grabbing;
-}
-
-.column-item .column-checkbox {
-  margin-right: 0.75rem;
-}
-
-.column-item .column-label {
-  flex-grow: 1;
-  font-weight: 500;
-}
-
-.column-item .column-key {
-  font-size: 0.8em;
-  color: #6c757d;
-  font-family: monospace;
-}
-
-[data-bs-theme="dark"] .column-item {
-  background-color: #343a40;
-  border-color: #495057;
-  color: #f8f9fa;
-}
-
-[data-bs-theme="dark"] .column-item:hover {
-  background-color: #495057;
-}
-
-[data-bs-theme="dark"] .column-item.selected {
-  background-color: #1e4d5b;
-  border-color: #5bc0de;
-  }
-}
 </style>
 
 {% block content %}
@@ -716,11 +771,6 @@
           </li>
         </ul>
       </div>
-      
-      <!-- Pulsante gestione colonne -->
-      <button type="button" class="btn btn-outline-primary" onclick="openColumnModal()">
-        <i class="bi bi-layout-three-columns"></i> <span class="d-none d-sm-inline">Gestisci Colonne</span>
-      </button>
       
       <!-- Pulsante condivisione -->
       <button type="button" class="btn btn-info" onclick="openShareModal()">
@@ -1128,6 +1178,61 @@
   <!-- Indicatore di scroll -->
   <div class="scroll-indicator" id="scrollIndicator"></div>
   
+  <!-- Controllo Colonne -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#columnControls" aria-expanded="false">
+        <i class="bi bi-gear"></i> Personalizza Colonne
+      </button>
+    </div>
+  </div>
+
+  <!-- Pannello controllo colonne (collassabile) -->
+  <div class="collapse mb-3" id="columnControls">
+    <div class="card card-body">
+      <div class="row">
+        <div class="col-12">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-gear me-2"></i>Colonne Visibili
+            <small class="text-muted fw-normal">(Trascina per riordinare)</small>
+          </h6>
+          <div id="visibleColumns" class="column-list-grid mb-4">
+            <!-- Popolato via JS -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-12">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-eye-slash me-2"></i>Colonne Nascoste
+            <small class="text-muted fw-normal">(Clicca per mostrare)</small>
+          </h6>  
+          <div id="hiddenColumns" class="column-list-grid mb-3">
+            <!-- Popolato via JS -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-top pt-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <button class="btn btn-primary btn-sm me-2" onclick="saveColumnPreferences()">
+              <i class="bi bi-check"></i> Salva Configurazione
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetColumnPreferences()">
+              <i class="bi bi-arrow-clockwise"></i> Ripristina Default
+            </button>
+          </div>
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Le modifiche si applicano automaticamente
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="table-responsive" id="tableContainer">
     <!-- Spinner di caricamento -->
     <div id="loadingSpinner" class="text-center py-5" style="display: none;">
@@ -1142,7 +1247,7 @@
     <table class="table table-striped table-hover align-middle table-sticky-columns" id="candidatesTable">
       <thead class="table-light">
         <tr id="tableHeader">
-          <!-- Colonne dinamiche popolate via JS -->
+          <!-- Intestazioni colonne generate dinamicamente via JS -->
         </tr>
       </thead>
       <tbody>
@@ -1414,58 +1519,6 @@
     </div>
   </div>
 </div>
-
-<!-- Modal per gestione colonne -->
-<div class="modal fade" id="columnModal" tabindex="-1" aria-labelledby="columnModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="columnModalLabel">
-          <i class="bi bi-layout-three-columns"></i> Gestisci Colonne Tabella
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-12 mb-3">
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i>
-              <strong>Istruzioni:</strong> Seleziona le colonne da mostrare e trascinale per riordinarle. Le modifiche vengono salvate automaticamente.
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-12">
-            <h6>Colonne disponibili:</h6>
-            <div class="d-flex gap-2 mb-3">
-              <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllColumns()">
-                <i class="bi bi-check-all"></i> Seleziona tutte
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-warning" onclick="selectDefaultColumns()">
-                <i class="bi bi-arrow-clockwise"></i> Solo principali
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllColumns()">
-                <i class="bi bi-x-circle"></i> Deseleziona tutte
-              </button>
-            </div>
-            <div id="columnList" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
-              <!-- Popolato dinamicamente -->
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x-lg"></i> Chiudi
-        </button>
-        <button type="button" class="btn btn-primary" onclick="applyColumnChanges()">
-          <i class="bi bi-check-lg"></i> Applica modifiche
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
 {% endblock %}
 {% block scripts %}
 <script>
@@ -1473,12 +1526,19 @@ let allCandidates = [];
 let filteredCandidates = [];
 let currentSort = { key: null, asc: true };
 
-// Configurazione colonne
+// Gestione colonne personalizzabili
 const ALL_COLUMNS = [
   { key: 'first_name', label: 'Nome', default: true },
   { key: 'last_name', label: 'Cognome', default: true },
   { key: 'email', label: 'Email', default: true },
   { key: 'phone_number', label: 'Telefono', default: true },
+  { key: 'form_name', label: 'Form', default: true },
+  { key: 'form_category', label: 'Categoria', default: true },
+  { key: 'form_subcategory', label: 'Sottocategoria', default: true },
+  { key: 'created_at', label: 'Creato il', default: true },
+  { key: 'total_score', label: 'Punteggio', default: true },
+  { key: 'curriculum', label: 'Curriculum', default: true },
+  { key: 'photo', label: 'Foto', default: true },
   { key: 'come_sei_arrivato', label: 'Come sei arrivato a noi', default: false },
   { key: 'gender', label: 'Genere', default: false },
   { key: 'date_of_birth', label: 'Data di nascita', default: false },
@@ -1493,6 +1553,10 @@ const ALL_COLUMNS = [
   { key: 'city', label: 'Città', default: false },
   { key: 'postal_code', label: 'CAP', default: false },
   { key: 'country_of_residence', label: 'Paese residenza', default: false },
+  { key: 'domicile_address', label: 'Indirizzo Domicilio', default: false },
+  { key: 'domicile_city', label: 'Città Domicilio', default: false },
+  { key: 'domicile_postal_code', label: 'CAP Domicilio', default: false },
+  { key: 'domicile_country', label: 'Paese Domicilio', default: false },
   { key: 'id_document', label: 'ID documento', default: false },
   { key: 'id_number', label: 'Numero documento', default: false },
   { key: 'id_expiry_date', label: 'Scadenza documento', default: false },
@@ -1517,72 +1581,264 @@ const ALL_COLUMNS = [
   { key: 'language_2', label: 'Lingua 2', default: false },
   { key: 'proficiency_2', label: 'Livello 2', default: false },
   { key: 'language_3', label: 'Lingua 3', default: false },
-  { key: 'proficiency_3', label: 'Livello 3', default: false },
-  { key: 'form_name', label: 'Form', default: true },
-  { key: 'form_category', label: 'Categoria Form', default: false },
-  { key: 'form_subcategory', label: 'Sottocategoria Form', default: false },
-  { key: 'created_at', label: 'Creato il', default: true },
-  { key: 'total_score', label: 'Punteggio', default: true },
-  { key: 'curriculum', label: 'Curriculum', default: true, special: true },
-  { key: 'photo', label: 'Foto', default: true, special: true },
-  { key: 'actions', label: 'Azioni', default: true, special: true, fixed: true }
+  { key: 'proficiency_3', label: 'Livello 3', default: false }
 ];
 
 let visibleColumns = [];
+let columnOrder = [];
 
-// Funzioni per gestione colonne
-function getColumnConfig() {
+// *** GESTIONE COLONNE PERSONALIZZABILI ***
+
+// Inizializza le colonne con le preferenze salvate o default
+function initializeColumns() {
   const saved = localStorage.getItem('candidatesTableColumns');
   if (saved) {
     try {
-      return JSON.parse(saved);
+      const preferences = JSON.parse(saved);
+      visibleColumns = preferences.visible || [];
+      columnOrder = preferences.order || [];
     } catch (e) {
-      console.warn('Errore nel caricamento configurazione colonne:', e);
+      console.warn('Errore nel caricare le preferenze colonne:', e);
+      setDefaultColumns();
     }
+  } else {
+    setDefaultColumns();
   }
-  // Configurazione di default: solo colonne principali
-  return ALL_COLUMNS.filter(col => col.default).map(col => col.key);
-}
-
-function saveColumnConfig(columnOrder) {
-  localStorage.setItem('candidatesTableColumns', JSON.stringify(columnOrder));
-}
-
-function initializeColumns() {
-  const columnOrder = getColumnConfig();
-  visibleColumns = columnOrder.map(key => ALL_COLUMNS.find(col => col.key === key)).filter(col => col);
+  
+  updateColumnControls();
   updateTableHeader();
 }
 
-function updateTableHeader() {
-  const header = document.getElementById('tableHeader');
-  header.innerHTML = '';
+// Imposta le colonne di default
+function setDefaultColumns() {
+  visibleColumns = ALL_COLUMNS.filter(col => col.default).map(col => col.key);
+  visibleColumns.push('actions'); // Sempre visibile
+  columnOrder = [...visibleColumns];
+}
+
+// Aggiorna i controlli delle colonne
+function updateColumnControls() {
+  const visibleContainer = document.getElementById('visibleColumns');
+  const hiddenContainer = document.getElementById('hiddenColumns');
   
-  visibleColumns.forEach(column => {
-    const th = document.createElement('th');
-    th.style.maxWidth = '120px';
-    th.style.whiteSpace = 'nowrap';
-    th.style.overflow = 'hidden';
-    th.style.textOverflow = 'ellipsis';
-    
-    if (column.special) {
-      // Colonne speciali (Curriculum, Foto, Azioni)
-      th.innerHTML = `<span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>`;
-    } else {
-      // Colonne normali con ordinamento
-      th.innerHTML = `
-        <button class="btn btn-link p-0 sort-btn" data-sort="${column.key}" title="${column.label}">
-          <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>
-          <i class="bi bi-arrow-down-up ms-1"></i>
-        </button>
-      `;
+  visibleContainer.innerHTML = '';
+  hiddenContainer.innerHTML = '';
+  
+  // Colonne visibili (in ordine)
+  const visibleItems = [];
+  columnOrder.forEach(key => {
+    if (visibleColumns.includes(key)) {
+      const column = ALL_COLUMNS.find(col => col.key === key) || { key: 'actions', label: 'Azioni' };
+      visibleItems.push(createColumnItem(column, true));
     }
-    
-    header.appendChild(th);
   });
   
-  // Riattiva gli event listener per l'ordinamento
-  attachSortListeners();
+  // Colonne nascoste
+  const hiddenItems = [];
+  ALL_COLUMNS.forEach(column => {
+    if (!visibleColumns.includes(column.key)) {
+      hiddenItems.push(createColumnItem(column, false));
+    }
+  });
+  
+  // Organizza in colonne da massimo 5 elementi
+  organizeIntoColumns(visibleContainer, visibleItems, 5);
+  organizeIntoColumns(hiddenContainer, hiddenItems, 5);
+}
+
+// Organizza gli elementi in colonne da massimo itemsPerColumn elementi
+function organizeIntoColumns(container, items, itemsPerColumn = 5) {
+  const numColumns = Math.ceil(items.length / itemsPerColumn);
+  container.style.display = 'flex';
+  container.style.gap = '15px';
+  container.style.flexWrap = 'wrap';
+  
+  for (let col = 0; col < numColumns; col++) {
+    const columnDiv = document.createElement('div');
+    columnDiv.style.flex = '1';
+    columnDiv.style.minWidth = '180px';
+    columnDiv.style.display = 'flex';
+    columnDiv.style.flexDirection = 'column';
+    columnDiv.style.gap = '4px';
+    
+    const startIndex = col * itemsPerColumn;
+    const endIndex = Math.min(startIndex + itemsPerColumn, items.length);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      columnDiv.appendChild(items[i]);
+    }
+    
+    container.appendChild(columnDiv);
+  }
+}
+
+// Crea un elemento colonna trascinabile
+function createColumnItem(column, isVisible) {
+  const item = document.createElement('div');
+  item.className = 'column-item';
+  item.draggable = true;
+  item.dataset.columnKey = column.key;
+  
+  item.innerHTML = `
+    <i class="bi bi-grip-vertical drag-handle"></i>
+    <span class="column-name">${column.label}</span>
+    <i class="bi ${isVisible ? 'bi-eye' : 'bi-eye-slash'} visibility-toggle" 
+       title="${isVisible ? 'Nascondi' : 'Mostra'}" 
+       onclick="toggleColumnVisibility('${column.key}')"></i>
+  `;
+  
+  // Gestione drag & drop
+  item.addEventListener('dragstart', handleDragStart);
+  item.addEventListener('dragover', handleDragOver);
+  item.addEventListener('drop', handleDrop);
+  item.addEventListener('dragend', handleDragEnd);
+  
+  return item;
+}
+
+// Attiva/disattiva visibilità colonna
+function toggleColumnVisibility(columnKey) {
+  if (columnKey === 'actions') return; // Le azioni sono sempre visibili
+  
+  const index = visibleColumns.indexOf(columnKey);
+  if (index > -1) {
+    visibleColumns.splice(index, 1);
+    columnOrder = columnOrder.filter(key => key !== columnKey);
+  } else {
+    visibleColumns.push(columnKey);
+    // Aggiungi alla fine dell'ordine
+    if (!columnOrder.includes(columnKey)) {
+      columnOrder.push(columnKey);
+    }
+  }
+  
+  updateColumnControls();
+  updateTableHeader();
+  
+  // Aggiorna immediatamente la tabella con i dati
+  if (filteredCandidates.length > 0) {
+    renderTable(filteredCandidates);
+  }
+}
+
+// Aggiorna l'header della tabella
+function updateTableHeader() {
+  const headerRow = document.getElementById('tableHeader');
+  headerRow.innerHTML = '';
+  
+  columnOrder.forEach(key => {
+    if (visibleColumns.includes(key)) {
+      const column = ALL_COLUMNS.find(col => col.key === key);
+      const th = document.createElement('th');
+      th.style.cssText = 'max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+      th.dataset.column = key;
+      
+      if (key === 'actions') {
+        th.innerHTML = 'Azioni';
+      } else if (key === 'curriculum' || key === 'photo') {
+        th.innerHTML = `<span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>`;
+      } else {
+        th.innerHTML = `
+          <button class="btn btn-link p-0 sort-btn" data-sort="${key}" title="${column.label}">
+            <span class="d-inline-block text-truncate" style="max-width: 100px; vertical-align: middle;">${column.label}</span>
+            <i class="bi bi-arrow-down-up ms-1"></i>
+          </button>
+        `;
+      }
+      
+      headerRow.appendChild(th);
+    }
+  });
+  
+  // Re-applica i listener di ordinamento
+  addSortListeners();
+}
+
+// Gestione drag & drop
+let draggedElement = null;
+
+function handleDragStart(e) {
+  draggedElement = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.outerHTML);
+}
+
+function handleDragOver(e) {
+  if (e.preventDefault) e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function handleDrop(e) {
+  if (e.stopPropagation) e.stopPropagation();
+  
+  if (draggedElement !== this) {
+    const draggedKey = draggedElement.dataset.columnKey;
+    const targetKey = this.dataset.columnKey;
+    
+    // Riordina nell'array
+    const draggedIndex = columnOrder.indexOf(draggedKey);
+    const targetIndex = columnOrder.indexOf(targetKey);
+    
+    if (draggedIndex > -1 && targetIndex > -1) {
+      columnOrder.splice(draggedIndex, 1);
+      columnOrder.splice(targetIndex, 0, draggedKey);
+      
+      updateColumnControls();
+      updateTableHeader();
+      
+      // Aggiorna immediatamente la tabella con i dati
+      if (filteredCandidates.length > 0) {
+        renderTable(filteredCandidates);
+      }
+    }
+  }
+  
+  return false;
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  draggedElement = null;
+}
+
+// Salva le preferenze delle colonne
+function saveColumnPreferences() {
+  const preferences = {
+    visible: visibleColumns,
+    order: columnOrder
+  };
+  
+  localStorage.setItem('candidatesTableColumns', JSON.stringify(preferences));
+  
+  // Feedback all'utente
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-check"></i> Salvato!';
+  btn.classList.add('btn-success');
+  btn.classList.remove('btn-primary');
+  
+  setTimeout(() => {
+    btn.innerHTML = originalText;
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-primary');
+  }, 2000);
+  
+  // Non serve più ricaricare la tabella qui, si aggiorna automaticamente
+}
+
+// Ripristina le colonne di default
+function resetColumnPreferences() {
+  localStorage.removeItem('candidatesTableColumns');
+  setDefaultColumns();
+  updateColumnControls();
+  updateTableHeader();
+  
+  // Ricarica la tabella automaticamente
+  if (filteredCandidates.length > 0) {
+    renderTable(filteredCandidates);
+  }
 }
 
 // Carica le opzioni per i filtri dropdown
@@ -1857,76 +2113,16 @@ function renderTable(data) {
   data.forEach(c => {
     const tr = document.createElement('tr');
     
-    // Genera le celle in base alle colonne visibili
-    visibleColumns.forEach(column => {
-      const td = document.createElement('td');
-      
-      switch(column.key) {
-        case 'curriculum':
-          td.innerHTML = c.curriculum_file ? `
-            <div class="btn-group btn-group-sm" role="group">
-              <a href="/curriculum/view/${c.curriculum_file.split('/').pop()}" class="btn btn-outline-info" title="Visualizza PDF">
-                <i class='bi bi-eye'></i>
-              </a>
-              <a href="${c.curriculum_file}" download class="btn btn-outline-success" title="Scarica PDF">
-                <i class='bi bi-download'></i>
-              </a>
-            </div>
-          ` : '<span class="text-muted">-</span>';
-          break;
-          
-        case 'photo':
-          td.innerHTML = c.profile_photo ? 
-            `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : 
-            '<span class="text-muted">-</span>';
-          break;
-          
-        case 'actions':
-          td.innerHTML = `
-            <div class="btn-group" role="group">
-              <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
-              {% if not current_user.is_ospite() %}
-              <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
-              ${getArchiveButton(c)}
-              {% endif %}
-            </div>
-          `;
-          break;
-          
-        case 'form_name':
-          td.innerHTML = c.form_name ? `<span class="badge bg-info">${c.form_name}</span>` : '<span class="text-muted">-</span>';
-          break;
-          
-        case 'form_category':
-          td.innerHTML = c.form_category ? `<span class="badge bg-primary">${c.form_category}</span>` : '<span class="text-muted">-</span>';
-          break;
-          
-        case 'form_subcategory':
-          td.innerHTML = c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>';
-          break;
-          
-        case 'created_at':
-          td.innerHTML = c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT') : '<span class="text-muted">-</span>';
-          break;
-          
-        case 'total_score':
-          td.innerHTML = (c.scores_count && c.scores_count > 0) ? 
-            `<div class="text-center">
-              <span class="badge bg-${(parseFloat(c.total_score) || 0) >= 80 ? 'success' : (parseFloat(c.total_score) || 0) >= 60 ? 'warning' : (parseFloat(c.total_score) || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
-              <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
-            </div>` : 
-            '<span class="text-muted">Non valutato</span>';
-          break;
-          
-        default:
-          // Colonne standard
-          td.textContent = c[column.key] || '';
-          break;
+    // Genera le celle solo per le colonne visibili nell'ordine specificato
+    let cellsHTML = '';
+    
+    columnOrder.forEach(key => {
+      if (visibleColumns.includes(key)) {
+        cellsHTML += generateCellHTML(key, c);
       }
-      
-      tr.appendChild(td);
     });
     
+    tr.innerHTML = cellsHTML;
     tbody.appendChild(tr);
   });
   
@@ -1934,9 +2130,105 @@ function renderTable(data) {
   updateScrollbarAfterTableChange();
 }
 
-// Wrapper function per compatibilità
-function renderCandidatesTable(data) {
-  renderTable(data);
+// Genera l'HTML per una singola cella basata sulla chiave della colonna
+function generateCellHTML(key, candidate) {
+  const c = candidate;
+  
+  switch(key) {
+    case 'first_name': return `<td>${c.first_name||''}</td>`;
+    case 'last_name': return `<td>${c.last_name||''}</td>`;
+    case 'email': return `<td>${c.email||''}</td>`;
+    case 'phone_number': return `<td>${c.phone_number||''}</td>`;
+    case 'come_sei_arrivato': return `<td>${c.come_sei_arrivato||''}</td>`;
+    case 'gender': return `<td>${c.gender||''}</td>`;
+    case 'date_of_birth': return `<td>${c.date_of_birth||''}</td>`;
+    case 'place_of_birth': return `<td>${c.place_of_birth||''}</td>`;
+    case 'nationality': return `<td>${c.nationality||''}</td>`;
+    case 'marital_status': return `<td>${c.marital_status||''}</td>`;
+    case 'height_cm': return `<td>${c.height_cm||''}</td>`;
+    case 'weight_kg': return `<td>${c.weight_kg||''}</td>`;
+    case 'tshirt_size': return `<td>${c.tshirt_size||''}</td>`;
+    case 'shoe_size_eu': return `<td>${c.shoe_size_eu||''}</td>`;
+    case 'address': return `<td>${c.address||''}</td>`;
+    case 'city': return `<td>${c.city||''}</td>`;
+    case 'postal_code': return `<td>${c.postal_code||''}</td>`;
+    case 'country_of_residence': return `<td>${c.country_of_residence||''}</td>`;
+    case 'id_document': return `<td>${c.id_document||''}</td>`;
+    case 'id_number': return `<td>${c.id_number||''}</td>`;
+    case 'id_expiry_date': return `<td>${c.id_expiry_date||''}</td>`;
+    case 'id_country': return `<td>${c.id_country||''}</td>`;
+    case 'additional_document': return `<td>${c.additional_document||''}</td>`;
+    case 'codice_fiscale': return `<td>${c.codice_fiscale||''}</td>`;
+    case 'permesso_soggiorno': return `<td>${c.permesso_soggiorno||''}</td>`;
+    case 'license_country': return `<td>${c.license_country||''}</td>`;
+    case 'license_number': return `<td>${c.license_number||''}</td>`;
+    case 'license_category': return `<td>${c.license_category||''}</td>`;
+    case 'license_issue_date': return `<td>${c.license_issue_date||''}</td>`;
+    case 'license_expiry_date': return `<td>${c.license_expiry_date||''}</td>`;
+    case 'years_driving_experience': return `<td>${c.years_driving_experience||''}</td>`;
+    case 'auto_moto_munito': return `<td>${c.auto_moto_munito||''}</td>`;
+    case 'occupation': return `<td>${c.occupation||''}</td>`;
+    case 'other_experience': return `<td>${c.other_experience||''}</td>`;
+    case 'availability_from': return `<td>${c.availability_from||''}</td>`;
+    case 'availability_till': return `<td>${c.availability_till||''}</td>`;
+    case 'city_availability': return `<td>${c.city_availability||''}</td>`;
+    case 'language_1': return `<td>${c.language_1||''}</td>`;
+    case 'proficiency_1': return `<td>${c.proficiency_1||''}</td>`;
+    case 'language_2': return `<td>${c.language_2||''}</td>`;
+    case 'proficiency_2': return `<td>${c.proficiency_2||''}</td>`;
+    case 'language_3': return `<td>${c.language_3||''}</td>`;
+    case 'proficiency_3': return `<td>${c.proficiency_3||''}</td>`;
+    
+    case 'form_name': 
+      return `<td>${c.form_name ? `<span class="badge bg-info">${c.form_name}</span>` : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'form_category': 
+      return `<td>${c.form_category ? `<span class="badge bg-primary">${c.form_category}</span>` : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'form_subcategory': 
+      return `<td>${c.form_subcategory ? `<span class="badge bg-secondary">${c.form_subcategory}</span>` : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'created_at': 
+      return `<td>${c.created_at ? new Date(c.created_at).toLocaleDateString('it-IT') : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'total_score': 
+      return `<td>${(c.scores_count && c.scores_count > 0) ? 
+        `<div class="text-center">
+          <span class="badge bg-${(parseFloat(c.total_score) || 0) >= 80 ? 'success' : (parseFloat(c.total_score) || 0) >= 60 ? 'warning' : (parseFloat(c.total_score) || 0) >= 40 ? 'info' : 'danger'}">${c.total_score ? Number(c.total_score).toFixed(1) : '0.0'}</span>
+          <br><small class="text-muted">${c.scores_count} punt${c.scores_count === 1 ? 'o' : 'i'}</small>
+        </div>` : 
+        '<span class="text-muted">Non valutato</span>'
+      }</td>`;
+    
+    case 'curriculum': 
+      return `<td>${c.curriculum_file ? `
+        <div class="btn-group btn-group-sm" role="group">
+          <a href="/curriculum/view/${c.curriculum_file.split('/').pop()}" class="btn btn-outline-info" title="Visualizza PDF">
+            <i class='bi bi-eye'></i>
+          </a>
+          <a href="${c.curriculum_file}" download class="btn btn-outline-success" title="Scarica PDF">
+            <i class='bi bi-download'></i>
+          </a>
+        </div>
+      ` : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'photo': 
+      return `<td>${c.profile_photo ? `<img src="${c.profile_photo}" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="showImgModal('${c.profile_photo}')">` : '<span class="text-muted">-</span>'}</td>`;
+    
+    case 'actions': 
+      return `<td>
+        <div class="btn-group" role="group">
+          <a href="/candidati/${c.id}/profilo" class="btn btn-sm btn-primary"><i class="bi bi-person-lines-fill"></i> Profilo</a>
+          {% if not current_user.is_ospite() %}
+          <a href="/candidati/${c.id}/punteggi" class="btn btn-sm btn-info"><i class="bi bi-star"></i> Punteggi</a>
+          ${getArchiveButton(c)}
+          {% endif %}
+        </div>
+      </td>`;
+    
+    default: 
+      return `<td>${c[key] || ''}</td>`;
+  }
 }
 function applyFiltersAndSort() {
   showFilterSpinner();
@@ -2525,7 +2817,8 @@ function clearAllInFilter(fieldName) {
 // Variabile globale per tenere traccia del preset attivo
 let currentFilterPreset = null;
 
-function attachSortListeners() {
+// Funzione per aggiungere i listener di ordinamento
+function addSortListeners() {
   document.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const key = this.getAttribute('data-sort');
@@ -2539,6 +2832,9 @@ function attachSortListeners() {
     });
   });
 }
+
+// Inizializza i listener di ordinamento all'avvio
+addSortListeners();
 function openEdit(id) {
   const c = allCandidates.find(x=>x.id===id);
   if(!c) return;
@@ -2731,6 +3027,9 @@ function showAlert(message, type = 'info') {
 
 // Carica sia i candidati che le opzioni dei filtri all'avvio
 async function initializePage() {
+  // Inizializza le colonne personalizzabili PRIMA di tutto
+  initializeColumns();
+  
   await loadFilterOptions();
   await loadCandidates();
   // Inizializza il label del filtro punteggi
@@ -2788,10 +3087,38 @@ function initializeFloatingScrollbar() {
       viewportHeight: viewportHeight
     });
     
-    // Mostra la scrollbar solo se ha senso
+    // Posiziona la scrollbar all'altezza ottimale basandosi sul contenitore tabella
     if (hasHorizontalScroll && isTableInView) {
+      // Calcola la posizione basandosi sul contenitore della tabella
+      const containerScrollTop = tableContainer.scrollTop;
+      const containerHeight = tableContainer.clientHeight;
+      const tableHeight = table.offsetHeight;
+      
+      // Posiziona la scrollbar al centro dell'area visibile del contenitore tabella
+      let targetY;
+      
+      if (containerHeight >= tableHeight) {
+        // Tutta la tabella è visibile - centra rispetto al contenitore
+        targetY = tableRect.top + containerHeight / 2;
+      } else {
+        // La tabella è scrollabile - posiziona al centro dell'area visibile
+        const visibleAreaCenter = tableRect.top + containerHeight / 2;
+        targetY = Math.max(150, Math.min(visibleAreaCenter, viewportHeight - 150));
+      }
+      
+      // Assicurati che la scrollbar rimanga dentro la viewport
+      targetY = Math.max(100, Math.min(targetY, viewportHeight - 50));
+      
+      // Imposta la posizione verticale
+      floatingScrollbar.style.top = targetY + 'px';
       floatingScrollbar.classList.add('visible');
-      console.log('✅ Scrollbar floating mostrata');
+      console.log('✅ Scrollbar floating mostrata alla posizione Y:', targetY);
+      console.log('Container scroll info:', {
+        scrollTop: containerScrollTop,
+        clientHeight: containerHeight,
+        tableHeight: tableHeight,
+        tableRect: tableRect
+      });
     } else {
       floatingScrollbar.classList.remove('visible');
       console.log('❌ Scrollbar floating nascosta');
@@ -2814,6 +3141,8 @@ function initializeFloatingScrollbar() {
       floatingScrollbar.scrollLeft = tableContainer.scrollLeft;
       setTimeout(() => { isScrollingSyncing = false; }, 10);
     }
+    // Aggiorna anche la posizione verticale della scrollbar quando si scrolla verticalmente
+    updateFloatingScrollbar();
   });
   
   // Observer per monitorare i cambiamenti nella dimensione della tabella
@@ -3932,188 +4261,5 @@ function initTableUsabilityFeatures() {
     </div>
   </div>
 </div>
-
-// ===== FUNZIONI PER GESTIONE COLONNE =====
-
-function openColumnModal() {
-  populateColumnModal();
-  const modal = new bootstrap.Modal(document.getElementById('columnModal'));
-  modal.show();
-}
-
-function populateColumnModal() {
-  const columnList = document.getElementById('columnList');
-  columnList.innerHTML = '';
-  
-  const currentOrder = visibleColumns.map(col => col.key);
-  
-  // Aggiungi le colonne nell'ordine attuale
-  visibleColumns.forEach(column => {
-    const columnItem = createColumnItem(column, true);
-    columnList.appendChild(columnItem);
-  });
-  
-  // Aggiungi le colonne non visibili
-  ALL_COLUMNS.filter(col => !currentOrder.includes(col.key) && !col.fixed).forEach(column => {
-    const columnItem = createColumnItem(column, false);
-    columnList.appendChild(columnItem);
-  });
-  
-  // Abilita il drag and drop
-  enableDragAndDrop(columnList);
-}
-
-function createColumnItem(column, isSelected) {
-  const div = document.createElement('div');
-  div.className = `column-item ${isSelected ? 'selected' : ''}`;
-  div.draggable = !column.fixed;
-  div.dataset.columnKey = column.key;
-  
-  div.innerHTML = `
-    ${!column.fixed ? '<i class="bi bi-grip-vertical drag-handle"></i>' : ''}
-    <input type="checkbox" class="form-check-input column-checkbox" ${isSelected ? 'checked' : ''} ${column.fixed ? 'disabled' : ''}>
-    <span class="column-label">${column.label}</span>
-    <span class="column-key">${column.key}</span>
-  `;
-  
-  // Event listener per checkbox
-  const checkbox = div.querySelector('.column-checkbox');
-  checkbox.addEventListener('change', function() {
-    if (this.checked) {
-      div.classList.add('selected');
-    } else {
-      div.classList.remove('selected');
-    }
-  });
-  
-  return div;
-}
-
-function enableDragAndDrop(container) {
-  let draggedElement = null;
-  
-  container.addEventListener('dragstart', function(e) {
-    if (e.target.classList.contains('column-item') && e.target.draggable) {
-      draggedElement = e.target;
-      e.target.classList.add('dragging');
-    }
-  });
-  
-  container.addEventListener('dragend', function(e) {
-    if (e.target.classList.contains('column-item')) {
-      e.target.classList.remove('dragging');
-      draggedElement = null;
-    }
-  });
-  
-  container.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    const afterElement = getDragAfterElement(container, e.clientY);
-    if (afterElement == null) {
-      container.appendChild(draggedElement);
-    } else {
-      container.insertBefore(draggedElement, afterElement);
-    }
-  });
-}
-
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
-  
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
-function selectAllColumns() {
-  const checkboxes = document.querySelectorAll('#columnList .column-checkbox:not(:disabled)');
-  checkboxes.forEach(checkbox => {
-    checkbox.checked = true;
-    checkbox.closest('.column-item').classList.add('selected');
-  });
-}
-
-function deselectAllColumns() {
-  const checkboxes = document.querySelectorAll('#columnList .column-checkbox:not(:disabled)');
-  checkboxes.forEach(checkbox => {
-    checkbox.checked = false;
-    checkbox.closest('.column-item').classList.remove('selected');
-  });
-}
-
-function selectDefaultColumns() {
-  const allItems = document.querySelectorAll('#columnList .column-item');
-  allItems.forEach(item => {
-    const columnKey = item.dataset.columnKey;
-    const column = ALL_COLUMNS.find(col => col.key === columnKey);
-    const checkbox = item.querySelector('.column-checkbox');
-    
-    if (!checkbox.disabled) {
-      if (column && column.default) {
-        checkbox.checked = true;
-        item.classList.add('selected');
-      } else {
-        checkbox.checked = false;
-        item.classList.remove('selected');
-      }
-    }
-  });
-}
-
-function applyColumnChanges() {
-  const columnItems = document.querySelectorAll('#columnList .column-item');
-  const newColumnOrder = [];
-  
-  columnItems.forEach(item => {
-    const checkbox = item.querySelector('.column-checkbox');
-    if (checkbox.checked) {
-      newColumnOrder.push(item.dataset.columnKey);
-    }
-  });
-  
-  // Aggiorna la configurazione
-  visibleColumns = newColumnOrder.map(key => ALL_COLUMNS.find(col => col.key === key)).filter(col => col);
-  
-  // Salva la configurazione
-  saveColumnConfig(newColumnOrder);
-  
-  // Aggiorna la tabella
-  updateTableHeader();
-  renderCandidatesTable(filteredCandidates);
-  
-  // Chiudi il modal
-  const modal = bootstrap.Modal.getInstance(document.getElementById('columnModal'));
-  modal.hide();
-  
-  // Mostra messaggio di conferma
-  const alert = document.createElement('div');
-  alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
-  alert.style.top = '20px';
-  alert.style.right = '20px';
-  alert.style.zIndex = '9999';
-  alert.innerHTML = `
-    <i class="bi bi-check-circle"></i> Configurazione colonne salvata!
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
-  document.body.appendChild(alert);
-  
-  setTimeout(() => {
-    if (alert.parentNode) {
-      alert.parentNode.removeChild(alert);
-    }
-  }, 3000);
-}
-
-// Inizializzazione
-document.addEventListener('DOMContentLoaded', function() {
-  initializeColumns();
-});
 
 {% endblock %}

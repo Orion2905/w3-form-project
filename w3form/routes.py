@@ -66,7 +66,6 @@ def get_available_export_fields():
             {'name': 'id_number', 'label': 'Numero Documento', 'checked': False},
             {'name': 'id_expiry_date', 'label': 'Scadenza Documento', 'checked': False},
             {'name': 'id_country', 'label': 'Paese Documento', 'checked': False},
-            {'name': 'additional_document', 'label': 'Documento Aggiuntivo', 'checked': False},
             {'name': 'codice_fiscale', 'label': 'Codice Fiscale', 'checked': False},
             {'name': 'permesso_soggiorno', 'label': 'Permesso di Soggiorno', 'checked': False},
         ],
@@ -222,7 +221,6 @@ def edit_candidate(candidate_id):
         candidate.id_country = request.form.get('id_country') or None
         candidate.codice_fiscale = request.form.get('codice_fiscale') or None
         candidate.permesso_soggiorno = request.form.get('permesso_soggiorno') or None
-        candidate.additional_document = request.form.get('additional_document') or None
         
         if request.form.get('id_expiry_date'):
             candidate.id_expiry_date = datetime.strptime(request.form.get('id_expiry_date'), '%Y-%m-%d').date()
@@ -314,8 +312,9 @@ def export_excel():
 @role_required('intervistatore')
 def create_dynamic_form():
     dropdown_fields = [
-        'gender', 'marital_status', 'tshirt_size', 'id_document', 'license_category',
-        'auto_moto_munito', 'proficiency_1', 'proficiency_2', 'proficiency_3', 'come_sei_arrivato'
+        'gender', 'marital_status', 'has_children', 'tshirt_size', 'id_document', 'license_category',
+        'auto_moto_munito', 'transmission_type', 'occupation', 'work_away_from_domicile', 
+        'language_1', 'language_2', 'language_3', 'proficiency_1', 'proficiency_2', 'proficiency_3', 'come_sei_arrivato'
     ]
     if request.method == 'POST':
         name = request.form['name']
@@ -402,11 +401,12 @@ def get_form_field_visibility(slug):
         
         # Crea la risposta con visibilità e obbligatorietà
         field_visibility = {}
-        for field_name in default_fields.keys():
+        for field_name, field_info in default_fields.items():
             config = fields_config.get(field_name)
+            default_required = field_info.get('required', True)  # Default True se non specificato
             field_visibility[field_name] = {
                 'is_visible': config.is_visible if config else True,
-                'is_required': config.is_required if config else True
+                'is_required': config.is_required if config else default_required
             }
         
         return jsonify({
@@ -502,8 +502,9 @@ def duplicate_dynamic_form(form_id):
 def edit_dynamic_form(form_id):
     form = DynamicForm.query.get_or_404(form_id)
     dropdown_fields = [
-        'gender', 'marital_status', 'tshirt_size', 'id_document', 'license_category',
-        'auto_moto_munito', 'proficiency_1', 'proficiency_2', 'proficiency_3', 'come_sei_arrivato'
+        'gender', 'marital_status', 'has_children', 'tshirt_size', 'id_document', 'license_category',
+        'auto_moto_munito', 'transmission_type', 'occupation', 'work_away_from_domicile', 
+        'language_1', 'language_2', 'language_3', 'proficiency_1', 'proficiency_2', 'proficiency_3', 'come_sei_arrivato'
     ]
     if request.method == 'POST':
         form.name = request.form.get('name')
@@ -597,7 +598,6 @@ def api_get_candidates():
             'availability_from': c.availability_from.isoformat() if c.availability_from else '',
             'availability_till': c.availability_till.isoformat() if c.availability_till else '',
             'city_availability': c.city_availability,
-            'additional_document': c.additional_document,
             'codice_fiscale': c.codice_fiscale,
             'permesso_soggiorno': c.permesso_soggiorno,
             'language_1': c.language_1,
@@ -801,7 +801,6 @@ def api_update_candidate(candidate_id):
                 c.availability_till = availability_till if isinstance(availability_till, date) else None
         
         c.city_availability = data.get('city_availability', c.city_availability)
-        c.additional_document = data.get('additional_document', c.additional_document)
         c.codice_fiscale = data.get('codice_fiscale', c.codice_fiscale)
         c.permesso_soggiorno = data.get('permesso_soggiorno', c.permesso_soggiorno)
         c.language_1 = data.get('language_1', c.language_1)
@@ -1541,7 +1540,6 @@ def export_candidates_csv():
             'id_number': 'Numero Documento',
             'id_expiry_date': 'Scadenza Documento',
             'id_country': 'Paese Documento',
-            'additional_document': 'Documento Aggiuntivo',
             'codice_fiscale': 'Codice Fiscale',
             'permesso_soggiorno': 'Permesso di Soggiorno',
             'license_country': 'Paese Patente',
@@ -1647,8 +1645,6 @@ def export_candidates_csv():
                     row.append(candidate.id_expiry_date.strftime('%d/%m/%Y') if candidate.id_expiry_date else '')
                 elif field == 'id_country':
                     row.append(candidate.id_country or '')
-                elif field == 'additional_document':
-                    row.append(candidate.additional_document or '')
                 elif field == 'codice_fiscale':
                     row.append(candidate.codice_fiscale or '')
                 elif field == 'permesso_soggiorno':

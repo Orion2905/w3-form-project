@@ -98,6 +98,119 @@
   color: #6f42c1 !important;
 }
 
+/* === VARIABILI CSS PER TEMA CHIARO/SCURO === */
+:root {
+  --domicile-bg: #f8f9fa;
+  --domicile-border: #dee2e6;
+  --domicile-text: #495057;
+  --domicile-disabled-bg: #f8f9fa;
+  --domicile-primary: #0d6efd;
+}
+
+[data-theme="dark"] {
+  --domicile-bg: #2d2d2d;
+  --domicile-border: #404040;
+  --domicile-text: #e9ecef;
+  --domicile-disabled-bg: #383838;
+  --domicile-primary: #6ea8fe;
+}
+
+/* Stili per la sezione domicilio */
+.form-check {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--domicile-bg);
+  border-radius: 0.375rem;
+  border: 1px solid var(--domicile-border);
+  transition: all 0.3s ease;
+}
+
+.form-check:hover {
+  background: var(--domicile-bg);
+  filter: brightness(0.95);
+}
+
+[data-theme="dark"] .form-check:hover {
+  filter: brightness(1.1);
+}
+
+.form-check-input {
+  background-color: var(--domicile-bg);
+  border-color: var(--domicile-border);
+  transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+  background-color: var(--domicile-primary);
+  border-color: var(--domicile-primary);
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+[data-theme="dark"] .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(110, 168, 254, 0.25);
+}
+
+.form-check-label {
+  font-weight: 500;
+  color: var(--domicile-text);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.form-check-label:hover {
+  color: var(--domicile-primary);
+}
+
+/* Transizioni smooth per i campi domicilio */
+#domicile-fields, #domicile-fields-2 {
+  transition: all 0.3s ease;
+}
+
+/* Stili per campi disabilitati */
+.form-control:disabled {
+  background-color: var(--domicile-disabled-bg);
+  color: var(--domicile-text);
+  opacity: 0.7;
+  border-color: var(--domicile-border);
+}
+
+/* Override per input nei temi scuri */
+[data-theme="dark"] .form-control {
+  background-color: var(--domicile-bg);
+  border-color: var(--domicile-border);
+  color: var(--domicile-text);
+}
+
+[data-theme="dark"] .form-control:focus {
+  background-color: var(--domicile-bg);
+  border-color: var(--domicile-primary);
+  color: var(--domicile-text);
+  box-shadow: 0 0 0 0.2rem rgba(110, 168, 254, 0.25);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #adb5bd;
+}
+
+/* Animazione per il toggle del checkbox */
+.form-check-input {
+  transform: scale(1);
+}
+
+.form-check-input:active {
+  transform: scale(0.95);
+}
+
+/* Indicatore visivo per stato attivo */
+.form-check.active {
+  background: linear-gradient(135deg, var(--domicile-bg) 0%, var(--domicile-primary) 5%, var(--domicile-bg) 10%);
+  border-color: var(--domicile-primary);
+}
+
 .section-title .bi-file-earmark-text {
   color: #fd7e14 !important;
 }
@@ -128,6 +241,39 @@
 
 .section-title .bi-shield-check {
   color: #607d8b !important;
+}
+
+/* Sottotitolo sezione */
+.section-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bs-secondary);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-subtitle i {
+  font-size: 0.9rem;
+  color: var(--bs-primary);
+}
+
+/* Fix per campi affiancati - solo quando visibili */
+#international-license-fields[style*="block"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+}
+
+#international-license-fields .col-6 {
+  flex: 1;
+  max-width: 50%;
+  padding-right: 0.75rem;
+}
+
+#international-license-fields .col-6:last-child {
+  padding-right: 0;
+  padding-left: 0.75rem;
 }
 
 /* Tema scuro per le sezioni */
@@ -267,82 +413,112 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             </h5>
           </div>
           <div class="section-body">
-            <div class="row">
+            <!-- Prima riga: Nome + Cognome -->
+            <div class="row mb-3">
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="first_name" class="form-label required-field">Nome</label>
-                  <input type="text" class="form-control" id="first_name" name="first_name" required>
-                </div>
-                <div class="mb-3">
-                  <label for="last_name" class="form-label required-field">Cognome</label>
-                  <input type="text" class="form-control" id="last_name" name="last_name" required>
-                </div>
-                <div class="mb-3">
-                  <label for="gender" class="form-label required-field">Genere</label>
-                  <select class="form-select" id="gender" name="gender" required>
-                    <option value="">Seleziona</option>
-                    {% for opt in dropdown_options.gender or ['M','F','Altro'] %}
-                    <option value="{{ opt }}">{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <label for="first_name" class="form-label required-field">Nome</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" required>
               </div>
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
-                  <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
-                </div>
-                <div class="mb-3">
-                  <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
-                  <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
-                </div>
-                <div class="mb-3">
-                  <label for="nationality" class="form-label required-field">Nazionalità</label>
-                  <input type="text" class="form-control" id="nationality" name="nationality" required>
-                </div>
+                <label for="last_name" class="form-label required-field">Cognome</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" required>
+              </div>
+            </div>
+            
+            <!-- Seconda riga: Data di Nascita + Luogo di Nascita -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="date_of_birth" class="form-label required-field">Data di Nascita</label>
+                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+              </div>
+              <div class="col-md-6">
+                <label for="place_of_birth" class="form-label required-field">Luogo di Nascita</label>
+                <input type="text" class="form-control" id="place_of_birth" name="place_of_birth" required>
+              </div>
+            </div>
+            
+            <!-- Terza riga: Nazionalità + Genere -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="nationality" class="form-label required-field">Nazionalità</label>
+                <input type="text" class="form-control" id="nationality" name="nationality" required>
+              </div>
+              <div class="col-md-6">
+                <label for="gender" class="form-label required-field">Genere</label>
+                <select class="form-select" id="gender" name="gender" required>
+                  <option value="">Seleziona</option>
+                  {% for opt in dropdown_options.gender or ['M','F','Altro'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <!-- Quarta riga: Stato Civile + Figli -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="marital_status" class="form-label required-field">Stato Civile</label>
+                <select class="form-select" id="marital_status" name="marital_status" required>
+                  <option value="">Seleziona</option>
+                  {% for opt in dropdown_options.marital_status or ['Celibe/Nubile','Sposato/a','Divorziato/a','Vedovo/a'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="has_children" class="form-label required-field">Figli</label>
+                <select class="form-select" id="has_children" name="has_children" required>
+                  <option value="">Seleziona</option>
+                  {% for opt in dropdown_options.has_children or ['Sì','No'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Sezione Stato Civile e Contatti -->
+        <!-- Sezione Contatti -->
         <div class="form-section">
           <div class="section-header">
             <h5 class="section-title">
-              <i class="bi bi-heart"></i>
-              Stato Civile e Contatti
+              <i class="bi bi-telephone"></i>
+              Contatti
             </h5>
           </div>
           <div class="section-body">
+            <!-- Prima riga: Numero Cellulare e Indirizzo Email (obbligatori) -->
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="marital_status" class="form-label required-field">Stato Civile</label>
-                  <select class="form-select" id="marital_status" name="marital_status" required>
-                    <option value="">Seleziona</option>
-                    {% for opt in dropdown_options.marital_status or ['Celibe/Nubile','Sposato/a','Divorziato/a','Vedovo/a'] %}
-                    <option value="{{ opt }}">{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="phone_number" class="form-label required-field">Numero di Telefono</label>
+                  <label for="phone_number" class="form-label required-field">Numero Cellulare</label>
                   <input type="text" class="form-control" id="phone_number" name="phone_number" required>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="email" class="form-label required-field">Indirizzo Email</label>
+                  <label for="email" class="form-label required-field">Indirizzo E-mail</label>
                   <input type="email" class="form-control" id="email" name="email" required>
                 </div>
+              </div>
+            </div>
+            <!-- Seconda riga: Come sei arrivato a noi e Instagram (non obbligatori) -->
+            <div class="row">
+              <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="come_sei_arrivato" class="form-label required-field">Come sei arrivato a noi</label>
-                  <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato" required>
+                  <label for="come_sei_arrivato" class="form-label">Come sei arrivato a noi</label>
+                  <select class="form-select" id="come_sei_arrivato" name="come_sei_arrivato">
                     <option value="">Seleziona</option>
                     {% for opt in dropdown_options.come_sei_arrivato or ['Passaparola','Social Media','Sito Web','Altro'] %}
                     <option value="{{ opt }}">{{ opt }}</option>
                     {% endfor %}
                   </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="instagram" class="form-label">Instagram</label>
+                  <input type="text" class="form-control" id="instagram" name="instagram" placeholder="@nomeutente">
                 </div>
               </div>
             </div>
@@ -452,26 +628,71 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             </h5>
           </div>
           <div class="section-body">
-            <div class="row">
+            <!-- Prima riga: Indirizzo e Città -->
+            <div class="row mb-3">
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="address" class="form-label required-field">Indirizzo</label>
-                  <input type="text" class="form-control" id="address" name="address" required>
-                </div>
-                <div class="mb-3">
-                  <label for="city" class="form-label required-field">Città</label>
-                  <input type="text" class="form-control" id="city" name="city" required>
-                </div>
+                <label for="address" class="form-label required-field">Indirizzo</label>
+                <input type="text" class="form-control" id="address" name="address" required>
               </div>
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="postal_code" class="form-label required-field">Codice Postale</label>
-                  <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                <label for="city" class="form-label required-field">Città</label>
+                <input type="text" class="form-control" id="city" name="city" required>
+              </div>
+            </div>
+            <!-- Seconda riga: Codice Postale e Paese -->
+            <div class="row">
+              <div class="col-md-6">
+                <label for="postal_code" class="form-label required-field">Codice Postale</label>
+                <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+              </div>
+              <div class="col-md-6">
+                <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
+                <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sezione Informazioni di Domicilio -->
+        <div class="form-section">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-geo-alt"></i>
+              Informazioni di Domicilio
+            </h5>
+          </div>
+          <div class="section-body">
+            <!-- Checkbox per usare stesso indirizzo di residenza -->
+            <div class="row mb-3">
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="same_as_residence" name="same_as_residence" onchange="toggleDomicileFields()">
+                  <label class="form-check-label" for="same_as_residence">
+                    Il domicilio coincide con la residenza
+                  </label>
                 </div>
-                <div class="mb-3">
-                  <label for="country_of_residence" class="form-label required-field">Paese di Residenza</label>
-                  <input type="text" class="form-control" id="country_of_residence" name="country_of_residence" required>
-                </div>
+              </div>
+            </div>
+            <!-- Prima riga: Indirizzo e Città Domicilio -->
+            <div class="row mb-3" id="domicile-fields">
+              <div class="col-md-6">
+                <label for="domicile_address" class="form-label">Indirizzo Domicilio</label>
+                <input type="text" class="form-control" id="domicile_address" name="domicile_address">
+              </div>
+              <div class="col-md-6">
+                <label for="domicile_city" class="form-label">Città Domicilio</label>
+                <input type="text" class="form-control" id="domicile_city" name="domicile_city">
+              </div>
+            </div>
+            <!-- Seconda riga: Codice Postale e Paese Domicilio -->
+            <div class="row" id="domicile-fields-2">
+              <div class="col-md-6">
+                <label for="domicile_postal_code" class="form-label">Codice Postale Domicilio</label>
+                <input type="text" class="form-control" id="domicile_postal_code" name="domicile_postal_code">
+              </div>
+              <div class="col-md-6">
+                <label for="domicile_country" class="form-label">Paese Domicilio</label>
+                <input type="text" class="form-control" id="domicile_country" name="domicile_country">
               </div>
             </div>
           </div>
@@ -486,7 +707,8 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             </h5>
           </div>
           <div class="section-body">
-            <div class="row">
+            <!-- Prima riga: Tipo Documento + Numero Documento -->
+            <div class="row mb-3">
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="id_document" class="form-label required-field">Tipo Documento</label>
@@ -497,38 +719,32 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
                     {% endfor %}
                   </select>
                 </div>
+              </div>
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label for="id_number" class="form-label required-field">Numero Documento</label>
                   <input type="text" class="form-control" id="id_number" name="id_number" required>
                 </div>
-                <div class="mb-3">
-                  <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
-                  <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
-                </div>
               </div>
+            </div>
+            
+            <!-- Seconda riga: Paese Documento + Scadenza Documento -->
+            <div class="row mb-3">
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="id_country" class="form-label required-field">Paese Documento</label>
                   <input type="text" class="form-control" id="id_country" name="id_country" required>
                 </div>
+              </div>
+              <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="additional_document" class="form-label">Documento Aggiuntivo</label>
-                  <input type="text" class="form-control" id="additional_document" name="additional_document" placeholder="Es: Tessera sanitaria, Carta regionale servizi, ecc.">
+                  <label for="id_expiry_date" class="form-label required-field">Scadenza Documento</label>
+                  <input type="date" class="form-control" id="id_expiry_date" name="id_expiry_date" required>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Sezione Documenti Fiscali -->
-        <div class="form-section">
-          <div class="section-header">
-            <h5 class="section-title">
-              <i class="bi bi-file-earmark-text"></i>
-              Documenti Fiscali e Legali
-            </h5>
-          </div>
-          <div class="section-body">
+            
+            <!-- Terza riga: Codice Fiscale (larghezza completa) -->
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
@@ -536,10 +752,33 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
                   <input type="text" class="form-control" id="codice_fiscale" name="codice_fiscale" placeholder="Es: RSSMRA85M01H501Z" required>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- Sezione Documenti Legali -->
+        <div class="form-section" id="permesso-soggiorno-section" style="display: none;">
+          <div class="section-header">
+            <h5 class="section-title">
+              <i class="bi bi-file-earmark-text"></i>
+              Documenti Legali
+            </h5>
+          </div>
+          <div class="section-body">
+            <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="permesso_soggiorno" class="form-label">Numero Permesso di Soggiorno</label>
-                  <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" placeholder="Es: 123456789">
+                  <label for="permesso_soggiorno" class="form-label required-field">Numero Permesso di Soggiorno</label>
+                  <input type="text" class="form-control" id="permesso_soggiorno" name="permesso_soggiorno" 
+                         placeholder="Es: 123456789" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="permesso_expiry_date" class="form-label required-field">Scadenza Permesso di Soggiorno</label>
+                  <input type="date" class="form-control" id="permesso_expiry_date" name="permesso_expiry_date" required>
                 </div>
               </div>
             </div>
@@ -555,30 +794,75 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             </h5>
           </div>
           <div class="section-body">
-            <div class="row">
+            <!-- Prima riga: Numero Patente + Data Rilascio -->
+            <div class="row mb-3">
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="license_country" class="form-label required-field">Paese Patente</label>
-                  <input type="text" class="form-control" id="license_country" name="license_country" required>
-                </div>
-                <div class="mb-3">
-                  <label for="license_number" class="form-label required-field">Numero Patente</label>
-                  <input type="text" class="form-control" id="license_number" name="license_number" required>
-                </div>
-                <div class="mb-3">
-                  <label for="license_category" class="form-label required-field">Categoria Patente</label>
-                  <input type="text" class="form-control" id="license_category" name="license_category" placeholder="Es: B, C, D, BE" required>
-                </div>
+                <label for="license_number" class="form-label required-field">Numero Patente</label>
+                <input type="text" class="form-control" id="license_number" name="license_number" required>
               </div>
               <div class="col-md-6">
+                <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
+                <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
+              </div>
+            </div>
+            
+            <!-- Seconda riga: Data Scadenza + Categoria Patente -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
+                <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
+              </div>
+              <div class="col-md-6">
+                <label for="license_category" class="form-label required-field">Categoria Patente</label>
+                <select class="form-select" id="license_category" name="license_category" required>
+                  <option value="">Seleziona categoria</option>
+                  {% for opt in dropdown_options.license_category or ['AM','A1','A2','A','B','B1','BE','C1','C','C1E','CE','D1','D','D1E','DE'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <!-- Terza riga: Paese Patente -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="license_country" class="form-label required-field">Paese Patente</label>
+                <input type="text" class="form-control" id="license_country" name="license_country" required>
+              </div>
+            </div>
+            
+            <!-- Sezione Patente Internazionale -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <h6 class="section-subtitle">
+                  <i class="bi bi-globe"></i>
+                  Patente Internazionale
+                </h6>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-12">
                 <div class="mb-3">
-                  <label for="license_issue_date" class="form-label required-field">Data Rilascio Patente</label>
-                  <input type="date" class="form-control" id="license_issue_date" name="license_issue_date" required>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="international_license" name="international_license" value="si">
+                    <label class="form-check-label" for="international_license">
+                      Possiedo una patente internazionale
+                    </label>
+                  </div>
                 </div>
-                <div class="mb-3">
-                  <label for="license_expiry_date" class="form-label required-field">Scadenza Patente</label>
-                  <input type="date" class="form-control" id="license_expiry_date" name="license_expiry_date" required>
-                </div>
+              </div>
+            </div>
+            
+            <!-- Campi patente internazionale (nascosti inizialmente) -->
+            <div class="row" id="international-license-fields" style="display: none;">
+              <div class="col-6">
+                <label for="international_license_number" class="form-label required-field">Numero Patente Internazionale</label>
+                <input type="text" class="form-control" id="international_license_number" name="international_license_number">
+              </div>
+              <div class="col-6">
+                <label for="international_license_expiry" class="form-label required-field">Scadenza Patente Internazionale</label>
+                <input type="date" class="form-control" id="international_license_expiry" name="international_license_expiry">
               </div>
             </div>
           </div>
@@ -611,6 +895,19 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="transmission_type" class="form-label">Utilizzo cambio</label>
+                  <select class="form-select" id="transmission_type" name="transmission_type">
+                    <option value="">Seleziona tipo cambio</option>
+                    {% for opt in dropdown_options.transmission_type or ['Manuale','Automatico','Entrambe'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -626,8 +923,8 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             <div class="row">
               <div class="col-md-12">
                 <div class="mb-3">
-                  <label for="curriculum_file" class="form-label required-field">Curriculum (PDF/DOCX)</label>
-                  <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx" required>
+                  <label for="curriculum_file" class="form-label">Curriculum (PDF/DOCX)</label>
+                  <input type="file" class="form-control" id="curriculum_file" name="curriculum_file" accept=".pdf,.doc,.docx">
                   <div class="form-text">
                     <i class="bi bi-info-circle"></i> 
                     Carica il tuo curriculum in formato PDF o DOCX (massimo 10MB)
@@ -659,7 +956,12 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
               <div class="col-md-6">
                 <div class="mb-3">
                   <label for="occupation" class="form-label required-field">Occupazione</label>
-                  <input type="text" class="form-control" id="occupation" name="occupation" placeholder="Es: Ingegnere, Studente, Manager" required>
+                  <select class="form-select" id="occupation" name="occupation" required>
+                    <option value="">Seleziona occupazione</option>
+                    {% for opt in dropdown_options.occupation or ['Impiegato','Libero professionista','Studente','Disoccupato'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
               <div class="col-md-6">
@@ -694,14 +996,17 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
                   <input type="date" class="form-control" id="availability_till" name="availability_till" required>
                 </div>
               </div>
-              <div class="col-md-12">
+            </div>
+            <div class="row">
+              <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="other_location" class="form-label required-field">Città di Disponibilità</label>
-                  <input type="text" class="form-control" id="other_location" name="other_location" required placeholder="Es: Milano, Roma, Torino o disponibile per trasferte">
-                  <div class="form-text">
-                    <i class="bi bi-info-circle"></i> 
-                    Indica le città dove sei disponibile a lavorare o se sei disponibile per trasferte
-                  </div>
+                  <label for="work_away_from_domicile" class="form-label">Disponibilità a lavorare in città diversa dal proprio domicilio</label>
+                  <select class="form-select" id="work_away_from_domicile" name="work_away_from_domicile">
+                    <option value="">Seleziona</option>
+                    {% for opt in dropdown_options.work_away_from_domicile or ['Sì','No'] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
             </div>
@@ -717,53 +1022,78 @@ body[data-theme="dark"] .form-check.border.rounded.bg-light {
             </h5>
           </div>
           <div class="section-body">
-            <div class="row">
+            <!-- Prima Lingua -->
+            <div class="row mb-3">
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="language_1" class="form-label required-field">Prima Lingua</label>
-                  <input type="text" class="form-control" id="language_1" name="language_1" placeholder="Es: Italiano" required>
-                </div>
-                <div class="mb-3">
-                  <label for="proficiency_1" class="form-label required-field">Livello Prima Lingua</label>
-                  <select class="form-select" id="proficiency_1" name="proficiency_1" required>
-                    <option value="">Seleziona livello</option>
-                    {% for opt in dropdown_options.proficiency_1 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                    <option value="{{ opt }}">{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <label for="language_1" class="form-label">Prima Lingua</label>
+                <select class="form-select" id="language_1" name="language_1">
+                  <option value="">Seleziona lingua</option>
+                  {% for opt in dropdown_options.language_1 or ['Italiano','Inglese','Francese','Spagnolo','Tedesco','Portoghese','Russo','Cinese','Arabo','Giapponese'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="language_2" class="form-label required-field">Seconda Lingua</label>
-                  <input type="text" class="form-control" id="language_2" name="language_2" placeholder="Es: Inglese" required>
-                </div>
-                <div class="mb-3">
-                  <label for="proficiency_2" class="form-label required-field">Livello Seconda Lingua</label>
-                  <select class="form-select" id="proficiency_2" name="proficiency_2" required>
-                    <option value="">Seleziona livello</option>
-                    {% for opt in dropdown_options.proficiency_2 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                    <option value="{{ opt }}">{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <label for="proficiency_1" class="form-label">Livello</label>
+                <select class="form-select" id="proficiency_1" name="proficiency_1">
+                  <option value="">Seleziona livello</option>
+                  {% for opt in dropdown_options.proficiency_1 or ['Basso','Medio','Alto'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <!-- Seconda Lingua -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="language_2" class="form-label">Seconda Lingua</label>
+                <select class="form-select" id="language_2" name="language_2">
+                  <option value="">Seleziona lingua</option>
+                  {% for opt in dropdown_options.language_2 or ['Italiano','Inglese','Francese','Spagnolo','Tedesco','Portoghese','Russo','Cinese','Arabo','Giapponese'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="language_3" class="form-label required-field">Terza Lingua</label>
-                  <input type="text" class="form-control" id="language_3" name="language_3" placeholder="Es: Francese, Spagnolo" required>
-                </div>
+                <label for="proficiency_2" class="form-label">Livello</label>
+                <select class="form-select" id="proficiency_2" name="proficiency_2">
+                  <option value="">Seleziona livello</option>
+                  {% for opt in dropdown_options.proficiency_2 or ['Basso','Medio','Alto'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <!-- Terza Lingua -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="language_3" class="form-label">Terza Lingua</label>
+                <select class="form-select" id="language_3" name="language_3">
+                  <option value="">Seleziona lingua</option>
+                  {% for opt in dropdown_options.language_3 or ['Italiano','Inglese','Francese','Spagnolo','Tedesco','Portoghese','Russo','Cinese','Arabo','Giapponese'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="proficiency_3" class="form-label required-field">Livello Terza Lingua</label>
-                  <select class="form-select" id="proficiency_3" name="proficiency_3" required>
-                    <option value="">Seleziona livello</option>
-                    {% for opt in dropdown_options.proficiency_3 or ['Base','Intermedio','Avanzato','Madrelingua'] %}
-                    <option value="{{ opt }}">{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <label for="proficiency_3" class="form-label">Livello</label>
+                <select class="form-select" id="proficiency_3" name="proficiency_3">
+                  <option value="">Seleziona livello</option>
+                  {% for opt in dropdown_options.proficiency_3 or ['Basso','Medio','Alto'] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <!-- Didascalia livelli -->
+            <div class="row mt-3">
+              <div class="col-12">
+                <small class="text-muted" style="color: #555 !important; font-style: italic;">
+                  *Livelli: <strong>Basso</strong> capacità conversazione / <strong>Medio</strong> capacità di usare lingua lavorativamente / <strong>Alto</strong> ottima capacità parlata e scritta
+                </small>
               </div>
             </div>
           </div>
@@ -884,11 +1214,12 @@ const requiredFields = [
   'first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
   'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
   'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo',
-  'address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-  'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+  'address', 'city', 'postal_code', 'country_of_residence', 
+  'domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country',
+  'id_document', 'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
   'license_country', 'license_number', 'license_category', 'license_issue_date', 
   'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file',
-  'occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+  'occupation', 'other_experience', 'availability_from', 'availability_till', 
   'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
   'gdpr_consent'
 ];
@@ -914,6 +1245,14 @@ const fieldLabels = {
   'city': 'Città',
   'postal_code': 'Codice Postale',
   'country_of_residence': 'Paese di Residenza',
+  'domicile_address': 'Indirizzo Domicilio',
+  'domicile_city': 'Città Domicilio',
+  'domicile_postal_code': 'Codice Postale Domicilio',
+  'domicile_country': 'Paese Domicilio',
+  'domicile_address': 'Indirizzo Domicilio',
+  'domicile_city': 'Città Domicilio',
+  'domicile_postal_code': 'Codice Postale Domicilio',
+  'domicile_country': 'Paese Domicilio',
   'id_document': 'Tipo Documento',
   'id_number': 'Numero Documento',
   'id_expiry_date': 'Scadenza Documento',
@@ -927,12 +1266,14 @@ const fieldLabels = {
   'license_expiry_date': 'Scadenza Patente',
   'years_driving_experience': 'Anni di Esperienza di Guida',
   'auto_moto_munito': 'Auto/Moto Munito',
+  'transmission_type': 'Utilizzo cambio',
   'curriculum_file': 'Curriculum',
   'occupation': 'Occupazione',
   'other_experience': 'Altre Esperienze',
   'availability_from': 'Disponibilità Da',
   'availability_till': 'Disponibilità Fino A',
-  'other_location': 'City/Cities of Availability',
+  'work_away_from_domicile': 'Disp. lavorare fuori domicilio',
+
   'language_1': 'Lingua 1',
   'proficiency_1': 'Livello 1',
   'language_2': 'Lingua 2',
@@ -996,11 +1337,14 @@ function validateCurrentStep() {
     0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
         'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
         'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
-    1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+    1: ['address', 'city', 'postal_code', 'country_of_residence',
+        'domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country',
+        'id_document', 'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+        'permesso_soggiorno', 'permesso_expiry_date',
         'license_country', 'license_number', 'license_category', 'license_issue_date', 
-        'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
-    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+        'license_expiry_date', 'international_license', 'international_license_number', 'international_license_expiry',
+        'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
+    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 
         'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
         'gdpr_consent']
   };
@@ -1010,6 +1354,40 @@ function validateCurrentStep() {
   
   // Filtra solo i campi che sono sia nello step corrente che nella lista dei campi obbligatori dinamici
   const requiredFieldsForCurrentStep = currentStepFields.filter(fieldId => {
+    // Se i campi domicilio non sono richiesti quando checkbox è selezionato
+    const sameAsResidenceCheckbox = document.getElementById('same_as_residence');
+    if (sameAsResidenceCheckbox && sameAsResidenceCheckbox.checked) {
+      const domicileFields = ['domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country'];
+      if (domicileFields.includes(fieldId)) {
+        return false; // Non richiedere validazione per campi domicilio se checkbox è selezionato
+      }
+    }
+    
+    // Gestione speciale per i campi documenti legali (permesso di soggiorno)
+    const permessoFields = ['permesso_soggiorno', 'permesso_expiry_date'];
+    if (permessoFields.includes(fieldId)) {
+      const nationalityField = document.getElementById('nationality');
+      if (nationalityField) {
+        const nationality = nationalityField.value.toLowerCase();
+        const isItalian = nationality === 'italiana' || nationality === 'italy' || nationality === 'ita';
+        if (isItalian) {
+          return false; // Non richiedere validazione per campi permesso se nazionalità italiana
+        }
+      }
+    }
+    
+    // Gestione speciale per i campi patente internazionale
+    const internationalLicenseFields = ['international_license_number', 'international_license_expiry'];
+    if (internationalLicenseFields.includes(fieldId)) {
+      const internationalLicenseCheckbox = document.getElementById('international_license');
+      if (internationalLicenseCheckbox) {
+        const hasInternationalLicense = internationalLicenseCheckbox.checked;
+        if (!hasInternationalLicense) {
+          return false; // Non richiedere validazione per campi patente internazionale se non selezionata
+        }
+      }
+    }
+    
     // Controlla se il campo è nella configurazione dinamica e se è obbligatorio e visibile
     if (FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldId]) {
       return FIELD_VISIBILITY_CONFIG[fieldId].is_visible && FIELD_VISIBILITY_CONFIG[fieldId].is_required;
@@ -1086,8 +1464,163 @@ function showStep(idx) {
   indicators.forEach((el, i) => el.classList.toggle('active', i === idx));
   currentStep = idx;
   
+  // Aggiorna URL con lo step corrente
+  updateUrlWithStep(idx);
+  
   // Nascondi il sommario quando cambi step
   document.getElementById('missingFieldsSummary').classList.remove('show');
+}
+
+function updateUrlWithStep(stepIndex) {
+  const url = new URL(window.location);
+  if (stepIndex === 0) {
+    // Rimuovi il parametro step se siamo al primo step
+    url.searchParams.delete('step');
+  } else {
+    // Aggiungi lo step all'URL (step 1-based per l'utente)
+    url.searchParams.set('step', stepIndex + 1);
+  }
+  
+  // Aggiorna l'URL senza ricaricare la pagina
+  window.history.replaceState(null, '', url.toString());
+}
+
+function getStepFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const stepParam = urlParams.get('step');
+  
+  if (stepParam) {
+    const stepIndex = parseInt(stepParam) - 1; // Converti da 1-based a 0-based
+    // Verifica che lo step sia valido
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+      return stepIndex;
+    }
+  }
+  
+  return 0; // Default al primo step
+}
+
+// Funzione per gestire il toggle dei campi domicilio
+function toggleDomicileFields() {
+  const checkbox = document.getElementById('same_as_residence');
+  const domicileFields1 = document.getElementById('domicile-fields');
+  const domicileFields2 = document.getElementById('domicile-fields-2');
+  const formCheckDiv = checkbox.closest('.form-check');
+  
+  if (checkbox.checked) {
+    // Aggiungi classe per indicare stato attivo
+    formCheckDiv.classList.add('active');
+    
+    // Nascondi i campi domicilio e copia i valori dalla residenza
+    domicileFields1.style.display = 'none';
+    domicileFields2.style.display = 'none';
+    
+    // Copia i valori dalla residenza al domicilio
+    syncResidenceToDomicile();
+    
+    // Rimuovi i required dai campi domicilio
+    const domicileInputs = ['domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country'];
+    domicileInputs.forEach(fieldName => {
+      const field = document.getElementById(fieldName);
+      if (field) {
+        field.removeAttribute('required');
+        field.classList.remove('missing-field');
+      }
+    });
+  } else {
+    // Rimuovi classe stato attivo
+    formCheckDiv.classList.remove('active');
+    
+    // Mostra i campi domicilio
+    domicileFields1.style.display = 'flex';
+    domicileFields2.style.display = 'flex';
+    
+    // Ripristina i required sui campi domicilio se necessario
+    const domicileInputs = ['domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country'];
+    domicileInputs.forEach(fieldName => {
+      const field = document.getElementById(fieldName);
+      if (field && FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldName] && FIELD_VISIBILITY_CONFIG[fieldName].is_required) {
+        field.setAttribute('required', 'required');
+      }
+    });
+  }
+}
+
+// Funzione per sincronizzare i campi residenza -> domicilio quando checkbox è attiva
+function syncResidenceToDomicile() {
+  const checkbox = document.getElementById('same_as_residence');
+  if (checkbox && checkbox.checked) {
+    document.getElementById('domicile_address').value = document.getElementById('address').value;
+    document.getElementById('domicile_city').value = document.getElementById('city').value;
+    document.getElementById('domicile_postal_code').value = document.getElementById('postal_code').value;
+    document.getElementById('domicile_country').value = document.getElementById('country_of_residence').value;
+  }
+}
+
+// Funzione per gestire la visibilità della sezione documenti legali
+function togglePermessoSoggiornoSection() {
+  const nationalityField = document.getElementById('nationality');
+  const permessoSection = document.getElementById('permesso-soggiorno-section');
+  const permessoFields = ['permesso_soggiorno', 'permesso_expiry_date'];
+  
+  if (!nationalityField || !permessoSection) return;
+  
+  const nationality = nationalityField.value.toLowerCase();
+  const isItalian = nationality === 'italiana' || nationality === 'italy' || nationality === 'ita';
+  
+  if (isItalian) {
+    // Nascondi sezione e rimuovi obbligatorietà
+    permessoSection.style.display = 'none';
+    permessoFields.forEach(fieldName => {
+      const field = document.getElementById(fieldName);
+      if (field) {
+        field.removeAttribute('required');
+        field.classList.remove('missing-field');
+        field.value = ''; // Pulisci i valori
+      }
+    });
+  } else {
+    // Mostra sezione e aggiungi obbligatorietà
+    permessoSection.style.display = 'block';
+    permessoFields.forEach(fieldName => {
+      const field = document.getElementById(fieldName);
+      if (field && FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldName] && FIELD_VISIBILITY_CONFIG[fieldName].is_required) {
+        field.setAttribute('required', 'required');
+      }
+    });
+  }
+}
+
+// Funzione per gestire la visibilità dei campi patente internazionale
+function toggleInternationalLicenseFields() {
+  const internationalLicenseCheckbox = document.getElementById('international_license');
+  const internationalLicenseFields = document.getElementById('international-license-fields');
+  const internationalLicenseNumber = document.getElementById('international_license_number');
+  const internationalLicenseExpiry = document.getElementById('international_license_expiry');
+  
+  if (!internationalLicenseCheckbox || !internationalLicenseFields) return;
+  
+  const hasInternationalLicense = internationalLicenseCheckbox.checked;
+  
+  if (hasInternationalLicense) {
+    // Mostra campi e aggiungi obbligatorietà
+    internationalLicenseFields.style.display = 'block';
+    if (internationalLicenseNumber) internationalLicenseNumber.setAttribute('required', 'required');
+    if (internationalLicenseExpiry) internationalLicenseExpiry.setAttribute('required', 'required');
+  } else {
+    // Nascondi campi e rimuovi obbligatorietà
+    internationalLicenseFields.style.display = 'none';
+    if (internationalLicenseNumber) {
+      internationalLicenseNumber.removeAttribute('required');
+      internationalLicenseNumber.classList.remove('missing-field');
+      internationalLicenseNumber.value = '';
+    }
+    if (internationalLicenseExpiry) {
+      internationalLicenseExpiry.removeAttribute('required');
+      internationalLicenseExpiry.classList.remove('missing-field');
+      internationalLicenseExpiry.value = '';
+    }
+  }
 }
 
 function nextStep() {
@@ -1107,11 +1640,13 @@ function showMissingFieldsAlert() {
     0: ['first_name', 'last_name', 'gender', 'date_of_birth', 'place_of_birth', 
         'nationality', 'marital_status', 'come_sei_arrivato', 'height_cm', 'weight_kg', 
         'tshirt_size', 'shoe_size_eu', 'phone_number', 'email', 'profile_photo'],
-    1: ['address', 'city', 'postal_code', 'country_of_residence', 'id_document', 
-        'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+    1: ['address', 'city', 'postal_code', 'country_of_residence',
+        'domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country',
+        'id_document', 'id_number', 'id_expiry_date', 'id_country', 'codice_fiscale',
+        'permesso_soggiorno', 'permesso_tipo', 'permesso_issue_date', 'permesso_expiry_date', 'permesso_questura',
         'license_country', 'license_number', 'license_category', 'license_issue_date', 
         'license_expiry_date', 'years_driving_experience', 'auto_moto_munito', 'curriculum_file'],
-    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 'other_location', 
+    2: ['occupation', 'other_experience', 'availability_from', 'availability_till', 
         'language_1', 'proficiency_1', 'language_2', 'proficiency_2', 'language_3', 'proficiency_3',
         'gdpr_consent']
   };
@@ -1121,6 +1656,15 @@ function showMissingFieldsAlert() {
   
   // Filtra solo i campi che sono sia nello step corrente che nella lista dei campi obbligatori dinamici
   const requiredFieldsForCurrentStep = currentStepFields.filter(fieldId => {
+    // Se i campi domicilio non sono richiesti quando checkbox è selezionato
+    const sameAsResidenceCheckbox = document.getElementById('same_as_residence');
+    if (sameAsResidenceCheckbox && sameAsResidenceCheckbox.checked) {
+      const domicileFields = ['domicile_address', 'domicile_city', 'domicile_postal_code', 'domicile_country'];
+      if (domicileFields.includes(fieldId)) {
+        return false; // Non richiedere validazione per campi domicilio se checkbox è selezionato
+      }
+    }
+    
     if (FIELD_VISIBILITY_CONFIG && FIELD_VISIBILITY_CONFIG[fieldId]) {
       return FIELD_VISIBILITY_CONFIG[fieldId].is_visible && FIELD_VISIBILITY_CONFIG[fieldId].is_required;
     }
@@ -1604,6 +2148,53 @@ document.addEventListener('DOMContentLoaded', function() {
   // Nascondi il sommario all'inizio
   document.getElementById('missingFieldsSummary').classList.remove('show');
   
+  // Inizializza lo step dalla URL
+  const initialStep = getStepFromUrl();
+  if (initialStep !== 0) {
+    showStep(initialStep);
+  }
+  
+  // Gestisci navigazione browser (tasto indietro/avanti)
+  window.addEventListener('popstate', function() {
+    const urlStep = getStepFromUrl();
+    if (urlStep !== currentStep) {
+      // Non chiamare showStep per evitare loop, aggiorna solo la UI
+      steps.forEach((s, i) => s.classList.toggle('active', i === urlStep));
+      indicators.forEach((el, i) => el.classList.toggle('active', i === urlStep));
+      currentStep = urlStep;
+      document.getElementById('missingFieldsSummary').classList.remove('show');
+    }
+  });
+  
+  // Aggiungi event listener per sincronizzare residenza -> domicilio
+  const residenceFields = ['address', 'city', 'postal_code', 'country_of_residence'];
+  residenceFields.forEach(fieldName => {
+    const field = document.getElementById(fieldName);
+    if (field) {
+      field.addEventListener('input', syncResidenceToDomicile);
+      field.addEventListener('change', syncResidenceToDomicile);
+    }
+  });
+
+  // Event listener per la nazionalità - gestione permesso di soggiorno
+  const nationalityField = document.getElementById('nationality');
+  if (nationalityField) {
+    nationalityField.addEventListener('change', togglePermessoSoggiornoSection);
+    nationalityField.addEventListener('input', togglePermessoSoggiornoSection);
+    
+    // Controlla lo stato iniziale
+    setTimeout(togglePermessoSoggiornoSection, 100);
+  }
+
+  // Event listener per la patente internazionale
+  const internationalLicenseCheckbox = document.getElementById('international_license');
+  if (internationalLicenseCheckbox) {
+    internationalLicenseCheckbox.addEventListener('change', toggleInternationalLicenseFields);
+    
+    // Controlla lo stato iniziale
+    setTimeout(toggleInternationalLicenseFields, 100);
+  }
+  
   // Carica la configurazione dei campi e applica visibilità/obbligatorietà
   loadFieldVisibilityConfig();
   
@@ -1656,7 +2247,7 @@ function fillTestData() {
     'gender': 'M',
     'date_of_birth': '1990-05-15',
     'place_of_birth': 'Roma',
-    'nationality': 'Italiana',
+    'nationality': 'Italiana', // Cambiare in 'Francese' per testare permesso soggiorno
     'marital_status': 'Celibe/Nubile',
     'come_sei_arrivato': 'Passaparola',
     'height_cm': '175',
@@ -1675,14 +2266,17 @@ function fillTestData() {
     'id_number': 'CA1234567',
     'id_expiry_date': '2030-12-31',
     'id_country': 'Italia',
-    'additional_document': 'Tessera sanitaria',
     'codice_fiscale': 'RSSMRA90E15H501Z',
     'permesso_soggiorno': 'PS123456789',
+    'permesso_expiry_date': '2025-01-15',
     'license_country': 'Italia',
     'license_number': 'MI1234567',
     'license_category': 'B',
     'license_issue_date': '2010-06-01',
     'license_expiry_date': '2040-06-01',
+    'international_license': true,
+    'international_license_number': 'INT123456789',
+    'international_license_expiry': '2025-06-01',
     'years_driving_experience': '14',
     'auto_moto_munito': '1',
     
@@ -1691,7 +2285,7 @@ function fillTestData() {
     'other_experience': 'Esperienza di 5 anni nel settore IT, specializzato in applicazioni web e mobile. Competenze in JavaScript, Python, React.',
     'availability_from': '2025-08-01',
     'availability_till': '2025-12-31',
-    'other_location': 'Milano, Roma, disponibile per trasferte',
+
     'language_1': 'Italiano',
     'proficiency_1': 'Madrelingua',
     'language_2': 'Inglese',

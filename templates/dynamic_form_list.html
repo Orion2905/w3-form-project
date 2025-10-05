@@ -1,70 +1,201 @@
 {% extends 'layout_sidebar.html' %}
 {% block content %}
-<div class="container-fluid mt-3">
-  <h2 class="mb-4">Gestione Form Dinamici</h2>
-  <div class="mb-3 d-flex justify-content-between align-items-center">
-    <form class="d-flex" method="get">
-      <input type="text" class="form-control me-2" name="q" placeholder="Cerca per nome o slug" value="{{ request.args.get('q', '') }}">
-      <button class="btn btn-outline-primary" type="submit">Cerca</button>
-    </form>
-    <a href="/forms/crea" class="btn btn-success">+ Nuovo Form</a>
+<div class="container-fluid mt-3" style="width: 100%; max-width: none; padding: 0 0.75rem;">
+  <!-- Header con titolo e statistiche -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-ui-checks-grid text-primary me-2"></i>
+        Gestione Form Dinamici
+      </h2>
+      <p class="text-muted mb-0">Gestisci i tuoi form personalizzati</p>
+    </div>
+    <div class="d-none d-md-block">
+      <div class="d-flex gap-3">
+        <div class="text-center">
+          <div class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
+            {{ forms|length }}
+          </div>
+          <small class="text-muted d-block mt-1">Form Totali</small>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="table-responsive rounded shadow-sm">
-    <table class="table align-middle mb-0" id="forms-table">
-      <thead class="sticky-top" style="z-index:1;">
-        <tr>
-          <th style="min-width:40px;">#</th>
-          <th>Nome</th>
-          <th>Slug</th>
-          <th>Categoria</th>
-          <th>Sottocategoria</th>
-          <th>Descrizione</th>
-          <th>Azioni</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for form in forms %}
-        <tr class="form-row">
-          <td>{{ form.id }}</td>
-          <td class="fw-semibold">{{ form.name }}</td>
-          <td><span class="badge bg-secondary bg-opacity-75">{{ form.slug }}</span> <a href="/form/{{ form.slug }}" target="_blank" class="ms-1 text-decoration-none" title="Vai al form pubblico"><i class="bi bi-box-arrow-up-right"></i></a></td>
-          <td>
-            {% if form.category %}
-              <span class="badge bg-primary">{{ form.category }}</span>
-            {% else %}
-              <span class="text-muted">-</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if form.subcategory %}
-              <span class="badge bg-info">{{ form.subcategory }}</span>
-            {% else %}
-              <span class="text-muted">-</span>
-            {% endif %}
-          </td>
-          <td class="text-truncate" style="max-width: 300px;">{{ form.description }}</td>
-          <td>
-            <a href="/forms/modifica/{{ form.id }}" class="btn btn-outline-primary btn-sm me-1"><i class="bi bi-pencil"></i> Modifica</a>
-            
-            {% if is_feature_enabled('form_duplication') %}
-            <button type="button" class="btn btn-outline-info btn-sm me-1" onclick="showDuplicateModal('{{ form.id }}', '{{ form.name|e }}')">
-              <i class="bi bi-copy"></i> Duplica
-            </button>
-            {% else %}
-            <button class="btn btn-outline-info btn-sm me-1" disabled title="Funzionalità disattivata">
-              {{ feature_locked_icon() }} <i class="bi bi-copy"></i> Duplica
-            </button>
-            {% endif %}
-            
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDeleteModal('{{ form.id }}', '{{ form.name|e }}')">
-              <i class="bi bi-trash"></i> Elimina
-            </button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+  <!-- Barra di ricerca e azioni -->
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body p-3">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <form class="d-flex" method="get">
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input type="text" class="form-control border-start-0 ps-0" name="q" 
+                     placeholder="Cerca per nome, slug, categoria..." 
+                     value="{{ request.args.get('q', '') }}">
+              <button class="btn btn-outline-primary" type="submit">
+                <i class="bi bi-search me-1"></i>Cerca
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="col-md-4 text-end">
+          <a href="/forms/crea" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i>Nuovo Form
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Tabella migliorata -->
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="forms-table">
+        <thead class="table-header">
+          <tr>
+            <th class="border-0 py-3" style="width: 5%;">
+              <span class="text-muted">#</span>
+            </th>
+            <th class="border-0 py-3" style="width: 20%;">
+              <span class="fw-semibold">Nome Form</span>
+            </th>
+            <th class="border-0 py-3" style="width: 20%;">
+              <span class="fw-semibold">Slug & Link</span>
+            </th>
+            <th class="border-0 py-3" style="width: 12%;">
+              <span class="fw-semibold">Categoria</span>
+            </th>
+            <th class="border-0 py-3" style="width: 12%;">
+              <span class="fw-semibold">Sottocategoria</span>
+            </th>
+            <th class="border-0 py-3" style="width: 16%;">
+              <span class="fw-semibold">Descrizione</span>
+            </th>
+            <th class="border-0 py-3" style="width: 15%;">
+              <span class="fw-semibold">Azioni</span>
+            </th>
+          </tr>
+        </thead>
+              <tbody>
+          {% for form in forms %}
+          <tr class="table-row-hover">
+            <td class="border-0 py-3">
+              <div class="badge bg-primary-subtle text-primary rounded-pill">
+                {{ loop.index }}
+              </div>
+            </td>
+            <td class="border-0 py-3">
+              <div class="d-flex align-items-center">
+                <div class="form-icon me-2">
+                  <i class="bi bi-ui-checks text-primary"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold form-name-text">{{ form.name }}</div>
+                  <small class="text-muted">Form dinamico</small>
+                </div>
+              </div>
+            </td>
+            <td class="border-0 py-3">
+              <div>
+                <a href="/form/{{ form.slug }}" target="_blank" 
+                   class="text-decoration-none d-flex align-items-center link-hover"
+                   title="Apri in nuova scheda">
+                  <code class="bg-light text-dark px-2 py-1 rounded me-2">{{ form.slug }}</code>
+                  <i class="bi bi-box-arrow-up-right text-muted"></i>
+                </a>
+              </div>
+            </td>
+            <td class="border-0 py-3">
+              {% if form.category %}
+                <span class="badge bg-secondary-subtle text-secondary">
+                  {{ form.category }}
+                </span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="border-0 py-3">
+              {% if form.subcategory %}
+                <span class="badge bg-info-subtle text-info">
+                  {{ form.subcategory }}
+                </span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="border-0 py-3">
+              {% if form.description %}
+                <div class="description-cell" title="{{ form.description }}">
+                  {{ form.description }}
+                </div>
+              {% else %}
+                <span class="text-muted fst-italic">Nessuna descrizione</span>
+              {% endif %}
+            </td>
+            <td class="border-0 py-3">
+              <div class="d-flex gap-1 flex-wrap">
+                <a href="/form/{{ form.slug }}" 
+                   class="btn btn-sm btn-outline-primary rounded-pill" 
+                   target="_blank" 
+                   title="Visualizza form"
+                   data-bs-toggle="tooltip">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="/forms/modifica/{{ form.id }}" 
+                   class="btn btn-sm btn-outline-warning rounded-pill" 
+                   title="Modifica form"
+                   data-bs-toggle="tooltip">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-info rounded-pill" 
+                        onclick="showDuplicateModal({{ form.id }}, '{{ form.name }}')" 
+                        title="Duplica form"
+                        data-bs-toggle="tooltip">
+                  <i class="bi bi-files"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success rounded-pill" 
+                        onclick="shareForm('{{ form.slug }}')" 
+                        title="Condividi form"
+                        data-bs-toggle="tooltip">
+                  <i class="bi bi-share"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" 
+                        onclick="showDeleteModal({{ form.id }}, '{{ form.name }}')" 
+                        title="Elimina form"
+                        data-bs-toggle="tooltip">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Messaggio quando non ci sono form -->
+  {% if not forms %}
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="bi bi-ui-checks-grid text-muted" style="font-size: 4rem;"></i>
+    </div>
+    <h4 class="text-muted mb-3">Nessun form dinamico trovato</h4>
+    <p class="text-muted mb-4">
+      {% if request.args.get('q') %}
+        Nessun risultato per la ricerca "{{ request.args.get('q') }}"
+      {% else %}
+        Inizia creando il tuo primo form dinamico
+      {% endif %}
+    </p>
+    <a href="/forms/crea" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Crea il primo form
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Modale per Duplicazione -->
@@ -156,6 +287,61 @@ function showDeleteModal(formId, formName) {
   new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
+function shareForm(formSlug) {
+  const formUrl = window.location.origin + '/form/' + formSlug;
+  
+  // Prova a usare l'API di condivisione nativa se disponibile
+  if (navigator.share) {
+    navigator.share({
+      title: 'Form Dinamico',
+      text: 'Compila questo form:',
+      url: formUrl
+    }).catch(err => {
+      // Se fallisce, copia negli appunti
+      copyToClipboard(formUrl);
+    });
+  } else {
+    // Fallback: copia negli appunti
+    copyToClipboard(formUrl);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    // Mostra un toast di successo
+    showToast('Link copiato negli appunti!', 'success');
+  }, function(err) {
+    // Fallback per browser più vecchi
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    showToast('Link copiato negli appunti!', 'success');
+  });
+}
+
+function showToast(message, type = 'info') {
+  // Crea un toast semplice
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+  toast.style.zIndex = '9999';
+  toast.innerHTML = `
+    <i class="bi bi-check-circle me-2"></i>${message}
+    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Rimuovi automaticamente dopo 3 secondi
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, 3000);
+}
+
 // Aggiungi animazioni ai modali
 document.getElementById('duplicateModal').addEventListener('show.bs.modal', function () {
   this.querySelector('.modal-content').style.transform = 'scale(0.8)';
@@ -176,26 +362,495 @@ document.getElementById('deleteModal').addEventListener('show.bs.modal', functio
     this.querySelector('.modal-content').style.opacity = '1';
   }, 10);
 });
+
+// Inizializza i tooltip
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Aggiunge effetti hover alle righe
+  const tableRows = document.querySelectorAll('#forms-table tbody tr');
+  tableRows.forEach(row => {
+    row.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-2px)';
+    });
+    row.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Animazione di ingresso per le statistiche
+  const statsElements = document.querySelectorAll('.badge.fs-6');
+  statsElements.forEach((element, index) => {
+    setTimeout(() => {
+      element.style.animation = 'fadeInUp 0.4s ease-out forwards';
+    }, index * 100);
+  });
+});
 </script>
 
 <style>
-#forms-table tbody tr.form-row:nth-child(even) {
-  background-color: var(--row-alt-bg, #f8f9fa);
+/* === TEMA CHIARO/SCURO === */
+:root {
+  --forms-bg: #ffffff;
+  --forms-card-bg: #ffffff;
+  --forms-border: #dee2e6;
+  --forms-shadow: rgba(0, 0, 0, 0.1);
+  --forms-text: #212529;
+  --forms-text-muted: #6c757d;
+  --forms-header-bg: #f8f9fa;
+  --forms-hover: #f8f9fa;
+  --forms-code-bg: #f8f9fa;
+  --forms-code-text: #495057;
+  --forms-icon-bg: #e7f3ff;
+  --forms-icon-color: #0d6efd;
 }
-#forms-table tbody tr.form-row:nth-child(odd) {
-  background-color: var(--row-main-bg, #fff);
+
+[data-theme="dark"] {
+  --forms-bg: #1a1a1a;
+  --forms-card-bg: #2d2d2d;
+  --forms-border: #404040;
+  --forms-shadow: rgba(0, 0, 0, 0.3);
+  --forms-text: #ffffff;
+  --forms-text-muted: #adb5bd;
+  --forms-header-bg: #343a40;
+  --forms-hover: #383838;
+  --forms-code-bg: #404040;
+  --forms-code-text: #e9ecef;
+  --forms-icon-bg: #1e3a5f;
+  --forms-icon-color: #6ea8fe;
 }
-[data-theme="dark"] #forms-table tbody tr.form-row:nth-child(even) {
-  --row-alt-bg: #23272b;
+
+/* === CARD CONTAINERS === */
+.card {
+  background-color: var(--forms-card-bg) !important;
+  border-color: var(--forms-border) !important;
+  box-shadow: 0 0.125rem 0.25rem var(--forms-shadow) !important;
 }
-[data-theme="dark"] #forms-table tbody tr.form-row:nth-child(odd) {
-  --row-main-bg: #181a1b;
+
+.card-body {
+  background-color: var(--forms-card-bg) !important;
 }
-#forms-table tbody tr.form-row:hover {
-  background-color: var(--row-hover-bg, #e2e6ea) !important;
+
+/* === BOOTSTRAP TABLE OVERRIDE === */
+.table {
+  background-color: var(--forms-bg) !important;
+  color: var(--forms-text) !important;
+  width: 100% !important;
+  margin-bottom: 0 !important;
 }
-[data-theme="dark"] #forms-table tbody tr.form-row:hover {
-  --row-hover-bg: #343a40;
+
+.table > :not(caption) > * > * {
+  background-color: transparent !important;
+  color: var(--forms-text) !important;
+}
+
+/* === CONTENITORE LARGHEZZA COMPLETA === */
+.container-fluid {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  margin: 0 !important;
+}
+
+.card {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.card-body {
+  padding: 0.75rem !important;
+}
+
+/* === RIMOZIONE MARGINI EXTRA === */
+.table-responsive {
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0.375rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem !important;
+}
+
+.mb-4 {
+  margin-bottom: 1rem !important;
+}
+
+/* === HEADER TABLE === */
+#forms-table .table-header {
+  background-color: var(--forms-header-bg) !important;
+  border-bottom: 2px solid var(--forms-border);
+}
+
+#forms-table .table-header th {
+  color: var(--forms-text) !important;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--forms-border);
+}
+
+/* === TABELLA === */
+#forms-table {
+  background-color: var(--forms-bg) !important;
+  color: var(--forms-text) !important;
+  width: 100% !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+#forms-table tbody {
+  background-color: var(--forms-bg) !important;
+}
+
+.table-responsive {
+  background-color: var(--forms-bg) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+/* === OVERRIDE COMPLETO LARGHEZZA === */
+* {
+  box-sizing: border-box;
+}
+
+.row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.col-md-8, .col-md-4 {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+/* === RIGHE TABELLA === */
+#forms-table tbody tr.table-row-hover {
+  background-color: var(--forms-bg) !important;
+  border-bottom: 1px solid var(--forms-border);
+  transition: all 0.2s ease;
+}
+
+#forms-table tbody tr.table-row-hover:hover {
+  background-color: var(--forms-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--forms-shadow);
+}
+
+#forms-table tbody tr.table-row-hover td {
+  background-color: transparent !important;
+  color: var(--forms-text) !important;
+  vertical-align: middle;
+  padding: 1rem 0.75rem;
+}
+
+/* === ICONE E BADGE === */
+.form-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--forms-icon-bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.form-icon i {
+  color: var(--forms-icon-color);
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.badge.bg-primary-subtle {
+  background-color: var(--forms-icon-bg) !important;
+  color: var(--forms-icon-color) !important;
+}
+
+.badge.bg-secondary-subtle {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  color: var(--forms-text-muted) !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary-subtle {
+  background-color: rgba(173, 181, 189, 0.2) !important;
+  color: #adb5bd !important;
+}
+
+.badge.bg-info-subtle {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  color: #0dcaf0 !important;
+}
+
+/* === CODICE E LINK === */
+code {
+  background-color: var(--forms-code-bg) !important;
+  color: var(--forms-code-text) !important;
+  border: 1px solid var(--forms-border);
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+}
+
+.link-hover {
+  transition: all 0.2s ease;
+}
+
+.link-hover:hover {
+  transform: translateX(2px);
+}
+
+.link-hover:hover code {
+  background-color: var(--forms-icon-color) !important;
+  color: white !important;
+}
+
+/* === DESCRIZIONE === */
+.description-cell {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--forms-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.description-cell:hover {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  background-color: var(--forms-hover);
+  padding: 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px var(--forms-shadow);
+  position: relative;
+  z-index: 10;
+}
+
+/* === BOTTONI === */
+.btn-sm.rounded-pill {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin: 1px;
+}
+
+.btn-sm.rounded-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--forms-shadow);
+}
+
+/* === CONTENITORE AZIONI === */
+.d-flex.gap-1.flex-wrap {
+  gap: 0.35rem !important;
+  justify-content: flex-start;
+  align-items: center;
+  min-width: 180px;
+}
+
+/* === SEARCH BAR === */
+.input-group-text {
+  background-color: var(--forms-card-bg) !important;
+  border-color: var(--forms-border) !important;
+  color: var(--forms-text-muted) !important;
+}
+
+.form-control {
+  background-color: var(--forms-card-bg) !important;
+  border-color: var(--forms-border) !important;
+  color: var(--forms-text) !important;
+}
+
+.form-control::placeholder {
+  color: var(--forms-text-muted) !important;
+}
+
+.form-control:focus {
+  background-color: var(--forms-card-bg) !important;
+  border-color: var(--forms-icon-color) !important;
+  color: var(--forms-text) !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* === MESSAGGI VUOTI === */
+.text-center.py-5 {
+  background-color: var(--forms-card-bg);
+  color: var(--forms-text);
+  border-radius: 12px;
+  border: 1px solid var(--forms-border);
+}
+
+.text-center.py-5 .text-muted {
+  color: var(--forms-text-muted) !important;
+}
+
+/* === STATISTICHE === */
+.badge.fs-6 {
+  font-size: 1.1rem !important;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+/* === MODALS STYLING === */
+.modal-content {
+  background-color: var(--forms-card-bg) !important;
+  border: 1px solid var(--forms-border) !important;
+  color: var(--forms-text) !important;
+}
+
+.modal-header {
+  border-bottom-color: var(--forms-border) !important;
+}
+
+.modal-footer {
+  border-top-color: var(--forms-border) !important;
+}
+
+.bg-light {
+  background-color: var(--forms-header-bg) !important;
+}
+
+/* === ANIMAZIONI === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+#forms-table tbody tr {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+#forms-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+#forms-table tbody tr:nth-child(2) { animation-delay: 0.15s; }
+#forms-table tbody tr:nth-child(3) { animation-delay: 0.2s; }
+#forms-table tbody tr:nth-child(4) { animation-delay: 0.25s; }
+#forms-table tbody tr:nth-child(5) { animation-delay: 0.3s; }
+
+/* === OVERRIDE BOOTSTRAP COMPLETO === */
+[data-theme="dark"] .table,
+[data-theme="dark"] .table-responsive,
+[data-theme="dark"] #forms-table,
+[data-theme="dark"] #forms-table tbody,
+[data-theme="dark"] #forms-table tbody tr,
+[data-theme="dark"] #forms-table tbody tr td {
+  background-color: var(--forms-bg) !important;
+  color: var(--forms-text) !important;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover td {
+  background-color: var(--forms-hover) !important;
+  color: var(--forms-text) !important;
+}
+
+/* === TESTO FORM === */
+.form-name-text {
+  color: var(--forms-text) !important;
+}
+
+[data-theme="dark"] .form-name-text {
+  color: var(--forms-text) !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .description-cell {
+    max-width: 120px;
+  }
+  
+  .btn-sm.rounded-pill {
+    width: 30px;
+    height: 30px;
+    margin: 0.5px;
+  }
+  
+  .form-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  #forms-table th,
+  #forms-table td {
+    padding: 0.75rem 0.25rem;
+  }
+  
+  .d-flex.gap-1.flex-wrap {
+    gap: 0.25rem !important;
+    min-width: 160px;
+  }
+  
+  /* Colonne responsive */
+  thead th:nth-child(1) { width: 5% !important; }  /* # */
+  thead th:nth-child(2) { width: 22% !important; } /* Nome */
+  thead th:nth-child(3) { width: 18% !important; } /* Slug */
+  thead th:nth-child(4) { width: 10% !important; }  /* Categoria */
+  thead th:nth-child(5) { width: 10% !important; }  /* Sottocategoria */
+  thead th:nth-child(6) { width: 15% !important; } /* Descrizione */
+  thead th:nth-child(7) { width: 20% !important; } /* Azioni */
+}
+
+/* === SCROLLBAR PERSONALIZZATA === */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--forms-header-bg);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--forms-border);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--forms-text-muted);
+}
+
+/* === OVERRIDE LAYOUT SIDEBAR === */
+main, .main-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* === FORZA LARGHEZZA COMPLETA === */
+body .container-fluid,
+body .container-fluid .card,
+body .container-fluid .table-responsive,
+body .container-fluid #forms-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 </style>
 {% endblock %}
